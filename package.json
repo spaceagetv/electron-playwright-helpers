@@ -1,0 +1,48 @@
+{
+  "name": "electron-playwright-helpers",
+  "version": "1.0.0",
+  "description": "Helper functions for Electron end-to-end testing using Playwright",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "preinstall": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1",
+    "build:compile": "rm -rf dist; tsc",
+    "build:doc": "npx jsdoc2md --template ./readme-template.hbs --files ./src/*.ts --configure ./jsdoc2md.json > ./README.md",
+    "prepublish": "npm run build:compile && npm run build:doc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Electron",
+    "Playwright",
+    "Typescript"
+  ],
+  "author": "Jeff Robbins",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.17.6",
+    "@babel/core": "^7.17.5",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-typescript": "^7.16.7",
+    "@typescript-eslint/eslint-plugin": "^5.12.1",
+    "@typescript-eslint/parser": "^5.12.1",
+    "electron": "^17.0.1",
+    "eslint": "^8.9.0",
+    "eslint-config-prettier": "^8.4.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "jsdoc-babel": "^0.5.0",
+    "jsdoc-to-markdown": "^7.1.1",
+    "playwright": "^1.19.1",
+    "prettier": "^2.5.1",
+    "typescript": "^4.5.5"
+  },
+  "dependencies": {
+    "asar": "^3.1.0"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false,
+    "tabWidth": 2,
+    "useTabs": false,
+    "endOfLine": "lf"
+  }
+}
