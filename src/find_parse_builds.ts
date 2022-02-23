@@ -61,6 +61,14 @@ type Architecture = 'x64' | 'x32' | 'arm64' | undefined
 
 /**
  * Format of the data returned from `parseElectronApp()`
+ * @typedef ElectronAppInfo
+ * @prop {string} executable - path to the Electron executable
+ * @prop {string} main - path to the main (JS) file
+ * @prop {string} name - name of the your application
+ * @prop {string} resourcesDir - path to the resources directory
+ * @prop {boolean} asar - whether the app is packaged as an asar archive
+ * @prop {string} platform - 'darwin', 'linux', or 'win32'
+ * @prop {string} arch - 'x64', 'x32', or 'arm64'
  */
 export interface ElectronAppInfo {
   /** Path to the app's executable file */

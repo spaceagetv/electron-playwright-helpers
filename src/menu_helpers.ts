@@ -8,8 +8,8 @@ import { electronWaitForFunction } from './general_helpers'
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
  * @param id {string} - the id of the MenuItem to click
- * @returns {Promise}
- * @fulfil <void> resolves with the result of the `click()` method - probably `undefined`
+ * @returns {Promise<void>}
+ * @fulfil {void} resolves with the result of the `click()` method - probably `undefined`
  */
 export function clickMenuItemById(
   electronApp: ElectronApplication,
@@ -37,8 +37,8 @@ export function clickMenuItemById(
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
  * @param menuId {string} - the id of the MenuItem to retrieve the attribute from
  * @param attribute {string} - the attribute to retrieve
- * @returns {Promise}
- * @fulfil <string> resolves with the attribute value
+ * @returns {Promise<string>}
+ * @fulfil {string} resolves with the attribute value
  */
 export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
   electronApp: ElectronApplication,
@@ -94,8 +94,8 @@ type MenuItemPartial = MenuItemPrimitive & {
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
  * @param menuId {string} - the id of the MenuItem to retrieve
- * @returns {Promise}
- * @fulfil <MenuItemPartial> the MenuItem with the given id
+ * @returns {Promise<MenuItemPartial>}
+ * @fulfil {MenuItemPartial} the MenuItem with the given id
  */
 export function getMenuItemById(
   electronApp: ElectronApplication,
@@ -148,8 +148,8 @@ export function getMenuItemById(
  * @category Menu
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
- * @returns {Promise}
- * @fulfil <MenuItemPartial[]> an array of MenuItem-like objects
+ * @returns {Promise<MenuItemPartial[]>}
+ * @fulfil {MenuItemPartial[]} an array of MenuItem-like objects
  */
 export function getApplicationMenu(
   electronApp: ElectronApplication
@@ -197,8 +197,8 @@ export function getApplicationMenu(
  * @param property {string} - the property to search for
  * @param value {string} - the value to search for
  * @param menuItems {MenuItemPartial | MenuItemPartial[]} optional - single MenuItem or array - if not provided, will be retrieved from the application menu
- * @returns {Promise}
- * @fulfil <MenuItemPartial> the first MenuItem with the given property and value
+ * @returns {Promise<MenuItemPartial>}
+ * @fulfil {MenuItemPartial} the first MenuItem with the given property and value
  */
 export async function findMenuItem<P extends keyof MenuItemPartial>(
   electronApp: ElectronApplication,
@@ -227,14 +227,14 @@ export async function findMenuItem<P extends keyof MenuItemPartial>(
 }
 
 /**
- * Wait for a MenuItem to be exist
+ * Wait for a MenuItem to exist
  *
  * @category Menu
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
  * @param id {string} - the id of the MenuItem to wait for
- * @returns {Promise}
- * @fulfil <void> resolves when the MenuItem is found
+ * @returns {Promise<void>}
+ * @fulfil {void} resolves when the MenuItem is found
  */
 export async function waitForMenuItem(
   electronApp: ElectronApplication,
@@ -263,8 +263,8 @@ export async function waitForMenuItem(
  * @param id {string} - the id of the MenuItem to wait for
  * @param property {string} - the property to search for
  * @param value {string | number | boolean} - the value to search for
- * @returns {Promise}
- * @fulfil <void> resolves when the MenuItem with correct status is found
+ * @returns {Promise<void>}
+ * @fulfil {void} resolves when the MenuItem with correct status is found
  */
 export async function waitForMenuItemStatus<P extends keyof Electron.MenuItem>(
   electronApp: ElectronApplication,

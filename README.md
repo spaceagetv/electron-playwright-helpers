@@ -83,60 +83,60 @@ and the path to the app's main file.</p>
 <li>platform: OS platform</li>
 <li>arch: architecture</li>
 </ul></dd>
-<dt><a href="#electronWaitForFunction">electronWaitForFunction(electronApp, fn, arg)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#electronWaitForFunction">electronWaitForFunction(electronApp, fn, arg)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Wait for a function to evaluate to true in the main Electron process. This really
 should be part of the Playwright API, but it's not.</p>
 <p>This function is to <code>electronApp.evaluate()</code>
 as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p></dd>
-<dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an ipcMain message from the main process.
 This will trigger all ipcMain listeners for the event.</p>
 <p>This does not transfer data between main and renderer processes.
 It simply emits an event in the main process.</p></dd>
-<dt><a href="#ipcMainCallFirstListener">ipcMainCallFirstListener(electronApp, message, ...args)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#ipcMainCallFirstListener">ipcMainCallFirstListener(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Call the first listener for a given ipcMain message in the main process
 and return its result.</p>
 <p>NOTE: ipcMain listeners usually don't return a value, but we're using
 this to retrieve test data from the main process.</p>
 <p>Generally, it's probably better to use <code>ipcMainInvokeHandler()</code> instead.</p></dd>
-<dt><a href="#ipcMainInvokeHandler">ipcMainInvokeHandler(electronApp, message, ...args)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#ipcMainInvokeHandler">ipcMainInvokeHandler(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Get the return value of an <code>ipcMain.handle()</code> function</p></dd>
-<dt><a href="#ipcRendererSend">ipcRendererSend(page, channel, ...args)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#ipcRendererSend">ipcRendererSend(page, channel, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Send an <code>ipcRenderer.send()</code> (to main process) from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this BrowserWindow.</p></dd>
-<dt><a href="#ipcRendererInvoke">ipcRendererInvoke(page, message, ...args)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#ipcRendererInvoke">ipcRendererInvoke(page, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Send an ipcRenderer.invoke() from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this window</p></dd>
-<dt><a href="#ipcRendererCallFirstListener">ipcRendererCallFirstListener(window, message, ...args)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#ipcRendererCallFirstListener">ipcRendererCallFirstListener(window, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Call just the first listener for a given ipcRenderer channel in a given window.
 <em>UNLIKE MOST Electron ipcRenderer listeners</em>, this function SHOULD return a value.</p>
 <p>This function does not send data between main and renderer processes.
 It simply retrieves data from the renderer process.</p>
 <p>Note: nodeIntegration must be true for this BrowserWindow.</p></dd>
-<dt><a href="#ipcRendererEmit">ipcRendererEmit(window, message, ...args)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#ipcRendererEmit">ipcRendererEmit(window, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an IPC event to a given window.
 This will trigger all ipcRenderer listeners for the event.</p>
 <p>This does not transfer data between main and renderer processes.
 It simply emits an event in the renderer process.</p>
 <p>Note: nodeIntegration must be true for this window</p></dd>
-<dt><a href="#clickMenuItemById">clickMenuItemById(electronApp, id)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#clickMenuItemById">clickMenuItemById(electronApp, id)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Execute the <code>.click()</code> method on the element with the given id.</p></dd>
-<dt><a href="#getMenuItemAttribute">getMenuItemAttribute(electronApp, menuId, attribute)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#getMenuItemAttribute">getMenuItemAttribute(electronApp, menuId, attribute)</a> ⇒ <code>Promise.&lt;string&gt;</code></dt>
 <dd><p>Get a given attribute the MenuItem with the given id.</p></dd>
-<dt><a href="#getMenuItemById">getMenuItemById(electronApp, menuId)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#getMenuItemById">getMenuItemById(electronApp, menuId)</a> ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code></dt>
 <dd><p>Get information about the MenuItem with the given id</p></dd>
-<dt><a href="#getApplicationMenu">getApplicationMenu(electronApp)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#getApplicationMenu">getApplicationMenu(electronApp)</a> ⇒ <code>Promise.&lt;Array.&lt;MenuItemPartial&gt;&gt;</code></dt>
 <dd><p>Get the current state of the application menu. Contains only primitive values and submenus..
 Very similar to menu
 <a href="https://www.electronjs.org/docs/latest/api/menu#examples">construction template structure</a>
 in Electron.</p></dd>
-<dt><a href="#findMenuItem">findMenuItem(electronApp, property, value, menuItems)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#findMenuItem">findMenuItem(electronApp, property, value, menuItems)</a> ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code></dt>
 <dd><p>Find a MenuItem by any of its properties</p></dd>
-<dt><a href="#waitForMenuItem">waitForMenuItem(electronApp, id)</a> ⇒ <code>Promise</code></dt>
-<dd><p>Wait for a MenuItem to be exist</p></dd>
-<dt><a href="#waitForMenuItemStatus">waitForMenuItemStatus(electronApp, id, property, value)</a> ⇒ <code>Promise</code></dt>
+<dt><a href="#waitForMenuItem">waitForMenuItem(electronApp, id)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
+<dd><p>Wait for a MenuItem to exist</p></dd>
+<dt><a href="#waitForMenuItemStatus">waitForMenuItemStatus(electronApp, id, property, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Wait for a MenuItem to have a specific attribute value.
 For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 </dl>
@@ -178,7 +178,7 @@ and the path to the app's main file.</p>
 
 <a name="electronWaitForFunction"></a>
 
-## electronWaitForFunction(electronApp, fn, arg) ⇒ <code>Promise</code>
+## electronWaitForFunction(electronApp, fn, arg) ⇒ <code>Promise.&lt;void&gt;</code>
 <p>Wait for a function to evaluate to true in the main Electron process. This really
 should be part of the Playwright API, but it's not.</p>
 <p>This function is to <code>electronApp.evaluate()</code>
@@ -195,7 +195,7 @@ as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p>
 
 <a name="ipcMainEmit"></a>
 
-## ipcMainEmit(electronApp, message, ...args) ⇒ <code>Promise</code>
+## ipcMainEmit(electronApp, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
 <p>Emit an ipcMain message from the main process.
 This will trigger all ipcMain listeners for the event.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -203,8 +203,8 @@ It simply emits an event in the main process.</p>
 
 **Kind**: global function  
 **Category**: IPCMain  
-**Fulfil**: <boolean> true if there were listeners for this message  
-**Reject**: <Error> if there are no ipcMain listeners for the event  
+**Fulfil**: <code>boolean</code> true if there were listeners for this message  
+**Reject**: <code>Error</code> if there are no ipcMain listeners for the event  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -214,7 +214,7 @@ It simply emits an event in the main process.</p>
 
 <a name="ipcMainCallFirstListener"></a>
 
-## ipcMainCallFirstListener(electronApp, message, ...args) ⇒ <code>Promise</code>
+## ipcMainCallFirstListener(electronApp, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Call the first listener for a given ipcMain message in the main process
 and return its result.</p>
 <p>NOTE: ipcMain listeners usually don't return a value, but we're using
@@ -223,8 +223,8 @@ this to retrieve test data from the main process.</p>
 
 **Kind**: global function  
 **Category**: IPCMain  
-**Fulfil**: <unknown> resolves with the result of the function  
-**Reject**: <Error> if there are no ipcMain listeners for the event  
+**Fulfil**: <code>unknown</code> resolves with the result of the function  
+**Reject**: <code>Error</code> if there are no ipcMain listeners for the event  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -234,12 +234,12 @@ this to retrieve test data from the main process.</p>
 
 <a name="ipcMainInvokeHandler"></a>
 
-## ipcMainInvokeHandler(electronApp, message, ...args) ⇒ <code>Promise</code>
+## ipcMainInvokeHandler(electronApp, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Get the return value of an <code>ipcMain.handle()</code> function</p>
 
 **Kind**: global function  
 **Category**: IPCMain  
-**Fulfil**: <unknown> resolves with the result of the function called in main process  
+**Fulfil**: <code>unknown</code> resolves with the result of the function called in main process  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -249,7 +249,7 @@ this to retrieve test data from the main process.</p>
 
 <a name="ipcRendererSend"></a>
 
-## ipcRendererSend(page, channel, ...args) ⇒ <code>Promise</code>
+## ipcRendererSend(page, channel, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Send an <code>ipcRenderer.send()</code> (to main process) from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this BrowserWindow.</p>
@@ -266,7 +266,7 @@ in the webPreferences for this BrowserWindow.</p>
 
 <a name="ipcRendererInvoke"></a>
 
-## ipcRendererInvoke(page, message, ...args) ⇒ <code>Promise</code>
+## ipcRendererInvoke(page, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Send an ipcRenderer.invoke() from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this window</p>
@@ -283,7 +283,7 @@ in the webPreferences for this window</p>
 
 <a name="ipcRendererCallFirstListener"></a>
 
-## ipcRendererCallFirstListener(window, message, ...args) ⇒ <code>Promise</code>
+## ipcRendererCallFirstListener(window, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Call just the first listener for a given ipcRenderer channel in a given window.
 <em>UNLIKE MOST Electron ipcRenderer listeners</em>, this function SHOULD return a value.</p>
 <p>This function does not send data between main and renderer processes.
@@ -302,7 +302,7 @@ It simply retrieves data from the renderer process.</p>
 
 <a name="ipcRendererEmit"></a>
 
-## ipcRendererEmit(window, message, ...args) ⇒ <code>Promise</code>
+## ipcRendererEmit(window, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
 <p>Emit an IPC event to a given window.
 This will trigger all ipcRenderer listeners for the event.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -311,8 +311,8 @@ It simply emits an event in the renderer process.</p>
 
 **Kind**: global function  
 **Category**: IPCRenderer  
-**Fulfil**: <boolean> true if the event was emitted  
-**Reject**: <Error> if there are no ipcRenderer listeners for the event  
+**Fulfil**: <code>boolean</code> true if the event was emitted  
+**Reject**: <code>Error</code> if there are no ipcRenderer listeners for the event  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -322,12 +322,12 @@ It simply emits an event in the renderer process.</p>
 
 <a name="clickMenuItemById"></a>
 
-## clickMenuItemById(electronApp, id) ⇒ <code>Promise</code>
+## clickMenuItemById(electronApp, id) ⇒ <code>Promise.&lt;void&gt;</code>
 <p>Execute the <code>.click()</code> method on the element with the given id.</p>
 
 **Kind**: global function  
 **Category**: Menu  
-**Fulfil**: <void> resolves with the result of the `click()` method - probably `undefined`  
+**Fulfil**: <code>void</code> resolves with the result of the `click()` method - probably `undefined`  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -336,12 +336,12 @@ It simply emits an event in the renderer process.</p>
 
 <a name="getMenuItemAttribute"></a>
 
-## getMenuItemAttribute(electronApp, menuId, attribute) ⇒ <code>Promise</code>
+## getMenuItemAttribute(electronApp, menuId, attribute) ⇒ <code>Promise.&lt;string&gt;</code>
 <p>Get a given attribute the MenuItem with the given id.</p>
 
 **Kind**: global function  
 **Category**: Menu  
-**Fulfil**: <string> resolves with the attribute value  
+**Fulfil**: <code>string</code> resolves with the attribute value  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -351,12 +351,12 @@ It simply emits an event in the renderer process.</p>
 
 <a name="getMenuItemById"></a>
 
-## getMenuItemById(electronApp, menuId) ⇒ <code>Promise</code>
+## getMenuItemById(electronApp, menuId) ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code>
 <p>Get information about the MenuItem with the given id</p>
 
 **Kind**: global function  
 **Category**: Menu  
-**Fulfil**: <MenuItemPartial> the MenuItem with the given id  
+**Fulfil**: <code>MenuItemPartial</code> the MenuItem with the given id  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -365,7 +365,7 @@ It simply emits an event in the renderer process.</p>
 
 <a name="getApplicationMenu"></a>
 
-## getApplicationMenu(electronApp) ⇒ <code>Promise</code>
+## getApplicationMenu(electronApp) ⇒ <code>Promise.&lt;Array.&lt;MenuItemPartial&gt;&gt;</code>
 <p>Get the current state of the application menu. Contains only primitive values and submenus..
 Very similar to menu
 <a href="https://www.electronjs.org/docs/latest/api/menu#examples">construction template structure</a>
@@ -373,7 +373,7 @@ in Electron.</p>
 
 **Kind**: global function  
 **Category**: Menu  
-**Fulfil**: <MenuItemPartial[]> an array of MenuItem-like objects  
+**Fulfil**: <code>MenuItemPartial[]</code> an array of MenuItem-like objects  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -381,12 +381,12 @@ in Electron.</p>
 
 <a name="findMenuItem"></a>
 
-## findMenuItem(electronApp, property, value, menuItems) ⇒ <code>Promise</code>
+## findMenuItem(electronApp, property, value, menuItems) ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code>
 <p>Find a MenuItem by any of its properties</p>
 
 **Kind**: global function  
 **Category**: Menu  
-**Fulfil**: <MenuItemPartial> the first MenuItem with the given property and value  
+**Fulfil**: <code>MenuItemPartial</code> the first MenuItem with the given property and value  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -397,12 +397,12 @@ in Electron.</p>
 
 <a name="waitForMenuItem"></a>
 
-## waitForMenuItem(electronApp, id) ⇒ <code>Promise</code>
-<p>Wait for a MenuItem to be exist</p>
+## waitForMenuItem(electronApp, id) ⇒ <code>Promise.&lt;void&gt;</code>
+<p>Wait for a MenuItem to exist</p>
 
 **Kind**: global function  
 **Category**: Menu  
-**Fulfil**: <void> resolves when the MenuItem is found  
+**Fulfil**: <code>void</code> resolves when the MenuItem is found  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -411,13 +411,13 @@ in Electron.</p>
 
 <a name="waitForMenuItemStatus"></a>
 
-## waitForMenuItemStatus(electronApp, id, property, value) ⇒ <code>Promise</code>
+## waitForMenuItemStatus(electronApp, id, property, value) ⇒ <code>Promise.&lt;void&gt;</code>
 <p>Wait for a MenuItem to have a specific attribute value.
 For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 
 **Kind**: global function  
 **Category**: Menu  
-**Fulfil**: <void> resolves when the MenuItem with correct status is found  
+**Fulfil**: <code>void</code> resolves when the MenuItem with correct status is found  
 
 | Param | Type | Description |
 | --- | --- | --- |

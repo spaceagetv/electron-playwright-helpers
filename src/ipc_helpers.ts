@@ -12,7 +12,7 @@ import { ElectronApplication, Page } from 'playwright'
  * @param page {Page} the Playwright Page to send the ipcRenderer.send() from
  * @param channel {string} the channel to send the ipcRenderer.send() to
  * @param args {...unknown} one or more arguments to send to the `ipcRenderer.send()`
- * @returns {Promise}
+ * @returns {Promise<unknown>}
  * @fulfil {unknown} resolves with the result of `ipcRenderer.send()`
  */
 export function ipcRendererSend(
@@ -41,7 +41,7 @@ export function ipcRendererSend(
  * @param page {Page} the Playwright Page to send the ipcRenderer.invoke() from
  * @param message {string} the channel to send the ipcRenderer.invoke() to
  * @param args {...unknown} one or more arguments to send to the ipcRenderer.invoke()
- * @returns {Promise}
+ * @returns {Promise<unknown>}
  * @fulfil {unknown} resolves with the result of ipcRenderer.invoke()
  */
 export function ipcRendererInvoke(
@@ -73,7 +73,7 @@ export function ipcRendererInvoke(
  * @param window {Page} The Playwright Page to with the `ipcRenderer.on()` listener
  * @param message {string} The channel to call the first listener for
  * @param args {...unknown} optional - One or more arguments to send to the ipcRenderer.on() listener
- * @returns {Promise}
+ * @returns {Promise<unknown>}
  * @fulfil {unknown} the result of the first `ipcRenderer.on()` listener
  */
 export async function ipcRendererCallFirstListener(
@@ -113,9 +113,9 @@ export async function ipcRendererCallFirstListener(
  * @param window {Page} - the Playwright Page to with the ipcRenderer.on() listener
  * @param message {string} - the channel to call all ipcRenderer listeners for
  * @param args {...unknown} optional - one or more arguments to send
- * @returns {Promise}
- * @fulfil <boolean> true if the event was emitted
- * @reject <Error> if there are no ipcRenderer listeners for the event
+ * @returns {Promise<boolean>}
+ * @fulfil {boolean} true if the event was emitted
+ * @reject {Error} if there are no ipcRenderer listeners for the event
  */
 export function ipcRendererEmit(
   window: Page,
@@ -149,9 +149,9 @@ export function ipcRendererEmit(
  * @param electronApp {ElectronApplication} - the ElectronApplication object from Playwright
  * @param message {string} - the channel to call all ipcMain listeners for
  * @param args {...unknown} - one or more arguments to send
- * @returns {Promise}
- * @fulfil <boolean> true if there were listeners for this message
- * @reject <Error> if there are no ipcMain listeners for the event
+ * @returns {Promise<boolean>}
+ * @fulfil {boolean} true if there were listeners for this message
+ * @reject {Error} if there are no ipcMain listeners for the event
  */
 export function ipcMainEmit(
   electronApp: ElectronApplication,
@@ -185,9 +185,9 @@ export function ipcMainEmit(
  * @param electronApp {ElectronApplication} - the ElectronApplication object from Playwright
  * @param message {string} - the channel to call the first listener for
  * @param args {...unknown} - one or more arguments to send
- * @returns {Promise}
- * @fulfil <unknown> resolves with the result of the function
- * @reject <Error> if there are no ipcMain listeners for the event
+ * @returns {Promise<unknown>}
+ * @fulfil {unknown} resolves with the result of the function
+ * @reject {Error} if there are no ipcMain listeners for the event
  */
 export async function ipcMainCallFirstListener(
   electronApp: ElectronApplication,
@@ -222,8 +222,8 @@ type IpcMainWithHandlers = Electron.IpcMain & {
  * @param electronApp {ElectronApplication} - the ElectronApplication object from Playwright
  * @param message {string} - the channel to call the first listener for
  * @param args {...unknown} - one or more arguments to send
- * @returns {Promise}
- * @fulfil <unknown> resolves with the result of the function called in main process
+ * @returns {Promise<unknown>}
+ * @fulfil {unknown} resolves with the result of the function called in main process
  */
 export function ipcMainInvokeHandler(
   electronApp: ElectronApplication,

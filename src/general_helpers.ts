@@ -12,7 +12,7 @@ import { PageFunctionOn } from 'playwright/node_modules/playwright-core/types/st
  * @param electronApp {ElectronApplication} - the Playwright ElectronApplication
  * @param fn {Function} - the function to evaluate in the main process - must return a boolean
  * @param arg {Any} optional - an argument to pass to the function
- * @returns {Promise}
+ * @returns {Promise<void>}
  * @fulfil {void} Resolves when the function returns true
  */
 export async function electronWaitForFunction<R, Arg>(
