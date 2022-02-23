@@ -17,6 +17,9 @@ export function clickMenuItemById(
 ): Promise<unknown> {
   return electronApp.evaluate(({ Menu }, menuId) => {
     const menu = Menu.getApplicationMenu()
+    if (!menu) {
+      throw new Error('No application menu found')
+    }
     const menuItem = menu.getMenuItemById(menuId)
     if (menuItem) {
       return menuItem.click()
@@ -46,6 +49,9 @@ export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
   const resultPromise = electronApp.evaluate(
     ({ Menu }, { menuId, attr }) => {
       const menu = Menu.getApplicationMenu()
+      if (!menu) {
+        throw new Error('No application menu found')
+      }
       const menuItem = menu.getMenuItemById(menuId)
       if (!menuItem) {
         throw new Error(`Menu item with id "${menuId}" not found`)
@@ -83,7 +89,7 @@ type MenuItemPartial = MenuItemPrimitive & {
 
 /**
  * Get information about the MenuItem with the given id
- * 
+ *
  * @category Menu
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
@@ -108,16 +114,20 @@ export function getMenuItemById(
             typeof value === 'boolean' ||
             value === null
           ) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             returnValue[key] = value
           }
         })
-        if (menuItem.type === 'submenu') {
+        if (menuItem.type === 'submenu' && menuItem.submenu) {
           returnValue['submenu'] = menuItem.submenu.items.map(cleanMenuItem)
         }
         return returnValue
       }
       const menu = Menu.getApplicationMenu()
+      if (!menu) {
+        throw new Error('No application menu found')
+      }
       const menuItem = menu.getMenuItemById(menuId)
       if (menuItem) {
         return cleanMenuItem(menuItem)
@@ -134,7 +144,7 @@ export function getMenuItemById(
  * Very similar to menu
  * [construction template structure](https://www.electronjs.org/docs/latest/api/menu#examples)
  * in Electron.
- * 
+ *
  * @category Menu
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
@@ -145,7 +155,6 @@ export function getApplicationMenu(
   electronApp: ElectronApplication
 ): Promise<MenuItemPartial[]> {
   const promise = electronApp.evaluate(({ Menu }) => {
-
     // we need this function to be in scope
     function cleanMenuItem(menuItem: Electron.MenuItem): MenuItemPartial {
       const returnValue = {} as MenuItemPartial
@@ -157,17 +166,21 @@ export function getApplicationMenu(
           typeof value === 'boolean' ||
           value === null
         ) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore - we know it's a primitive
           returnValue[key] = value
         }
       })
-      if (menuItem.type === 'submenu') {
+      if (menuItem.type === 'submenu' && menuItem.submenu) {
         returnValue['submenu'] = menuItem.submenu.items.map(cleanMenuItem)
       }
       return returnValue
     }
 
     const menu = Menu.getApplicationMenu()
+    if (!menu) {
+      throw new Error('No application menu found')
+    }
     const cleanItems = menu.items.map(cleanMenuItem)
 
     return cleanItems
@@ -177,7 +190,7 @@ export function getApplicationMenu(
 
 /**
  * Find a MenuItem by any of its properties
- * 
+ *
  * @category Menu
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
@@ -192,7 +205,7 @@ export async function findMenuItem<P extends keyof MenuItemPartial>(
   property: P,
   value: MenuItemPartial[P],
   menuItems?: MenuItemPartial | MenuItemPartial[]
-): Promise<MenuItemPartial> {
+): Promise<MenuItemPartial | undefined> {
   if (!menuItems) {
     const menu = await getApplicationMenu(electronApp)
     return findMenuItem(electronApp, property, value, menu)
@@ -215,7 +228,7 @@ export async function findMenuItem<P extends keyof MenuItemPartial>(
 
 /**
  * Wait for a MenuItem to be exist
- * 
+ *
  * @category Menu
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
@@ -231,7 +244,10 @@ export async function waitForMenuItem(
     electronApp,
     ({ Menu }, id) => {
       const menu = Menu.getApplicationMenu()
-      return !!menu.getMenuItemById(id)
+      if (!menu) {
+        throw new Error('No application menu found')
+      }
+      return !!menu.getMenuItemById(id as string)
     },
     id
   )
@@ -240,9 +256,9 @@ export async function waitForMenuItem(
 /**
  * Wait for a MenuItem to have a specific attribute value.
  * For example, wait for a MenuItem to be enabled... or be visible.. etc
- * 
+ *
  * @category Menu
- * 
+ *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
  * @param id {string} - the id of the MenuItem to wait for
  * @param property {string} - the property to search for
@@ -260,7 +276,13 @@ export async function waitForMenuItemStatus<P extends keyof Electron.MenuItem>(
     electronApp,
     ({ Menu }, { id, value, property }) => {
       const menu = Menu.getApplicationMenu()
+      if (!menu) {
+        throw new Error('No application menu found')
+      }
       const menuItem = menu.getMenuItemById(id)
+      if (!menuItem) {
+        throw new Error(`Menu item with id "${id}" not found`)
+      }
       return menuItem[property] === value
     },
     { id, value, property }

@@ -1,20 +1,29 @@
 {
   "name": "electron-playwright-helpers",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Helper functions for Electron end-to-end testing using Playwright",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "repository": "https://github.com/spaceagetv/electron-playwright-helpers",
+  "homepage": "https://github.com/spaceagetv/electron-playwright-helpers#readme",
   "scripts": {
     "preinstall": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1",
     "build:compile": "rm -rf dist; tsc",
     "build:doc": "npx jsdoc2md --template ./readme-template.hbs --files ./src/*.ts --configure ./jsdoc2md.json > ./README.md",
+    "lint": "npx eslint src/**/*.ts",
+    "lint:fix": "npx eslint src/**/*.ts --fix",
     "prepublish": "npm run build:compile && npm run build:doc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "Electron",
     "Playwright",
-    "Typescript"
+    "Typescript",
+    "E2E",
+    "E2E Testing"
   ],
   "author": "Jeff Robbins",
   "license": "MIT",
@@ -23,6 +32,7 @@
     "@babel/core": "^7.17.5",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
+    "@tsconfig/node12": "^1.0.9",
     "@typescript-eslint/eslint-plugin": "^5.12.1",
     "@typescript-eslint/parser": "^5.12.1",
     "electron": "^17.0.1",

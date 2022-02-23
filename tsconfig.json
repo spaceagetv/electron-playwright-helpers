@@ -1,8 +1,7 @@
 {
+  "extends": "@tsconfig/node12/tsconfig.json",
   "compilerOptions": {
     "allowJs": true,
-    "target": "ES5",
-    "lib": ["es2018", "es7", "es6"],
     "module": "commonjs",
     "skipLibCheck": true,
     "esModuleInterop": true,

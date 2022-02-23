@@ -41,7 +41,11 @@ export function findLatestBuild(): string {
         }
       }
     })
-    .sort((a, b) => b.time - a.time)
+    .sort((a, b) => {
+      const aTime = a ? a.time : 0
+      const bTime = b ? b.time : 0
+      return bTime - aTime
+    })
     .map((file) => {
       if (file) {
         return file.name
@@ -53,7 +57,7 @@ export function findLatestBuild(): string {
   return path.join(outDir, latestBuild)
 }
 
-type Architecture = 'x64' | 'x32' | 'arm64'
+type Architecture = 'x64' | 'x32' | 'arm64' | undefined
 
 /**
  * Format of the data returned from `parseElectronApp()`
@@ -107,7 +111,8 @@ function getLinuxExecutableName(baseName: string): string {
  */
 export function parseElectronApp(buildDir: string): ElectronAppInfo {
   console.log(`Parsing Electron app in ${buildDir}`)
-  let platform: string
+
+  let platform = ''
 
   // in case the buildDir is the path to the app itself
   if (buildDir.endsWith('.app')) {
@@ -182,6 +187,9 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
     const appBundle = list.find((fileName) => {
       return fileName.endsWith('.app')
     })
+    if (!appBundle) {
+      throw new Error(`Could not find app bundle in ${buildDir}`)
+    }
     const appDir = path.join(buildDir, appBundle, 'Contents', 'MacOS')
     const appName = fs.readdirSync(appDir)[0]
     executable = path.join(appDir, appName)
@@ -217,6 +225,9 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
     const exe = list.find((fileName) => {
       return fileName.endsWith('.exe')
     })
+    if (!exe) {
+      throw new Error(`Could not find executable in ${buildDir}`)
+    }
     executable = path.join(buildDir, exe)
 
     resourcesDir = path.join(buildDir, 'resources')
