@@ -12,6 +12,10 @@ npm i -D electron-playwright-helpers
 
 ## Usage
 
+For a full example of how to use this library, see the 
+[electron-playwright-example](https://github.com/spaceagetv/electron-playwright-example) project.
+But here's a quick example:
+
 Javascript:
 
 ```JS
