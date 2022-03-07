@@ -83,7 +83,7 @@ type MenuItemPrimitive = PickByType<
  * A MenuItemConstructorOptions-like Electron MenuItem
  * containing only primitive and null values
  */
-type MenuItemPartial = MenuItemPrimitive & {
+export type MenuItemPartial = MenuItemPrimitive & {
   submenu?: MenuItemPartial[]
 }
 

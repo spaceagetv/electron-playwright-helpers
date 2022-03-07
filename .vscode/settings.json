@@ -10,6 +10,7 @@
     "typescriptreact"
   ],
   "conventionalCommits.scopes": [
-    "JSDoc"
+    "JSDoc",
+    "types"
   ]
 }
