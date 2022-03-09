@@ -58,7 +58,14 @@ import { electronWaitForFunction, ipcMainCallFirstListener, clickMenuItemById } 
 
 ## Contributing
 
-Yes, please! Pull requests are always welcome. Feel free to add new features, fix bugs, etc.
+Yes, please! Pull requests are always welcome. Feel free to add or suggest new features, fix bugs, etc.
+
+## Additional Resources
+
+  * [Electron Playwright Example](https://github.com/spaceagetv/electron-playwright-example) - an example of how to use this library
+  * [Playwright Fake Dialog](https://www.npmjs.com/package/playwright-fake-dialog) - replace Electron's dialog function for testing
+  * [Playwright API](https://playwright.dev/docs/api/class-electron) - Playwright API docs for Electron
+  * [Electron API](https://electronjs.org/docs/api/app) - Electron API
 
 ## API
 
