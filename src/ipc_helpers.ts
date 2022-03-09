@@ -161,8 +161,9 @@ export function ipcMainEmit(
   return electronApp.evaluate(
     ({ ipcMain }, { message, args }) => {
       if (ipcMain.listeners(message).length > 0) {
-        // we send null in place of the ipcMain event object
-        return ipcMain.emit(message, null, ...args)
+        // fake ipcMainEvent
+        const event = {} as Electron.IpcMainEvent
+        return ipcMain.emit(message, event, ...args)
       } else {
         throw new Error(`No ipcMain listeners for '${message}'`)
       }
@@ -197,7 +198,9 @@ export async function ipcMainCallFirstListener(
   return await electronApp.evaluate(
     async ({ ipcMain }, { message, args }) => {
       if (ipcMain.listenerCount(message) > 0) {
-        return await ipcMain.listeners(message)[0](...args)
+        // fake ipcMainEvent
+        const event = {} as Electron.IpcMainEvent
+        return await ipcMain.listeners(message)[0](event, ...args)
       } else {
         throw new Error(`No listeners for message ${message}`)
       }
