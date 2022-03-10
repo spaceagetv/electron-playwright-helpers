@@ -1,6 +1,6 @@
 {
   "name": "electron-playwright-helpers",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Helper functions for Electron end-to-end testing using Playwright",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
