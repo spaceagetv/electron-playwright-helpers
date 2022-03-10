@@ -1,8 +1,9 @@
 # Electron Playwright Helpers
 
+[![NPM](https://nodei.co/npm/electron-playwright-helpers.png)](https://nodei.co/npm/electron-playwright-helpers/)
+
 Helper functions to make it easier to use [Playwright](https://playwright.dev/) for end-to-end testing with
-[Electron](https://www.electronjs.org/). Parse packaged Electron projects so you can run tests on them. Click Electron
-menu items, send IPC messages, get menu structures, etc.
+[Electron](https://www.electronjs.org/). Parse packaged Electron projects so you can run tests on them. Click Electron menu items, send IPC messages, get menu structures, etc.
 
 ## Installation
 
@@ -62,10 +63,10 @@ Yes, please! Pull requests are always welcome. Feel free to add or suggest new f
 
 ## Additional Resources
 
-  * [Electron Playwright Example](https://github.com/spaceagetv/electron-playwright-example) - an example of how to use this library
-  * [Playwright Fake Dialog](https://www.npmjs.com/package/playwright-fake-dialog) - replace Electron's dialog function for testing
-  * [Playwright API](https://playwright.dev/docs/api/class-electron) - Playwright API docs for Electron
-  * [Electron API](https://electronjs.org/docs/api/app) - Electron API
+* [Electron Playwright Example](https://github.com/spaceagetv/electron-playwright-example) - an example of how to use this library
+* [Playwright Fake Dialog](https://www.npmjs.com/package/playwright-fake-dialog) - replace Electron's dialog function for testing
+* [Playwright API](https://playwright.dev/docs/api/class-electron) - Playwright API docs for Electron
+* [Electron API](https://electronjs.org/docs/api/app) - Electron API
 
 ## API
 

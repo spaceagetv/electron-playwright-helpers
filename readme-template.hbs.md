@@ -1,5 +1,7 @@
 # Electron Playwright Helpers
 
+[![NPM](https://nodei.co/npm/electron-playwright-helpers.png)](https://nodei.co/npm/electron-playwright-helpers/)
+
 Helper functions to make it easier to use [Playwright](https://playwright.dev/) for end-to-end testing with
 [Electron](https://www.electronjs.org/). Parse packaged Electron projects so you can run tests on them. Click Electron menu items, send IPC messages, get menu structures, etc.
 
