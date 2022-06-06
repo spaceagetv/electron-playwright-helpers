@@ -8,11 +8,11 @@ import * as ASAR from 'asar'
  *
  * @returns {string} - path to the most recently modified build directory
  */
-export function findLatestBuild(): string {
+export function findLatestBuild(buildDirectory='out'): string {
   // root of your project
   const rootDir = path.resolve('./')
   // directory where the builds are stored
-  const outDir = path.join(rootDir, 'out')
+  const outDir = path.join(rootDir, buildDirectory)
   // list of files in the out directory
   const builds = fs.readdirSync(outDir)
   const platforms = [
