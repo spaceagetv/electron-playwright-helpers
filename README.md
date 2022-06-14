@@ -73,7 +73,7 @@ Yes, please! Pull requests are always welcome. Feel free to add or suggest new f
 ## Functions
 
 <dl>
-<dt><a href="#findLatestBuild">findLatestBuild()</a> ⇒ <code>string</code></dt>
+<dt><a href="#findLatestBuild">findLatestBuild(buildDirectory)</a> ⇒ <code>string</code></dt>
 <dd><p>Parses the <code>out</code> directory to find the latest build of your Electron project.
 Use <code>npm run package</code> (or similar) to build your app prior to testing.</p></dd>
 <dt><a href="#parseElectronApp">parseElectronApp(buildDir)</a> ⇒ <code>ElectronAppInfo</code></dt>
@@ -151,7 +151,7 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 
 <a name="findLatestBuild"></a>
 
-## findLatestBuild() ⇒ <code>string</code>
+## findLatestBuild(buildDirectory) ⇒ <code>string</code>
 <p>Parses the <code>out</code> directory to find the latest build of your Electron project.
 Use <code>npm run package</code> (or similar) to build your app prior to testing.</p>
 
@@ -159,6 +159,11 @@ Use <code>npm run package</code> (or similar) to build your app prior to testing
 **Returns**: <code>string</code> - <ul>
 <li>path to the most recently modified build directory</li>
 </ul>  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| buildDirectory | <code>string</code> | <code>&quot;out&quot;</code> | <p>the directory to search for the latest build (path/name relative to package root or full path starting with /). Defaults to <code>out</code>.</p> |
+
 <a name="parseElectronApp"></a>
 
 ## parseElectronApp(buildDir) ⇒ <code>ElectronAppInfo</code>
