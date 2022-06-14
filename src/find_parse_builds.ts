@@ -5,14 +5,17 @@ import * as ASAR from 'asar'
 /**
  * Parses the `out` directory to find the latest build of your Electron project.
  * Use `npm run package` (or similar) to build your app prior to testing.
- *
+ * @param buildDirectory {string} the directory to search for the latest build
+ * (path/name relative to package root or full path starting with /). Defaults to `out`.
  * @returns {string} - path to the most recently modified build directory
  */
-export function findLatestBuild(buildDirectory='out'): string {
+export function findLatestBuild(buildDirectory = 'out'): string {
   // root of your project
   const rootDir = path.resolve('./')
   // directory where the builds are stored
-  const outDir = path.join(rootDir, buildDirectory)
+  const outDir = buildDirectory.startsWith('/')
+    ? buildDirectory
+    : path.join(rootDir, buildDirectory)
   // list of files in the out directory
   const builds = fs.readdirSync(outDir)
   const platforms = [
