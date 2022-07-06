@@ -1,6 +1,6 @@
 import 'electron'
 import { ElectronApplication } from 'playwright'
-import { PageFunctionOn } from 'playwright/node_modules/playwright-core/types/structs'
+import { PageFunctionOn } from 'playwright-core/types/structs'
 
 /**
  * Wait for a function to evaluate to true in the main Electron process. This really
