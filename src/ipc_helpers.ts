@@ -1,4 +1,3 @@
-import type { IpcMainInvokeEvent } from 'electron'
 import { ElectronApplication, Page } from 'playwright'
 
 /**
@@ -100,8 +99,8 @@ export async function ipcRendererCallFirstListener(
 }
 
 /**
- * Emit an IPC event to a given window.
- * This will trigger all ipcRenderer listeners for the event.
+ * Emit an IPC message to a given window.
+ * This will trigger all ipcRenderer listeners for the message.
  *
  * This does not transfer data between main and renderer processes.
  * It simply emits an event in the renderer process.
@@ -139,7 +138,7 @@ export function ipcRendererEmit(
 
 /**
  * Emit an ipcMain message from the main process.
- * This will trigger all ipcMain listeners for the event.
+ * This will trigger all ipcMain listeners for the message.
  *
  * This does not transfer data between main and renderer processes.
  * It simply emits an event in the main process.
@@ -209,11 +208,16 @@ export async function ipcMainCallFirstListener(
   )
 }
 
+type IpcMainInvokeEventWithReply = Electron.IpcMainInvokeEvent & {
+  _reply(value: unknown): void
+  _throw(error: Error | string): void
+}
+
 /** Expose type for private _invokeHandlers Map */
 type IpcMainWithHandlers = Electron.IpcMain & {
   _invokeHandlers: Map<
     string,
-    (e: IpcMainInvokeEvent, ...args: unknown[]) => void
+    (e: IpcMainInvokeEventWithReply, ...args: unknown[]) => Promise<unknown>
   >
 }
 
@@ -232,17 +236,28 @@ export function ipcMainInvokeHandler(
   electronApp: ElectronApplication,
   message: string,
   ...args: unknown[]
-) {
+): Promise<unknown> {
   return electronApp.evaluate(
-    ({ ipcMain }, { message, args }) => {
+    async ({ ipcMain }, { message, args }) => {
       const ipcMainWH = ipcMain as IpcMainWithHandlers
+      // this is all a bit of a hack, so let's test as we go
+      if (!ipcMainWH._invokeHandlers) {
+        throw new Error(`Cannot access ipcMain._invokeHandlers`)
+      }
       const handler = ipcMainWH._invokeHandlers.get(message)
-      if (handler) {
-        const fakeEvent = {} as Electron.IpcMainInvokeEvent
-        return handler(fakeEvent, ...args)
-      } else {
+      if (!handler) {
         throw new Error(`No ipcMain handler registered for '${message}'`)
       }
+      let reply: unknown
+      const e = {} as IpcMainInvokeEventWithReply
+      e._reply = (value: unknown) => {
+        reply = value
+      }
+      e._throw = function (error: Error) {
+        throw error
+      }
+      await handler(e, ...args)
+      return await reply
     },
     { message, args }
   )

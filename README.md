@@ -98,7 +98,7 @@ should be part of the Playwright API, but it's not.</p>
 as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p></dd>
 <dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an ipcMain message from the main process.
-This will trigger all ipcMain listeners for the event.</p>
+This will trigger all ipcMain listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
 It simply emits an event in the main process.</p></dd>
 <dt><a href="#ipcMainCallFirstListener">ipcMainCallFirstListener(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
@@ -124,8 +124,8 @@ in the webPreferences for this window</p></dd>
 It simply retrieves data from the renderer process.</p>
 <p>Note: nodeIntegration must be true for this BrowserWindow.</p></dd>
 <dt><a href="#ipcRendererEmit">ipcRendererEmit(window, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
-<dd><p>Emit an IPC event to a given window.
-This will trigger all ipcRenderer listeners for the event.</p>
+<dd><p>Emit an IPC message to a given window.
+This will trigger all ipcRenderer listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
 It simply emits an event in the renderer process.</p>
 <p>Note: nodeIntegration must be true for this window</p></dd>
@@ -162,7 +162,7 @@ Use <code>npm run package</code> (or similar) to build your app prior to testing
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| buildDirectory | <code>string</code> | <code>&quot;out&quot;</code> | <p>the directory to search for the latest build (path/name relative to package root or full path starting with /). Defaults to <code>out</code>.</p> |
+| buildDirectory | <code>string</code> | <code>&quot;out&quot;</code> | <p>optional - the directory to search for the latest build (path/name relative to package root or full path starting with /). Defaults to <code>out</code>.</p> |
 
 <a name="parseElectronApp"></a>
 
@@ -210,7 +210,7 @@ as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p>
 
 ## ipcMainEmit(electronApp, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
 <p>Emit an ipcMain message from the main process.
-This will trigger all ipcMain listeners for the event.</p>
+This will trigger all ipcMain listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
 It simply emits an event in the main process.</p>
 
@@ -316,8 +316,8 @@ It simply retrieves data from the renderer process.</p>
 <a name="ipcRendererEmit"></a>
 
 ## ipcRendererEmit(window, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
-<p>Emit an IPC event to a given window.
-This will trigger all ipcRenderer listeners for the event.</p>
+<p>Emit an IPC message to a given window.
+This will trigger all ipcRenderer listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
 It simply emits an event in the renderer process.</p>
 <p>Note: nodeIntegration must be true for this window</p>

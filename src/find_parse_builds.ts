@@ -5,7 +5,7 @@ import * as ASAR from 'asar'
 /**
  * Parses the `out` directory to find the latest build of your Electron project.
  * Use `npm run package` (or similar) to build your app prior to testing.
- * @param buildDirectory {string} the directory to search for the latest build
+ * @param buildDirectory {string} - optional - the directory to search for the latest build
  * (path/name relative to package root or full path starting with /). Defaults to `out`.
  * @returns {string} - path to the most recently modified build directory
  */
