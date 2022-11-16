@@ -1,6 +1,6 @@
 import path from 'path'
 import fs from 'fs'
-import * as ASAR from 'asar'
+import * as ASAR from '@electron/asar'
 
 /**
  * Parses the `out` directory to find the latest build of your Electron project.
