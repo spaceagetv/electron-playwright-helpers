@@ -135,41 +135,41 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
     platform = 'win32'
   }
 
-  /** The name of the build directory CONVERTED TO LOWERCASE */
-  const baseName = path.basename(buildDir).toLowerCase()
+  // The name of the build directory CONVERTED TO LOWERCASE
+  const baseNameLc = path.basename(buildDir).toLowerCase()
   if (!platform) {
     // parse the directory name to figure out the platform
-    if (baseName.includes('win')) {
+    if (baseNameLc.includes('win')) {
       platform = 'win32'
     }
     if (
-      baseName.includes('linux') ||
-      baseName.includes('ubuntu') ||
-      baseName.includes('debian')
+      baseNameLc.includes('linux') ||
+      baseNameLc.includes('ubuntu') ||
+      baseNameLc.includes('debian')
     ) {
       platform = 'linux'
     }
     if (
-      baseName.includes('darwin') ||
-      baseName.includes('mac') ||
-      baseName.includes('osx')
+      baseNameLc.includes('darwin') ||
+      baseNameLc.includes('mac') ||
+      baseNameLc.includes('osx')
     ) {
       platform = 'darwin'
     }
   }
 
   if (!platform) {
-    throw new Error(`Platform not found in directory name: ${baseName}`)
+    throw new Error(`Platform not found in directory name: ${baseNameLc}`)
   }
 
   let arch: Architecture
-  if (baseName.includes('x32') || baseName.includes('i386')) {
+  if (baseNameLc.includes('x32') || baseNameLc.includes('i386')) {
     arch = 'x32'
   }
-  if (baseName.includes('x64')) {
+  if (baseNameLc.includes('x64')) {
     arch = 'x64'
   }
-  if (baseName.includes('arm64')) {
+  if (baseNameLc.includes('arm64')) {
     arch = 'arm64'
   }
 
