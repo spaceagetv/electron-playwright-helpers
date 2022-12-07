@@ -135,6 +135,7 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
     platform = 'win32'
   }
 
+  /** The name of the build directory CONVERTED TO LOWERCASE */
   const baseName = path.basename(buildDir).toLowerCase()
   if (!platform) {
     // parse the directory name to figure out the platform
@@ -269,7 +270,10 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
     //     app --- (untested - we're making assumptions here)
     //       package.json
     //       (your app structure)
-    executable = path.join(buildDir, getLinuxExecutableName(baseName))
+    executable = path.join(
+      buildDir,
+      getLinuxExecutableName(path.basename(buildDir))
+    )
     resourcesDir = path.join(buildDir, 'resources')
     const resourcesList = fs.readdirSync(resourcesDir)
     asar = resourcesList.includes('app.asar')
