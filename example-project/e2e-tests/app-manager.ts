@@ -1,4 +1,4 @@
-import { ElectronApplication } from 'playwright'
+import { ElectronApplication } from '../../node_modules/playwright' // <-- replace with 'playwright'
 
 let electronApp: ElectronApplication
 

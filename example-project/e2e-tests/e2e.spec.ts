@@ -27,7 +27,7 @@ import {
   waitForMenuItemStatus,
 } from '../../src' // <-- replace with 'electron-playwright-helpers'
 
-import { Page, _electron as electron } from 'playwright'
+import { Page, _electron as electron } from '../../node_modules/playwright' // <-- replace with 'playwright'
 import { getApp, setApp } from './app-manager'
 
 test.beforeAll(async () => {
