@@ -15,7 +15,8 @@
     "lint": "npx eslint src/**/*.ts",
     "lint:fix": "npx eslint src/**/*.ts --fix",
     "prepublish": "npm run build:compile && npm run build:doc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "cd example-project && npm install",
+    "test": "cd example-project && npm run e2e",
     "version:patch": "npm version patch",
     "version:minor": "npm version minor",
     "version:major": "npm version major"
