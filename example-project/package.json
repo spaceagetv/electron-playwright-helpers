@@ -1,0 +1,107 @@
+{
+  "name": "electron-playwright-helpers-example",
+  "productName": "My Electron App",
+  "version": "1.0.0",
+  "description": "My Electron application",
+  "main": ".webpack/main",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint --ext .ts,.tsx .",
+    "pree2e": "npm run package",
+    "e2e": "playwright test"
+  },
+  "keywords": [
+    "electron",
+    "playwright",
+    "example",
+    "electron-forge",
+    "webpack",
+    "typescript"
+  ],
+  "author": {
+    "name": "Jeff Robbins"
+  },
+  "license": "MIT",
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "asar": true
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "electron_playwright_example"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ],
+      "plugins": [
+        {
+          "name": "@electron-forge/plugin-webpack",
+          "config": {
+            "mainConfig": "./webpack.main.config.js",
+            "renderer": {
+              "config": "./webpack.renderer.config.js",
+              "entryPoints": [
+                {
+                  "html": "./src/renderer/index.html",
+                  "js": "./src/renderer/index.ts",
+                  "preload": {
+                    "js": "./src/renderer/preload.ts"
+                  },
+                  "name": "main_window"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "@electron/asar": "^3.2.2",
+    "@electron-forge/cli": "^6.0.4",
+    "@electron-forge/maker-deb": "^6.0.4",
+    "@electron-forge/maker-rpm": "^6.0.4",
+    "@electron-forge/maker-squirrel": "^6.0.4",
+    "@electron-forge/maker-zip": "^6.0.4",
+    "@electron-forge/plugin-webpack": "^6.0.4",
+    "@playwright/test": "^1.28.1",
+    "@typescript-eslint/eslint-plugin": "^5.45.1",
+    "@typescript-eslint/parser": "^5.45.1",
+    "@vercel/webpack-asset-relocator-loader": "1.7.3",
+    "css-loader": "^6.7.2",
+    "electron": "^22.0.0",
+    "electron-playwright-helpers": "^1.2.2",
+    "eslint": "^8.29.0",
+    "eslint-plugin-import": "^2.26.0",
+    "fork-ts-checker-webpack-plugin": "^7.2.13",
+    "jimp": "^0.16.2",
+    "node-loader": "^2.0.0",
+    "playwright": "^1.28.1",
+    "playwright-core": "^1.28.1",
+    "style-loader": "^3.3.1",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.3"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.0"
+  }
+}
