@@ -10,6 +10,7 @@ import { expect, test } from '@playwright/test'
 // but if you use this in your own project, you should
 // import from 'electron-playwright-helpers'
 import {
+  clickMenuItem,
   clickMenuItemById,
   findLatestBuild,
   findMenuItem,
@@ -231,5 +232,17 @@ test('select a menu item via the main process', async () => {
   const newPage = await electronApp.waitForEvent('window')
   expect(newPage).toBeTruthy()
   expect(await newPage.title()).toBe('Window 6')
+  page = newPage
+})
+
+test('click a menu item by its commandId', async () => {
+  const electronApp = getApp()
+  const menuItem = await findMenuItem(electronApp, 'id', 'new-window')
+  expect(menuItem).toBeTruthy()
+  if (!menuItem) return
+  await clickMenuItem(electronApp, 'commandId', menuItem.commandId)
+  const newPage = await electronApp.waitForEvent('window')
+  expect(newPage).toBeTruthy()
+  expect(await newPage.title()).toBe('Window 7')
   page = newPage
 })
