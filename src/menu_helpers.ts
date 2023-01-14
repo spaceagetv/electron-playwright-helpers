@@ -30,6 +30,60 @@ export function clickMenuItemById(
 }
 
 /**
+ * Click the first matching menu item by any of its properties. This is
+ * useful for menu items that don't have an id. HOWEVER, this is not as fast
+ * or reliable as using `clickMenuItemById()` if the menu item has an id.
+ *
+ * @category Menu
+ *
+ * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
+ * @param property {String} - a property of the MenuItem to search for
+ * @param value {String | Number | Boolean} - the value of the property to search for
+ * @returns {Promise<void>}
+ * @fulfil {void} resolves with the result of the `click()` method - probably `undefined`
+ */
+export async function clickMenuItem<P extends keyof MenuItemPartial>(
+  electronApp: ElectronApplication,
+  property: P,
+  value: MenuItemPartial[P]
+): Promise<unknown> {
+  const menuItem = await findMenuItem(electronApp, property, value)
+  if (!menuItem) {
+    throw new Error(`Menu item with ${property} = ${value} not found`)
+  }
+  return await electronApp.evaluate(async ({ Menu }, commandId) => {
+    const menu = Menu.getApplicationMenu()
+    if (!menu) {
+      throw new Error('No application menu found')
+    }
+    // recurse through the menu to find menu item with matching commandId
+    function findMenuItem(
+      menu: Electron.Menu,
+      commandId: number
+    ): Electron.MenuItem | undefined {
+      for (const item of menu.items) {
+        if (item.type === 'submenu' && item.submenu) {
+          const found = findMenuItem(item.submenu, commandId)
+          if (found) {
+            return found
+          }
+        } else if (item.commandId === commandId) {
+          return item
+        }
+      }
+    }
+    const mI = findMenuItem(menu, commandId)
+    if (!mI) {
+      throw new Error(`Menu item with commandId ${commandId} not found`)
+    }
+    if (!mI.click) {
+      throw new Error(`Menu item has no click method`)
+    }
+    await mI.click()
+  }, menuItem.commandId)
+}
+
+/**
  * Get a given attribute the MenuItem with the given id.
  *
  * @category Menu
