@@ -76,7 +76,7 @@ type PickByType<T, Value> = {
 /** Limit to just primitive MenuItem attributes */
 type MenuItemPrimitive = PickByType<
   Electron.MenuItem,
-  string | number | boolean
+  string | number | boolean | null
 >
 
 /**
@@ -206,6 +206,12 @@ export async function findMenuItem<P extends keyof MenuItemPartial>(
   value: MenuItemPartial[P],
   menuItems?: MenuItemPartial | MenuItemPartial[]
 ): Promise<MenuItemPartial | undefined> {
+  if (property === 'role') {
+    // set the value to lowercase
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    value = value.toLowerCase()
+  }
   if (!menuItems) {
     const menu = await getApplicationMenu(electronApp)
     return findMenuItem(electronApp, property, value, menu)
@@ -272,6 +278,12 @@ export async function waitForMenuItemStatus<P extends keyof Electron.MenuItem>(
   property: P,
   value: Electron.MenuItem[P]
 ): Promise<void> {
+  if (property === 'role') {
+    // set the value to lowercase
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    value = value.toLowerCase()
+  }
   await electronWaitForFunction(
     electronApp,
     ({ Menu }, { id, value, property }) => {
