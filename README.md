@@ -130,11 +130,15 @@ This will trigger all ipcRenderer listeners for the message.</p>
 It simply emits an event in the renderer process.</p>
 <p>Note: nodeIntegration must be true for this window</p></dd>
 <dt><a href="#clickMenuItemById">clickMenuItemById(electronApp, id)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
-<dd><p>Execute the <code>.click()</code> method on the element with the given id.</p></dd>
+<dd><p>Execute the <code>.click()</code> method on the element with the given id.
+<strong>NOTE:</strong> All menu testing functions will only work with items in the
+<a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p></dd>
 <dt><a href="#clickMenuItem">clickMenuItem(electronApp, property, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Click the first matching menu item by any of its properties. This is
 useful for menu items that don't have an id. HOWEVER, this is not as fast
-or reliable as using <code>clickMenuItemById()</code> if the menu item has an id.</p></dd>
+or reliable as using <code>clickMenuItemById()</code> if the menu item has an id.</p>
+<p><strong>NOTE:</strong> All menu testing functions will only work with items in the
+<a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p></dd>
 <dt><a href="#getMenuItemAttribute">getMenuItemAttribute(electronApp, menuId, attribute)</a> ⇒ <code>Promise.&lt;string&gt;</code></dt>
 <dd><p>Get a given attribute the MenuItem with the given id.</p></dd>
 <dt><a href="#getMenuItemById">getMenuItemById(electronApp, menuId)</a> ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code></dt>
@@ -340,7 +344,9 @@ It simply emits an event in the renderer process.</p>
 <a name="clickMenuItemById"></a>
 
 ## clickMenuItemById(electronApp, id) ⇒ <code>Promise.&lt;void&gt;</code>
-<p>Execute the <code>.click()</code> method on the element with the given id.</p>
+<p>Execute the <code>.click()</code> method on the element with the given id.
+<strong>NOTE:</strong> All menu testing functions will only work with items in the
+<a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p>
 
 **Kind**: global function  
 **Category**: Menu  
@@ -357,6 +363,8 @@ It simply emits an event in the renderer process.</p>
 <p>Click the first matching menu item by any of its properties. This is
 useful for menu items that don't have an id. HOWEVER, this is not as fast
 or reliable as using <code>clickMenuItemById()</code> if the menu item has an id.</p>
+<p><strong>NOTE:</strong> All menu testing functions will only work with items in the
+<a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p>
 
 **Kind**: global function  
 **Category**: Menu  

@@ -3,6 +3,8 @@ import { electronWaitForFunction } from './general_helpers'
 
 /**
  * Execute the `.click()` method on the element with the given id.
+ * **NOTE:** All menu testing functions will only work with items in the
+ * [application menu](https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu).
  *
  * @category Menu
  *
@@ -33,6 +35,9 @@ export function clickMenuItemById(
  * Click the first matching menu item by any of its properties. This is
  * useful for menu items that don't have an id. HOWEVER, this is not as fast
  * or reliable as using `clickMenuItemById()` if the menu item has an id.
+ *
+ *  **NOTE:** All menu testing functions will only work with items in the
+ * [application menu](https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu).
  *
  * @category Menu
  *
