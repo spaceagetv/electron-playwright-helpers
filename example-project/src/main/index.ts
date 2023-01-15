@@ -1,11 +1,10 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog } from 'electron'
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
-  // eslint-disable-line global-require
   app.quit()
 }
 
@@ -50,6 +49,35 @@ const createWindow = (): void => {
   // mainWindow.webContents.openDevTools();
 }
 
+let openedFile = ''
+
+async function openFile() {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    message: 'Open a file',
+  })
+  if (result.canceled) {
+    return
+  }
+  openedFile = result.filePaths[0]
+}
+
+async function closeFile() {
+  if (!openedFile) return
+  const result = await dialog.showMessageBox({
+    type: 'question',
+    buttons: ['Yes', 'No'],
+    message: 'Are you sure you want to close this file?',
+  })
+  if (result.response !== 0) return
+  openedFile = ''
+}
+
+/** This allows us to get the value in E2E */
+ipcMain.handle('get-opened-file', () => {
+  return openedFile
+})
+
 function initMenu() {
   const menu = Menu.getApplicationMenu()
   // create the "New Window" MenuItem
@@ -61,6 +89,22 @@ function initMenu() {
       createWindow()
     },
   })
+
+  // open a file
+  const openFileItem = new MenuItem({
+    label: 'Open File',
+    id: 'open-file',
+    accelerator: 'CmdOrCtrl+O',
+    click: openFile,
+  })
+
+  // close a file
+  const closeFileItem = new MenuItem({
+    label: 'Close File',
+    id: 'close-file',
+    click: closeFile,
+  })
+
   // create a checkbox menu item
   const checkbox = new MenuItem({
     label: 'Checkbox',
@@ -79,6 +123,10 @@ function initMenu() {
   if (fileMenu) {
     // add the "New Window" MenuItem to the beginning of the File menu
     fileMenu.submenu.insert(0, newWindow)
+    // add the "Open File" MenuItem to the end of the File menu
+    fileMenu.submenu.insert(1, openFileItem)
+    // add the "Close File" MenuItem to the end of the File menu
+    fileMenu.submenu.insert(2, closeFileItem)
     // add the checkbox menu item to the end of the File menu
     fileMenu.submenu.append(checkbox)
   }
