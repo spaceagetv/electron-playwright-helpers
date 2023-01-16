@@ -1,0 +1,26 @@
+name: "Tests: E2E"
+
+on: [pull_request]
+
+env:
+  GITHUB_PR_NUMBER: ${{github.event.pull_request.number}}
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: true
+
+jobs:
+  tests_e2e:
+    name: Run end-to-end tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: install dependencies
+        run: npm ci && cd example-project && npm ci
+      - name: lint
+        run: npm run lint
+      # - name: npm test
+      #   run: npm test
+      - name: e2e tests (on ubuntu)
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm test
+      
+
+    
