@@ -25,6 +25,7 @@ import {
   ipcRendererInvoke,
   ipcRendererSend,
   parseElectronApp,
+  stubDialog,
   waitForMenuItemStatus,
 } from '../../src' // <-- replace with 'electron-playwright-helpers'
 
@@ -134,11 +135,11 @@ test('receive asynchronous data via ipcRendererCallFirstListener()', async () =>
 
 test('send an ipcRendererEmit.emit() message and expect element to appear', async () => {
   // evaluate this script in RENDERER process
-  await ipcRendererEmit(page, 'add-message', 'Hello World!', 'message-1')
+  await ipcRendererEmit(page, 'add-message', 'Goodbye World!', 'message-1')
   const locator = page.locator('#message-1')
   await locator.waitFor({ state: 'attached' })
   const text = await locator.textContent()
-  expect(text).toBe('Hello World!')
+  expect(text).toBe('Goodbye World!')
   expect(await locator.isVisible()).toBeTruthy()
 })
 
@@ -245,4 +246,44 @@ test('click a menu item by its commandId', async () => {
   expect(newPage).toBeTruthy()
   expect(await newPage.title()).toBe('Window 7')
   page = newPage
+})
+
+test('click a menu item based on its label', async () => {
+  const electronApp = getApp()
+  await clickMenuItem(electronApp, 'label', 'New Window')
+  const newPage = await electronApp.waitForEvent('window')
+  expect(newPage).toBeTruthy()
+  expect(await newPage.title()).toBe('Window 8')
+  page = newPage
+})
+
+test('dialog.showOpenDialog stubbing', async () => {
+  const app = getApp()
+  await stubDialog(app, 'showOpenDialog', {
+    filePaths: ['/path/to/file.txt'],
+    canceled: false,
+  })
+  // get the currently "opened" file path
+  const filePath = await ipcMainInvokeHandler(app, 'get-opened-file')
+  expect(filePath).not.toBe('/path/to/file.txt')
+  // open a file (and call the mocked dialog)
+  await clickMenuItemById(app, 'open-file')
+  // get the currently "opened" file path
+  const filePath2 = await ipcMainInvokeHandler(app, 'get-opened-file')
+  expect(filePath2).toBe('/path/to/file.txt')
+})
+
+test('dialog.showMessageBox stubbing', async () => {
+  const app = getApp()
+  await stubDialog(app, 'showMessageBox', {
+    response: 0, // The "Yes" button
+  })
+  // get the currently "opened" file path
+  const response = await ipcMainInvokeHandler(app, 'get-opened-file')
+  expect(response).not.toBe('')
+  // select the "Close File" menu item, which will call the mocked dialog
+  await clickMenuItemById(app, 'close-file')
+  // get the currently "opened" file path
+  const response2 = await ipcMainInvokeHandler(app, 'get-opened-file')
+  expect(response2).toBe('')
 })

@@ -3,7 +3,7 @@
 [![NPM](https://nodei.co/npm/electron-playwright-helpers.png)](https://nodei.co/npm/electron-playwright-helpers/)
 
 Helper functions to make it easier to use [Playwright](https://playwright.dev/) for end-to-end testing with
-[Electron](https://www.electronjs.org/). Parse packaged Electron projects so you can run tests on them. Click Electron menu items, send IPC messages, get menu structures, etc.
+[Electron](https://www.electronjs.org/). Parse packaged Electron projects so you can run tests on them. Click Electron menu items, send IPC messages, get menu structures, stub `dialog.showOpenDialog()` results, etc.
 
 ## Installation
 
@@ -41,10 +41,20 @@ test.afterAll(async () => {
   await electronApp.close()
 })
 
-test('click menu item', async () => {
-  await eph.clickMenuItemById(electronApp, 'newproject')
-})
+test('open a file', async () => {
+  // stub electron dialog so dialog.showOpenDialog() 
+  // will return a file path without opening a dialog
+  await eph.stubDialog(electronApp, 'showOpenDialog', { filePaths: ['/path/to/file'] })
 
+  // call the click method of menu item in the Electron app's application menu
+  await eph.clickMenuItemById(electronApp, 'open-file')
+
+  // get the result of an ipcMain.handle() function
+  const result = await eph.ipcMainInvokeHandler(electronApp, 'get-open-file-path')
+  
+  // result should be the file path
+  expect(result).toBe('/path/to/file')
+})
 ```
 
 Typescript:
@@ -64,7 +74,6 @@ Yes, please! Pull requests are always welcome. Feel free to add or suggest new f
 ## Additional Resources
 
 * [Electron Playwright Example](https://github.com/spaceagetv/electron-playwright-example) - an example of how to use this library
-* [Playwright Fake Dialog](https://www.npmjs.com/package/playwright-fake-dialog) - replace Electron's dialog function for testing
 * [Playwright API](https://playwright.dev/docs/api/class-electron) - Playwright API docs for Electron
 * [Electron API](https://electronjs.org/docs/api/app) - Electron API
 

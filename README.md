@@ -3,7 +3,7 @@
 [![NPM](https://nodei.co/npm/electron-playwright-helpers.png)](https://nodei.co/npm/electron-playwright-helpers/)
 
 Helper functions to make it easier to use [Playwright](https://playwright.dev/) for end-to-end testing with
-[Electron](https://www.electronjs.org/). Parse packaged Electron projects so you can run tests on them. Click Electron menu items, send IPC messages, get menu structures, etc.
+[Electron](https://www.electronjs.org/). Parse packaged Electron projects so you can run tests on them. Click Electron menu items, send IPC messages, get menu structures, stub `dialog.showOpenDialog()` results, etc.
 
 ## Installation
 
@@ -41,10 +41,20 @@ test.afterAll(async () => {
   await electronApp.close()
 })
 
-test('click menu item', async () => {
-  await eph.clickMenuItemById(electronApp, 'newproject')
-})
+test('open a file', async () => {
+  // stub electron dialog so dialog.showOpenDialog() 
+  // will return a file path without opening a dialog
+  await eph.stubDialog(electronApp, 'showOpenDialog', { filePaths: ['/path/to/file'] })
 
+  // call the click method of menu item in the Electron app's application menu
+  await eph.clickMenuItemById(electronApp, 'open-file')
+
+  // get the result of an ipcMain.handle() function
+  const result = await eph.ipcMainInvokeHandler(electronApp, 'get-open-file-path')
+  
+  // result should be the file path
+  expect(result).toBe('/path/to/file')
+})
 ```
 
 Typescript:
@@ -64,7 +74,6 @@ Yes, please! Pull requests are always welcome. Feel free to add or suggest new f
 ## Additional Resources
 
 * [Electron Playwright Example](https://github.com/spaceagetv/electron-playwright-example) - an example of how to use this library
-* [Playwright Fake Dialog](https://www.npmjs.com/package/playwright-fake-dialog) - replace Electron's dialog function for testing
 * [Playwright API](https://playwright.dev/docs/api/class-electron) - Playwright API docs for Electron
 * [Electron API](https://electronjs.org/docs/api/app) - Electron API
 
@@ -96,6 +105,30 @@ and the path to the app's main file.</p>
 should be part of the Playwright API, but it's not.</p>
 <p>This function is to <code>electronApp.evaluate()</code>
 as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p></dd>
+<dt><a href="#stubDialog">stubDialog(app, method, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
+<dd><p>Stub a single dialog method. This is a convenience function that calls <code>stubMultipleDialogs</code>
+for a single method.</p>
+<p>Playwright does not have a way to interact with Electron dialog windows,
+so this function allows you to substitute the dialog module's methods during your tests.
+By stubbing the dialog module, your Electron application will not display any dialog windows,
+and you can control the return value of the dialog methods. You're basically saying
+&quot;when my application calls dialog.showOpenDialog, return this value instead&quot;. This allows you
+to test your application's behavior when the user selects a file, or cancels the dialog, etc.</p>
+<p>Note: Each dialog method can only be stubbed with one value at a time, so you will want to call
+<code>stubDialog</code> before each time that you expect your application to call the dialog method.</p></dd>
+<dt><a href="#stubMultipleDialogs">stubMultipleDialogs(app, mocks)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
+<dd><p>Stub methods of the Electron dialog module.</p>
+<p>Playwright does not have a way to interact with Electron dialog windows,
+so this function allows you to mock the dialog module's methods during your tests.
+By mocking the dialog module, your Electron application will not display any dialog windows,
+and you can control the return value of the dialog methods. You're basically saying
+&quot;when my application calls dialog.showOpenDialog, return this value instead&quot;. This allows you
+to test your application's behavior when the user selects a file, or cancels the dialog, etc.</p></dd>
+<dt><a href="#stubAllDialogs">stubAllDialogs(app)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
+<dd><p>Stub all dialog methods. This is a convenience function that calls <code>stubMultipleDialogs</code>
+for all dialog methods. This is useful if you want to ensure that dialogs are not displayed
+during your tests. However, you may want to use <code>stubDialog</code> or <code>stubMultipleDialogs</code> to
+control the return value of specific dialog methods (e.g. <code>showOpenDialog</code>) during your tests.</p></dd>
 <dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an ipcMain message from the main process.
 This will trigger all ipcMain listeners for the message.</p>
@@ -213,6 +246,103 @@ as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p>
 | electronApp | <code>ElectronApplication</code> | <p>the Playwright ElectronApplication</p> |
 | fn | <code>function</code> | <p>the function to evaluate in the main process - must return a boolean</p> |
 | arg | <code>Any</code> | <p>optional - an argument to pass to the function</p> |
+
+<a name="stubDialog"></a>
+
+## stubDialog(app, method, value) ⇒ <code>Promise.&lt;void&gt;</code>
+<p>Stub a single dialog method. This is a convenience function that calls <code>stubMultipleDialogs</code>
+for a single method.</p>
+<p>Playwright does not have a way to interact with Electron dialog windows,
+so this function allows you to substitute the dialog module's methods during your tests.
+By stubbing the dialog module, your Electron application will not display any dialog windows,
+and you can control the return value of the dialog methods. You're basically saying
+&quot;when my application calls dialog.showOpenDialog, return this value instead&quot;. This allows you
+to test your application's behavior when the user selects a file, or cancels the dialog, etc.</p>
+<p>Note: Each dialog method can only be stubbed with one value at a time, so you will want to call
+<code>stubDialog</code> before each time that you expect your application to call the dialog method.</p>
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;void&gt;</code> - <p>A promise that resolves when the mock is applied.</p>  
+**Category**: Dialog  
+**Fullfil**: <code>void</code> - A promise that resolves when the mock is applied.  
+**See**: stubMultipleDialogs  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| app | <code>ElectronApplication</code> | <p>The Playwright ElectronApplication instance.</p> |
+| method | <code>String</code> | <p>The <a href="https://www.electronjs.org/docs/latest/api/dialog#methods">dialog method</a> to mock.</p> |
+| value | <code>ReturnType.&lt;Electron.Dialog&gt;</code> | <p>The value that your application will receive when calling this dialog method. See the <a href="https://www.electronjs.org/docs/latest/api/dialog#dialogshowopendialogbrowserwindow-options">Electron docs</a> for the return value of each method.</p> |
+
+**Example**  
+```ts
+await stubDialog(app, 'showOpenDialog', {
+ filePaths: ['/path/to/file'],
+ canceled: false,
+})
+await clickMenuItemById(app, 'open-file')
+// when time your application calls dialog.showOpenDialog,
+// it will return the value you specified
+```
+<a name="stubMultipleDialogs"></a>
+
+## stubMultipleDialogs(app, mocks) ⇒ <code>Promise.&lt;void&gt;</code>
+<p>Stub methods of the Electron dialog module.</p>
+<p>Playwright does not have a way to interact with Electron dialog windows,
+so this function allows you to mock the dialog module's methods during your tests.
+By mocking the dialog module, your Electron application will not display any dialog windows,
+and you can control the return value of the dialog methods. You're basically saying
+&quot;when my application calls dialog.showOpenDialog, return this value instead&quot;. This allows you
+to test your application's behavior when the user selects a file, or cancels the dialog, etc.</p>
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;void&gt;</code> - <p>A promise that resolves when the mocks are applied.</p>  
+**Category**: Dialog  
+**Fullfil**: <code>void</code> - A promise that resolves when the mocks are applied.  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| app | <code>ElectronApplication</code> | <p>The Playwright ElectronApplication instance.</p> |
+| mocks | <code>Array.&lt;DialogMethodStubPartial&gt;</code> | <p>An array of dialog method mocks to apply.</p> |
+
+**Example**  
+```ts
+await stubMultipleDialogs(app, [
+ {
+   method: 'showOpenDialog',
+   value: {
+     filePaths: ['/path/to/file1', '/path/to/file2'],
+     canceled: false,
+   },
+ },
+ {
+    method: 'showSaveDialog',
+    value: {
+      filePath: '/path/to/file',
+      canceled: false,
+    },
+  },
+])
+await clickMenuItemById(app, 'save-file')
+// when your application calls dialog.showSaveDialog,
+// it will return the value you specified
+```
+<a name="stubAllDialogs"></a>
+
+## stubAllDialogs(app) ⇒ <code>Promise.&lt;void&gt;</code>
+<p>Stub all dialog methods. This is a convenience function that calls <code>stubMultipleDialogs</code>
+for all dialog methods. This is useful if you want to ensure that dialogs are not displayed
+during your tests. However, you may want to use <code>stubDialog</code> or <code>stubMultipleDialogs</code> to
+control the return value of specific dialog methods (e.g. <code>showOpenDialog</code>) during your tests.</p>
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;void&gt;</code> - <p>A promise that resolves when the mocks are applied.</p>  
+**Category**: Dialog  
+**Fullfil**: <code>void</code> - A promise that resolves when the mocks are applied.  
+**See**: stubDialog  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| app | <code>ElectronApplication</code> | <p>The Playwright ElectronApplication instance.</p> |
 
 <a name="ipcMainEmit"></a>
 
