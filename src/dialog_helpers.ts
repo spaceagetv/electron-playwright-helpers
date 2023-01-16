@@ -1,11 +1,11 @@
 import { ElectronApplication } from 'playwright'
 
-type DialogMethodStub<T extends keyof Electron.Dialog> = {
+export type DialogMethodStub<T extends keyof Electron.Dialog> = {
   method: T
   value: Awaited<ReturnType<Electron.Dialog[T]>>
 }
 
-type DialogMethodStubPartial<T extends keyof Electron.Dialog> = {
+export type DialogMethodStubPartial<T extends keyof Electron.Dialog> = {
   method: T
   value: Partial<Awaited<ReturnType<Electron.Dialog[T]>>>
 }
