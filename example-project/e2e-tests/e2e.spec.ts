@@ -35,8 +35,28 @@ import { getApp, setApp } from './app-manager'
 test.beforeAll(async () => {
   // find the latest build in the out directory
   const latestBuild = findLatestBuild()
+  expect(latestBuild).toBeTruthy()
+
   // parse the directory and find paths and other info
   const appInfo = parseElectronApp(latestBuild)
+
+  // a little testing of parseElectronApp()
+  // for testing electron-playwright-helpers... you probably won't need this in your own tests
+  // --------- >8 cut here -------------------
+  expect(appInfo).toBeTruthy()
+  expect(appInfo.arch).toBeTruthy()
+  expect(appInfo.arch).toBe(process.arch)
+  expect(appInfo.asar).toBe(true)
+  expect(appInfo.executable).toBeTruthy()
+  expect(appInfo.main).toBeTruthy()
+  expect(appInfo.name).toBe('electron-playwright-helpers-example')
+  expect(appInfo.packageJson).toBeTruthy()
+  expect(appInfo.packageJson.name).toBe('electron-playwright-helpers-example')
+  expect(appInfo.platform).toBeTruthy()
+  expect(appInfo.platform).toBe(process.platform)
+  expect(appInfo.resourcesDir).toBeTruthy()
+  // --------- >8 cut here -------------------
+
   // set the CI environment variable to true
   process.env.CI = 'e2e'
   const electronApp = await electron.launch({
