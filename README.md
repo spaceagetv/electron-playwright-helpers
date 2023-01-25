@@ -84,7 +84,14 @@ Yes, please! Pull requests are always welcome. Feel free to add or suggest new f
 <dl>
 <dt><a href="#findLatestBuild">findLatestBuild(buildDirectory)</a> ⇒ <code>string</code></dt>
 <dd><p>Parses the <code>out</code> directory to find the latest build of your Electron project.
-Use <code>npm run package</code> (or similar) to build your app prior to testing.</p></dd>
+Use <code>npm run package</code> (or similar) to build your app prior to testing.</p>
+<p>Assumptions: We assume that your build will be in the <code>out</code> directory, and that
+the build directory will be named with a hyphen-delimited platform name, e.g.
+<code>out/my-app-win-x64</code>. If your build directory is not <code>out</code>, you can
+pass the name of the directory as the <code>buildDirectory</code> parameter. If your
+build directory is not named with a hyphen-delimited platform name, this
+function will not work. However, you can pass the build path into
+<code>parseElectronApp()</code> directly.</p></dd>
 <dt><a href="#parseElectronApp">parseElectronApp(buildDir)</a> ⇒ <code>ElectronAppInfo</code></dt>
 <dd><p>Given a directory containing an Electron app build,
 or the path to the app itself (directory on Mac, executable on Windows),
@@ -99,6 +106,7 @@ and the path to the app's main file.</p>
 <li>asar: true if the app is using asar</li>
 <li>platform: OS platform</li>
 <li>arch: architecture</li>
+<li>packageJson: the JSON.parse()'d contents of the package.json file.</li>
 </ul></dd>
 <dt><a href="#electronWaitForFunction">electronWaitForFunction(electronApp, fn, arg)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Wait for a function to evaluate to true in the main Electron process. This really
@@ -195,11 +203,19 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 ## findLatestBuild(buildDirectory) ⇒ <code>string</code>
 <p>Parses the <code>out</code> directory to find the latest build of your Electron project.
 Use <code>npm run package</code> (or similar) to build your app prior to testing.</p>
+<p>Assumptions: We assume that your build will be in the <code>out</code> directory, and that
+the build directory will be named with a hyphen-delimited platform name, e.g.
+<code>out/my-app-win-x64</code>. If your build directory is not <code>out</code>, you can
+pass the name of the directory as the <code>buildDirectory</code> parameter. If your
+build directory is not named with a hyphen-delimited platform name, this
+function will not work. However, you can pass the build path into
+<code>parseElectronApp()</code> directly.</p>
 
 **Kind**: global function  
 **Returns**: <code>string</code> - <ul>
 <li>path to the most recently modified build directory</li>
 </ul>  
+**See**: parseElectronApp  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -221,6 +237,7 @@ and the path to the app's main file.</p>
 <li>asar: true if the app is using asar</li>
 <li>platform: OS platform</li>
 <li>arch: architecture</li>
+<li>packageJson: the JSON.parse()'d contents of the package.json file.</li>
 </ul>
 
 **Kind**: global function  
