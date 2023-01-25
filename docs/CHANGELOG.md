@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.0...v1.5.1) (2023-01-25)
+
+
+### Bug Fixes
+
+* npm + github package ([fedbb09](https://github.com/spaceagetv/electron-playwright-helpers/commit/fedbb09a64d53c97c1ea80076383fda8879f03bf))
+
 # [1.5.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.4.2...v1.5.0) (2023-01-25)
 
 
