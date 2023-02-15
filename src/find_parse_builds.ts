@@ -24,9 +24,7 @@ export function findLatestBuild(buildDirectory = 'out'): string {
   // root of your project
   const rootDir = path.resolve('./')
   // directory where the builds are stored
-  const outDir = buildDirectory.startsWith('/')
-    ? buildDirectory
-    : path.join(rootDir, buildDirectory)
+  const outDir = path.resolve(rootDir, buildDirectory)
   // list of files in the out directory
   const builds = fs.readdirSync(outDir)
   const platforms = [
