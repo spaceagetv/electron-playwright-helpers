@@ -1,4 +1,4 @@
-import { ElectronApplication, Page } from 'playwright'
+import { ElectronApplication, Page } from 'playwright-core'
 
 /**
  * Send an `ipcRenderer.send()` (to main process) from a given window.

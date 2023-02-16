@@ -1,5 +1,5 @@
 import 'electron'
-import { ElectronApplication } from 'playwright'
+import { ElectronApplication } from 'playwright-core'
 import { PageFunctionOn } from 'playwright-core/types/structs'
 
 /**

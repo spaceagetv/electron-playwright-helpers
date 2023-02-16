@@ -4,7 +4,6 @@ on: [pull_request]
 
 env:
   GITHUB_PR_NUMBER: ${{github.event.pull_request.number}}
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: true
 
 jobs:
   tests_e2e:

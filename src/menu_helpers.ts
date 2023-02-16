@@ -1,4 +1,4 @@
-import type { ElectronApplication } from 'playwright'
+import type { ElectronApplication } from 'playwright-core'
 import { electronWaitForFunction } from './general_helpers'
 
 /**
