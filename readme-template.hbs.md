@@ -71,11 +71,13 @@ import { electronWaitForFunction, ipcMainCallFirstListener, clickMenuItemById } 
 
 Yes, please! Pull requests are always welcome. Feel free to add or suggest new features, fix bugs, etc.
 
+Please use [Conventional Commit](https://www.conventionalcommits.org/) messages for your commits. This project uses [semantic-release](https://github.com/semantic-release/semantic-release) to automatically publish new versions to NPM. The commit messages are used to determine the version number and changelog. We're also using Prettier as our code format and ESlint to enforce formatting, so please make sure your code is formatted before submitting a PR.
+
 ## Additional Resources
 
 * [Electron Playwright Example](https://github.com/spaceagetv/electron-playwright-example) - an example of how to use this library
-* [Playwright API](https://playwright.dev/docs/api/class-electron) - Playwright API docs for Electron
-* [Electron API](https://electronjs.org/docs/api/app) - Electron API
+* [Playwright Electron Class](https://playwright.dev/docs/api/class-electron) - Playwright API docs for Electron
+* [Electron API](https://electronjs.org/docs/api/app) - Electron API documentation
 
 ## API
 

@@ -1,7 +1,33 @@
 {
-  "branches": ["main"],
+  "$schema": "https://json.schemastore.org/semantic-release",
+  "branches": [
+    "main"
+  ],
   "plugins": [
-    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          {
+            "type": "docs",
+            "release": "patch"
+          },
+          {
+            "type": "refactor",
+            "release": "patch"
+          },
+          {
+            "type": "style",
+            "release": "patch"
+          },
+          {
+            "type": "test",
+            "release": "patch"
+          }
+        ]
+      }
+    ],
     "@semantic-release/release-notes-generator",
     [
       "@semantic-release/changelog",
@@ -12,7 +38,12 @@
     [
       "@semantic-release/git",
       {
-        "assets": ["docs/CHANGELOG.md", "README.md", "package.json", "package-lock.json"]
+        "assets": [
+          "docs/CHANGELOG.md",
+          "README.md",
+          "package.json",
+          "package-lock.json"
+        ]
       }
     ],
     "@semantic-release/npm",
