@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.1...v1.5.2) (2023-02-16)
+
+
+### Bug Fixes
+
+* update README during release workflow ([d5f0994](https://github.com/spaceagetv/electron-playwright-helpers/commit/d5f099417abc104156b9f2b74caf1093aa59b111))
+
 ## [1.5.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.0...v1.5.1) (2023-01-25)
 
 
