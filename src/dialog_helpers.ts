@@ -1,4 +1,4 @@
-import { ElectronApplication } from 'playwright'
+import { ElectronApplication } from 'playwright-core'
 
 export type DialogMethodStub<T extends keyof Electron.Dialog> = {
   method: T
