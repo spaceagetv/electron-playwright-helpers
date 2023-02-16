@@ -10,6 +10,7 @@
   "repository": "https://github.com/spaceagetv/electron-playwright-helpers",
   "homepage": "https://github.com/spaceagetv/electron-playwright-helpers#readme",
   "scripts": {
+    "build": "npm run build:compile && npm run build:doc",
     "build:compile": "rm -rf dist; tsc",
     "build:doc": "npx jsdoc2md --template ./readme-template.hbs.md --files ./src/*.ts --configure ./jsdoc2md.json > ./README.md",
     "lint": "npx eslint src/**/*.ts",
