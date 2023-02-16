@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.2...v1.5.3) (2023-02-16)
+
+
+### Bug Fixes
+
+* trigger releases for docs, refactor, style, and test ([40a5a1d](https://github.com/spaceagetv/electron-playwright-helpers/commit/40a5a1d3ee8d4dde3a878f17bd9e5f44efd8e146))
+
 ## [1.5.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.1...v1.5.2) (2023-02-16)
 
 
