@@ -1,3 +1,10 @@
+## [1.5.4](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.3...v1.5.4) (2023-03-21)
+
+
+### Bug Fixes
+
+* event object for ipcRendererCallFirstListener() ([8e2bd0c](https://github.com/spaceagetv/electron-playwright-helpers/commit/8e2bd0c81ca1667762cb05f8d137396922505519))
+
 ## [1.5.3](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.2...v1.5.3) (2023-02-16)
 
 
