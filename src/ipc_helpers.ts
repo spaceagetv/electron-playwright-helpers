@@ -85,9 +85,10 @@ export async function ipcRendererCallFirstListener(
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { ipcRenderer } = require('electron')
       if (ipcRenderer.listenerCount(message) > 0) {
-        // we send null in place of the ipcMain event object
+        // we send a fake event in place of the ipc event object
+        const event = {} as Electron.IpcRendererEvent
         // also, we await in case the listener returns a promise
-        return await ipcRenderer.listeners(message)[0](null, ...args)
+        return await ipcRenderer.listeners(message)[0](event, ...args)
       } else {
         throw new Error(`No ipcRenderer listeners for '${message}'`)
       }
