@@ -1,3 +1,11 @@
+## [1.5.5](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.4...v1.5.5) (2023-05-31)
+
+
+### Bug Fixes
+
+* ipcMainInvokeHandler() in E25 ([4fe5c7f](https://github.com/spaceagetv/electron-playwright-helpers/commit/4fe5c7f885f215d7fb3e688db1952341c0ed03f3))
+* windows unhappy with getApp().close() ([9808931](https://github.com/spaceagetv/electron-playwright-helpers/commit/98089312bd21e7650278f26904cb53592380c390))
+
 ## [1.5.4](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.3...v1.5.4) (2023-03-21)
 
 
