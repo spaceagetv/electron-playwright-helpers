@@ -1,7 +1,7 @@
 import { PlaywrightTestConfig } from '@playwright/test'
 
 const config: PlaywrightTestConfig = {
-  maxFailures: 2,
+  maxFailures: undefined,
   reporter: process.env.CI ? 'github' : 'list',
   testDir: './e2e-tests',
 }
