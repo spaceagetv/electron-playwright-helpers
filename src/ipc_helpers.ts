@@ -209,10 +209,12 @@ export async function ipcMainCallFirstListener(
   )
 }
 
-type IpcMainInvokeEventWithReply = Electron.IpcMainInvokeEvent & {
-  _reply(value: unknown): void
-  _throw(error: Error | string): void
-}
+type IpcMainInvokeEventWithReply =
+  | Electron.IpcMainInvokeEvent & {
+      // electron <= 24
+      _reply(value: unknown): void
+      _throw(error: Error | string): void
+    }
 
 /** Expose type for private _invokeHandlers Map */
 type IpcMainWithHandlers = Electron.IpcMain & {
@@ -233,12 +235,12 @@ type IpcMainWithHandlers = Electron.IpcMain & {
  * @returns {Promise<unknown>}
  * @fulfil {unknown} resolves with the result of the function called in main process
  */
-export function ipcMainInvokeHandler(
+export async function ipcMainInvokeHandler(
   electronApp: ElectronApplication,
   message: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  return electronApp.evaluate(
+  return await electronApp.evaluate(
     async ({ ipcMain }, { message, args }) => {
       const ipcMainWH = ipcMain as IpcMainWithHandlers
       // this is all a bit of a hack, so let's test as we go
@@ -249,16 +251,21 @@ export function ipcMainInvokeHandler(
       if (!handler) {
         throw new Error(`No ipcMain handler registered for '${message}'`)
       }
-      let reply: unknown
+      // in electron <= 24, the event object's _reply() method is called
+      let e24reply: unknown
       const e = {} as IpcMainInvokeEventWithReply
       e._reply = (value: unknown) => {
-        reply = value
+        e24reply = value
       }
       e._throw = function (error: Error) {
         throw error
       }
-      await handler(e, ...args)
-      return await reply
+      // in electron >= 25, we can simply call the handler
+      const e25reply = await handler(e, ...args)
+
+      // return the value from the event object if it exists
+      // otherwise return the value from the handler
+      return (await e24reply) ?? e25reply
     },
     { message, args }
   )
