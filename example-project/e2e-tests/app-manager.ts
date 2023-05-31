@@ -1,4 +1,4 @@
-import { ElectronApplication } from '../../node_modules/playwright' // <-- replace with 'playwright'
+import type { ElectronApplication } from '../../node_modules/playwright-core' // <-- replace with 'playwright-core'
 
 let electronApp: ElectronApplication
 
