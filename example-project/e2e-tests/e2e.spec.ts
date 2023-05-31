@@ -84,8 +84,8 @@ test.beforeAll(async () => {
   })
 })
 
-test.afterAll(async () => {
-  getApp().close()
+test.afterAll(() => {
+  getApp()?.close()
 })
 
 test('renders the first page', async () => {
