@@ -94,7 +94,7 @@ pass the name of the directory as the <code>buildDirectory</code> parameter. If 
 build directory is not named with a hyphen-delimited platform name, this
 function will not work. However, you can pass the build path into
 <code>parseElectronApp()</code> directly.</p></dd>
-<dt><a href="#parseElectronApp">parseElectronApp(buildDir)</a> ⇒ <code>ElectronAppInfo</code></dt>
+<dt><a href="#parseElectronApp">parseElectronApp(buildDir)</a> ⇒ <code><a href="#ElectronAppInfo">ElectronAppInfo</a></code></dt>
 <dd><p>Given a directory containing an Electron app build,
 or the path to the app itself (directory on Mac, executable on Windows),
 return a bunch of metadata, including the path to the app's executable
@@ -200,6 +200,13 @@ in Electron.</p></dd>
 For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 </dl>
 
+## Typedefs
+
+<dl>
+<dt><a href="#ElectronAppInfo">ElectronAppInfo</a></dt>
+<dd><p>Format of the data returned from <code>parseElectronApp()</code></p></dd>
+</dl>
+
 <a name="findLatestBuild"></a>
 
 ## findLatestBuild(buildDirectory) ⇒ <code>string</code>
@@ -225,7 +232,7 @@ function will not work. However, you can pass the build path into
 
 <a name="parseElectronApp"></a>
 
-## parseElectronApp(buildDir) ⇒ <code>ElectronAppInfo</code>
+## parseElectronApp(buildDir) ⇒ [<code>ElectronAppInfo</code>](#ElectronAppInfo)
 <p>Given a directory containing an Electron app build,
 or the path to the app itself (directory on Mac, executable on Windows),
 return a bunch of metadata, including the path to the app's executable
@@ -243,7 +250,7 @@ and the path to the app's main file.</p>
 </ul>
 
 **Kind**: global function  
-**Returns**: <code>ElectronAppInfo</code> - <p>metadata about the app</p>  
+**Returns**: [<code>ElectronAppInfo</code>](#ElectronAppInfo) - <p>metadata about the app</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -265,6 +272,25 @@ as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p>
 | electronApp | <code>ElectronApplication</code> | <p>the Playwright ElectronApplication</p> |
 | fn | <code>function</code> | <p>the function to evaluate in the main process - must return a boolean</p> |
 | arg | <code>Any</code> | <p>optional - an argument to pass to the function</p> |
+
+<a name="ElectronAppInfo"></a>
+
+## ElectronAppInfo
+<p>Format of the data returned from <code>parseElectronApp()</code></p>
+
+**Kind**: global typedef  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| executable | <code>string</code> | <p>path to the Electron executable</p> |
+| main | <code>string</code> | <p>path to the main (JS) file</p> |
+| name | <code>string</code> | <p>name of the your application</p> |
+| resourcesDir | <code>string</code> | <p>path to the resources directory</p> |
+| asar | <code>boolean</code> | <p>whether the app is packaged as an asar archive</p> |
+| platform | <code>string</code> | <p>'darwin', 'linux', or 'win32'</p> |
+| arch | <code>string</code> | <p>'x64', 'x32', or 'arm64'</p> |
+| packageJson | <code>PackageJson</code> | <p>the <code>JSON.parse()</code>'d contents of the package.json file.</p> |
 
 <a name="stubDialog"></a>
 

@@ -32,6 +32,11 @@ import {
 import { Page, _electron as electron } from '../../node_modules/playwright-core' // <-- replace with 'playwright-core'
 import { getApp, setApp } from './app-manager'
 
+export function latestPage(): Page | undefined {
+  const windows = getApp()?.windows()
+  return windows?.[windows.length - 1]
+}
+
 test.beforeAll(async () => {
   // find the latest build in the out directory
   const latestBuild = findLatestBuild()
@@ -79,14 +84,12 @@ test.beforeAll(async () => {
   })
 })
 
-test.afterAll(async () => {
-  getApp().close()
+test.afterAll(() => {
+  getApp()?.close()
 })
 
-let page: Page
-
 test('renders the first page', async () => {
-  page = await getApp().firstWindow()
+  const page = await getApp().firstWindow()
   await page.waitForSelector('h1')
   const text = await page.$eval('h1', (el) => el.textContent)
   expect(text).toBe('Hello World!')
@@ -95,17 +98,28 @@ test('renders the first page', async () => {
 })
 
 test(`"create new window" button exists`, async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
   expect(await page.$('#new-window')).toBeTruthy()
 })
 
 test('click the button to open new window', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
   await page.click('#new-window')
   const newPage = await getApp().waitForEvent('window')
   expect(newPage).toBeTruthy()
-  page = newPage
 })
 
 test('window 2 has correct title', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
   const title = await page.title()
   expect(title).toBe('Window 2')
 })
@@ -118,42 +132,64 @@ test('trigger IPC listener via main process', async () => {
   const newPage = await electronApp.waitForEvent('window')
   expect(newPage).toBeTruthy()
   expect(await newPage.title()).toBe('Window 3')
-  page = newPage
 })
 
 test('send IPC message from renderer', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
   // evaluate this script in render process
   // requires webPreferences.nodeIntegration true and contextIsolation false
   await ipcRendererSend(page, 'new-window')
   const newPage = await getApp().waitForEvent('window')
   expect(newPage).toBeTruthy()
   expect(await newPage.title()).toBe('Window 4')
-  page = newPage
 })
 
 test('send an ipcRenderer.invoke() message and receive result', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
   // evaluate this script in RENDERER process and collect the result
   const result = await ipcRendererInvoke(page, 'how-many-windows')
   expect(result).toBe(4)
 })
 
 test('get data from a ipcMain.handle() function in main', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
   // evaluate this script in MAIN process and collect the result
   const result = await ipcMainInvokeHandler(getApp(), 'how-many-windows')
   expect(result).toBe(4)
 })
 
 test('receive synchronous data via ipcRendererCallFirstListener()', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
   const data = await ipcRendererCallFirstListener(page, 'get-synchronous-data')
   expect(data).toBe('Synchronous Data')
 })
 
 test('receive asynchronous data via ipcRendererCallFirstListener()', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
   const data = await ipcRendererCallFirstListener(page, 'get-asynchronous-data')
   expect(data).toBe('Asynchronous Data')
 })
 
 test('send an ipcRendererEmit.emit() message and expect element to appear', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
   // evaluate this script in RENDERER process
   await ipcRendererEmit(page, 'add-message', 'Goodbye World!', 'message-1')
   const locator = page.locator('#message-1')
@@ -185,7 +221,6 @@ test('send an ipcMainEmit.emit() message and expect window to open', async () =>
   ])
   expect(newPage).toBeTruthy()
   expect(await newPage.title()).toBe('Window 5')
-  page = newPage
 })
 
 test('get the entire application menu', async () => {
@@ -253,7 +288,6 @@ test('select a menu item via the main process', async () => {
   const newPage = await electronApp.waitForEvent('window')
   expect(newPage).toBeTruthy()
   expect(await newPage.title()).toBe('Window 6')
-  page = newPage
 })
 
 test('click a menu item by its commandId', async () => {
@@ -265,7 +299,6 @@ test('click a menu item by its commandId', async () => {
   const newPage = await electronApp.waitForEvent('window')
   expect(newPage).toBeTruthy()
   expect(await newPage.title()).toBe('Window 7')
-  page = newPage
 })
 
 test('click a menu item based on its label', async () => {
@@ -274,7 +307,6 @@ test('click a menu item based on its label', async () => {
   const newPage = await electronApp.waitForEvent('window')
   expect(newPage).toBeTruthy()
   expect(await newPage.title()).toBe('Window 8')
-  page = newPage
 })
 
 test('dialog.showOpenDialog stubbing', async () => {
