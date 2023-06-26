@@ -70,7 +70,7 @@ export function findLatestBuild(buildDirectory = 'out'): string {
   return path.join(outDir, latestBuild)
 }
 
-type Architecture = 'x64' | 'x32' | 'arm64' | undefined
+type Architecture = 'x64' | 'x32' | 'arm64' | 'universal' | undefined
 
 export interface PackageJson {
   [key: string]: unknown
@@ -187,6 +187,21 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
   }
   if (baseNameLc.includes('arm64')) {
     arch = 'arm64'
+  }
+  if (baseNameLc.includes('universal')) {
+    arch = 'universal'
+  }
+
+  if (!arch) {
+    // we still haven't figured out architecture
+    // let's get a little more desperate
+    if (baseNameLc.includes('x86')) {
+      arch = 'x32'
+    } else if (baseNameLc.includes('arm')) {
+      arch = 'arm64'
+    } else if (baseNameLc.includes('univ')) {
+      arch = 'universal'
+    }
   }
 
   let executable: string
