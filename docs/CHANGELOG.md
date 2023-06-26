@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.5...v1.6.0) (2023-06-26)
+
+
+### Features
+
+* parse universal architecture ([4a8a5c0](https://github.com/spaceagetv/electron-playwright-helpers/commit/4a8a5c0ac1e9948c67aa26ee5dae581a8988141a))
+
 ## [1.5.5](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.4...v1.5.5) (2023-05-31)
 
 
