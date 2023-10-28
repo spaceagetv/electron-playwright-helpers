@@ -18,6 +18,9 @@ export type HelperFunctionName = keyof AllPromiseHelpersWithoutTimeout
 /**
  * Add a timeout to any Promise
  *
+ * @category Utilities
+ * @see addTimeout
+ *
  * @param promise - the promise to add a timeout to - must be a Promise
  * @param timeoutMs - the timeout in milliseconds - defaults to 5000
  * @param timeoutMessage - optional - the message to return if the timeout is reached
@@ -45,6 +48,8 @@ export async function addTimeoutToPromise<T>(
 
 /**
  * Add a timeout to any helper function from this library which returns a Promise.
+ *
+ * @category Utilities
  *
  * @param functionName - the name of the helper function to call
  * @param timeoutMs - the timeout in milliseconds - defaults to 5000

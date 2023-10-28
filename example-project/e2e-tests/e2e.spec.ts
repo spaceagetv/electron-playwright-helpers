@@ -10,6 +10,7 @@ import { expect, test } from '@playwright/test'
 // but if you use this in your own project, you should
 // import from 'electron-playwright-helpers'
 import {
+  addTimeout,
   clickMenuItem,
   clickMenuItemById,
   findLatestBuild,
@@ -183,6 +184,40 @@ test('receive asynchronous data via ipcRendererCallFirstListener()', async () =>
   }
   const data = await ipcRendererCallFirstListener(page, 'get-asynchronous-data')
   expect(data).toBe('Asynchronous Data')
+})
+
+test('receive asynchronous data via addTimeout(`ipcRendererCallFirstListener`)', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
+  const data = await addTimeout(
+    'ipcRendererCallFirstListener',
+    3000,
+    'timeout for ipcRendererCallFirstListener()',
+    page,
+    'get-asynchronous-data',
+    [],
+    3000
+  )
+  expect(data).toBe('Asynchronous Data')
+})
+
+test('throw error via ipcRendererCallFirstListener with bogus channel', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
+  await expect(
+    ipcRendererCallFirstListener(page, 'bogus-channel')
+  ).rejects.toThrowError(`No ipcRenderer listeners for 'bogus-channel'`)
+})
+
+test('throw error via ipcRendererCallFirstListener with bogus page`)', async () => {
+  const page = {} as Page
+  await expect(
+    ipcRendererCallFirstListener(page, 'get-asynchronous-data')
+  ).rejects.toThrowError()
 })
 
 test('send an ipcRendererEmit.emit() message and expect element to appear', async () => {
