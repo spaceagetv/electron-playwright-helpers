@@ -15,12 +15,17 @@ import { ElectronApplication, Page } from 'playwright-core'
  * @fulfil {unknown} resolves with the result of `ipcRenderer.send()`
  */
 export function ipcRendererSend(
-  window: Page,
+  page: Page,
   channel: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  return window.evaluate(
+  return page.evaluate(
     ({ channel, args }) => {
+      if (!require) {
+        throw new Error(
+          `Cannot access require() in renderer process. Is nodeIntegration: true?`
+        )
+      }
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { ipcRenderer } = require('electron')
       return ipcRenderer.send(channel, ...args)
@@ -44,12 +49,17 @@ export function ipcRendererSend(
  * @fulfil {unknown} resolves with the result of ipcRenderer.invoke()
  */
 export function ipcRendererInvoke(
-  window: Page,
+  page: Page,
   message: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  return window.evaluate(
+  return page.evaluate(
     async ({ message, args }) => {
+      if (!require) {
+        throw new Error(
+          `Cannot access require() in renderer process. Is nodeIntegration: true?`
+        )
+      }
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { ipcRenderer } = require('electron')
       return await ipcRenderer.invoke(message, ...args)
@@ -69,19 +79,24 @@ export function ipcRendererInvoke(
  *
  * @category IPCRenderer
  *
- * @param window {Page} The Playwright Page to with the `ipcRenderer.on()` listener
+ * @param page {Page} The Playwright Page to with the `ipcRenderer.on()` listener
  * @param message {string} The channel to call the first listener for
  * @param args {...unknown} optional - One or more arguments to send to the ipcRenderer.on() listener
  * @returns {Promise<unknown>}
  * @fulfil {unknown} the result of the first `ipcRenderer.on()` listener
  */
 export async function ipcRendererCallFirstListener(
-  window: Page,
+  page: Page,
   message: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  const result = await window.evaluate(
+  const result = await page.evaluate(
     async ({ message, args }) => {
+      if (!require) {
+        throw new Error(
+          `Cannot access require() in renderer process. Is nodeIntegration: true?`
+        )
+      }
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { ipcRenderer } = require('electron')
       if (ipcRenderer.listenerCount(message) > 0) {
@@ -110,7 +125,7 @@ export async function ipcRendererCallFirstListener(
  *
  * @category IPCRenderer
  *
- * @param window {Page} - the Playwright Page to with the ipcRenderer.on() listener
+ * @param page {Page} - the Playwright Page to with the ipcRenderer.on() listener
  * @param message {string} - the channel to call all ipcRenderer listeners for
  * @param args {...unknown} optional - one or more arguments to send
  * @returns {Promise<boolean>}
@@ -118,12 +133,17 @@ export async function ipcRendererCallFirstListener(
  * @reject {Error} if there are no ipcRenderer listeners for the event
  */
 export function ipcRendererEmit(
-  window: Page,
+  page: Page,
   message: string,
   ...args: unknown[]
 ): Promise<boolean> {
-  return window.evaluate(
+  return page.evaluate(
     ({ message, args }) => {
+      if (!require) {
+        throw new Error(
+          `Cannot access require() in renderer process. Is nodeIntegration: true?`
+        )
+      }
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { ipcRenderer } = require('electron')
       if (ipcRenderer.listenerCount(message) === 0) {

@@ -160,13 +160,13 @@ in the webPreferences for this BrowserWindow.</p></dd>
 <dd><p>Send an ipcRenderer.invoke() from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this window</p></dd>
-<dt><a href="#ipcRendererCallFirstListener">ipcRendererCallFirstListener(window, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcRendererCallFirstListener">ipcRendererCallFirstListener(page, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Call just the first listener for a given ipcRenderer channel in a given window.
 <em>UNLIKE MOST Electron ipcRenderer listeners</em>, this function SHOULD return a value.</p>
 <p>This function does not send data between main and renderer processes.
 It simply retrieves data from the renderer process.</p>
 <p>Note: nodeIntegration must be true for this BrowserWindow.</p></dd>
-<dt><a href="#ipcRendererEmit">ipcRendererEmit(window, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
+<dt><a href="#ipcRendererEmit">ipcRendererEmit(page, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an IPC message to a given window.
 This will trigger all ipcRenderer listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -198,6 +198,10 @@ in Electron.</p></dd>
 <dt><a href="#waitForMenuItemStatus">waitForMenuItemStatus(electronApp, id, property, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Wait for a MenuItem to have a specific attribute value.
 For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
+<dt><a href="#addTimeoutToPromise">addTimeoutToPromise(promise, timeoutMs, timeoutMessage)</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
+<dd><p>Add a timeout to any Promise</p></dd>
+<dt><a href="#addTimeout">addTimeout(functionName, timeoutMs, timeoutMessage, ...args)</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
+<dd><p>Add a timeout to any helper function from this library which returns a Promise.</p></dd>
 </dl>
 
 ## Typedefs
@@ -479,7 +483,7 @@ in the webPreferences for this window</p>
 
 <a name="ipcRendererCallFirstListener"></a>
 
-## ipcRendererCallFirstListener(window, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcRendererCallFirstListener(page, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Call just the first listener for a given ipcRenderer channel in a given window.
 <em>UNLIKE MOST Electron ipcRenderer listeners</em>, this function SHOULD return a value.</p>
 <p>This function does not send data between main and renderer processes.
@@ -492,13 +496,13 @@ It simply retrieves data from the renderer process.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| window | <code>Page</code> | <p>The Playwright Page to with the <code>ipcRenderer.on()</code> listener</p> |
+| page | <code>Page</code> | <p>The Playwright Page to with the <code>ipcRenderer.on()</code> listener</p> |
 | message | <code>string</code> | <p>The channel to call the first listener for</p> |
 | ...args | <code>unknown</code> | <p>optional - One or more arguments to send to the ipcRenderer.on() listener</p> |
 
 <a name="ipcRendererEmit"></a>
 
-## ipcRendererEmit(window, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
+## ipcRendererEmit(page, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
 <p>Emit an IPC message to a given window.
 This will trigger all ipcRenderer listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -512,7 +516,7 @@ It simply emits an event in the renderer process.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| window | <code>Page</code> | <p>the Playwright Page to with the ipcRenderer.on() listener</p> |
+| page | <code>Page</code> | <p>the Playwright Page to with the ipcRenderer.on() listener</p> |
 | message | <code>string</code> | <p>the channel to call all ipcRenderer listeners for</p> |
 | ...args | <code>unknown</code> | <p>optional - one or more arguments to send</p> |
 
@@ -642,4 +646,36 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 | id | <code>string</code> | <p>the id of the MenuItem to wait for</p> |
 | property | <code>string</code> | <p>the property to search for</p> |
 | value | <code>string</code> \| <code>number</code> \| <code>boolean</code> | <p>the value to search for</p> |
+
+<a name="addTimeoutToPromise"></a>
+
+## addTimeoutToPromise(promise, timeoutMs, timeoutMessage) ⇒ <code>Promise.&lt;T&gt;</code>
+<p>Add a timeout to any Promise</p>
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;T&gt;</code> - <p>the result of the original promise if it resolves before the timeout</p>  
+**Category**: Utilities  
+**See**: addTimeout  
+
+| Param | Default | Description |
+| --- | --- | --- |
+| promise |  | <p>the promise to add a timeout to - must be a Promise</p> |
+| timeoutMs | <code>5000</code> | <p>the timeout in milliseconds - defaults to 5000</p> |
+| timeoutMessage |  | <p>optional - the message to return if the timeout is reached</p> |
+
+<a name="addTimeout"></a>
+
+## addTimeout(functionName, timeoutMs, timeoutMessage, ...args) ⇒ <code>Promise.&lt;T&gt;</code>
+<p>Add a timeout to any helper function from this library which returns a Promise.</p>
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;T&gt;</code> - <p>the result of the helper function if it resolves before the timeout</p>  
+**Category**: Utilities  
+
+| Param | Default | Description |
+| --- | --- | --- |
+| functionName |  | <p>the name of the helper function to call</p> |
+| timeoutMs | <code>5000</code> | <p>the timeout in milliseconds - defaults to 5000</p> |
+| timeoutMessage |  | <p>optional - the message to return if the timeout is reached</p> |
+| ...args |  | <p>any arguments to pass to the helper function</p> |
 
