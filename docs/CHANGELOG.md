@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.6.0...v1.7.0) (2023-11-04)
+
+
+### Features
+
+* new utilities for adding timeouts ([b15430e](https://github.com/spaceagetv/electron-playwright-helpers/commit/b15430e8e7faf651e45a01cfe007e65d0aca98ba))
+
 # [1.6.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.5.5...v1.6.0) (2023-06-26)
 
 
