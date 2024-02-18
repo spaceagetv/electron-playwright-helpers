@@ -73,6 +73,17 @@ async function closeFile() {
   openedFile = ''
 }
 
+async function saveFileToLocation() {
+  if (!openedFile) {
+    throw new Error('No file is open')
+  }
+  const result = await dialog.showSaveDialog({
+    message: 'Save the file',
+  })
+  if (result.canceled) return
+  openedFile = result.filePath
+}
+
 /** This allows us to get the value in E2E */
 ipcMain.handle('get-opened-file', () => {
   return openedFile
@@ -96,6 +107,14 @@ function initMenu() {
     id: 'open-file',
     accelerator: 'CmdOrCtrl+O',
     click: openFile,
+  })
+
+  // save a file
+  const saveFileItem = new MenuItem({
+    label: 'Save File',
+    id: 'save-file',
+    accelerator: 'CmdOrCtrl+S',
+    click: saveFileToLocation,
   })
 
   // close a file
@@ -127,6 +146,8 @@ function initMenu() {
     fileMenu.submenu.insert(1, openFileItem)
     // add the "Close File" MenuItem to the end of the File menu
     fileMenu.submenu.insert(2, closeFileItem)
+    // add the "Save File" MenuItem to the end of the File menu
+    fileMenu.submenu.insert(3, saveFileItem)
     // add the checkbox menu item to the end of the File menu
     fileMenu.submenu.append(checkbox)
   }
