@@ -374,3 +374,27 @@ test('dialog.showMessageBox stubbing', async () => {
   const response2 = await ipcMainInvokeHandler(app, 'get-opened-file')
   expect(response2).toBe('')
 })
+
+test('dialog.showSaveDialog stubbing', async () => {
+  const app = getApp()
+  await stubDialog(app, 'showOpenDialog', {
+    filePaths: ['/path/to/file.txt'],
+    canceled: false,
+  })
+  // open a file (and call the mocked dialog)
+  await clickMenuItemById(app, 'open-file')
+  // get the currently "opened" file path
+  const filePath = await ipcMainInvokeHandler(app, 'get-opened-file')
+  expect(filePath).not.toBe('/path/to/new-saved-file.txt')
+
+  await stubDialog(app, 'showSaveDialog', {
+    filePath: '/path/to/new-saved-file.txt',
+  })
+  // select the "Save File" menu item, which will call the mocked dialog
+  // no dialog should appear, but the file path should be updated
+  await clickMenuItemById(app, 'save-file')
+
+  // get the currently "opened" file path
+  const filePath2 = await ipcMainInvokeHandler(app, 'get-opened-file')
+  expect(filePath2).toBe('/path/to/new-saved-file.txt')
+})
