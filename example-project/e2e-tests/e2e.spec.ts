@@ -307,7 +307,10 @@ test('select the checkbox menuItem and watch its status change', async () => {
   expect(checkboxBefore.checked).toBe(false)
   await Promise.all([
     waitForMenuItemStatus(electronApp, 'checkbox', 'checked', true),
-    clickMenuItemById(electronApp, 'checkbox'),
+    (async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      clickMenuItemById(electronApp, 'checkbox')
+    })(),
   ])
   const nowChecked = await getMenuItemAttribute(
     electronApp,

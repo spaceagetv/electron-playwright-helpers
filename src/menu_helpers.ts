@@ -1,5 +1,5 @@
 import type { ElectronApplication } from 'playwright-core'
-import { electronWaitForFunction } from './general_helpers'
+import { electronWaitForFunction, evaluateWithRetry } from './general_helpers'
 
 /**
  * Execute the `.click()` method on the element with the given id.
@@ -15,20 +15,26 @@ import { electronWaitForFunction } from './general_helpers'
  */
 export function clickMenuItemById(
   electronApp: ElectronApplication,
-  id: string
+  id: string,
+  retries = 3
 ): Promise<unknown> {
-  return electronApp.evaluate(({ Menu }, menuId) => {
-    const menu = Menu.getApplicationMenu()
-    if (!menu) {
-      throw new Error('No application menu found')
-    }
-    const menuItem = menu.getMenuItemById(menuId)
-    if (menuItem) {
-      return menuItem.click()
-    } else {
-      throw new Error(`Menu item with id ${menuId} not found`)
-    }
-  }, id)
+  return evaluateWithRetry(
+    electronApp,
+    ({ Menu }, menuId) => {
+      const menu = Menu.getApplicationMenu()
+      if (!menu) {
+        throw new Error('No application menu found')
+      }
+      const menuItem = menu.getMenuItemById(menuId)
+      if (menuItem) {
+        return menuItem.click()
+      } else {
+        throw new Error(`Menu item with id ${menuId} not found`)
+      }
+    },
+    id,
+    retries
+  )
 }
 
 /**
@@ -50,42 +56,48 @@ export function clickMenuItemById(
 export async function clickMenuItem<P extends keyof MenuItemPartial>(
   electronApp: ElectronApplication,
   property: P,
-  value: MenuItemPartial[P]
+  value: MenuItemPartial[P],
+  retries = 3
 ): Promise<unknown> {
   const menuItem = await findMenuItem(electronApp, property, value)
   if (!menuItem) {
     throw new Error(`Menu item with ${property} = ${value} not found`)
   }
-  return await electronApp.evaluate(async ({ Menu }, commandId) => {
-    const menu = Menu.getApplicationMenu()
-    if (!menu) {
-      throw new Error('No application menu found')
-    }
-    // recurse through the menu to find menu item with matching commandId
-    function findMenuItem(
-      menu: Electron.Menu,
-      commandId: number
-    ): Electron.MenuItem | undefined {
-      for (const item of menu.items) {
-        if (item.type === 'submenu' && item.submenu) {
-          const found = findMenuItem(item.submenu, commandId)
-          if (found) {
-            return found
+  return await evaluateWithRetry(
+    electronApp,
+    async ({ Menu }, commandId) => {
+      const menu = Menu.getApplicationMenu()
+      if (!menu) {
+        throw new Error('No application menu found')
+      }
+      // recurse through the menu to find menu item with matching commandId
+      function findMenuItem(
+        menu: Electron.Menu,
+        commandId: number
+      ): Electron.MenuItem | undefined {
+        for (const item of menu.items) {
+          if (item.type === 'submenu' && item.submenu) {
+            const found = findMenuItem(item.submenu, commandId)
+            if (found) {
+              return found
+            }
+          } else if (item.commandId === commandId) {
+            return item
           }
-        } else if (item.commandId === commandId) {
-          return item
         }
       }
-    }
-    const mI = findMenuItem(menu, commandId)
-    if (!mI) {
-      throw new Error(`Menu item with commandId ${commandId} not found`)
-    }
-    if (!mI.click) {
-      throw new Error(`Menu item has no click method`)
-    }
-    await mI.click()
-  }, menuItem.commandId)
+      const mI = findMenuItem(menu, commandId)
+      if (!mI) {
+        throw new Error(`Menu item with commandId ${commandId} not found`)
+      }
+      if (!mI.click) {
+        throw new Error(`Menu item has no click method`)
+      }
+      await mI.click()
+    },
+    menuItem.commandId,
+    retries
+  )
 }
 
 /**
@@ -102,10 +114,12 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
 export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
   electronApp: ElectronApplication,
   menuId: string,
-  attribute: T
+  attribute: T,
+  retries = 3
 ): Promise<Electron.MenuItem[T]> {
   const attr = attribute as keyof Electron.MenuItem
-  const resultPromise = electronApp.evaluate(
+  const resultPromise = evaluateWithRetry(
+    electronApp,
     ({ Menu }, { menuId, attr }) => {
       const menu = Menu.getApplicationMenu()
       if (!menu) {
@@ -122,7 +136,8 @@ export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
         return menuItem[attr]
       }
     },
-    { menuId, attr }
+    { menuId, attr },
+    retries
   )
   return resultPromise as Promise<Electron.MenuItem[T]>
 }
@@ -158,9 +173,11 @@ export type MenuItemPartial = MenuItemPrimitive & {
  */
 export function getMenuItemById(
   electronApp: ElectronApplication,
-  menuId: string
+  menuId: string,
+  retries = 3
 ): Promise<MenuItemPartial> {
-  return electronApp.evaluate(
+  return evaluateWithRetry(
+    electronApp,
     ({ Menu }, { menuId }) => {
       // we need this function to be in scope
       function cleanMenuItem(menuItem: Electron.MenuItem): MenuItemPartial {
@@ -194,7 +211,8 @@ export function getMenuItemById(
         throw new Error(`Menu item with id ${menuId} not found`)
       }
     },
-    { menuId }
+    { menuId },
+    retries
   )
 }
 
@@ -211,39 +229,45 @@ export function getMenuItemById(
  * @fulfil {MenuItemPartial[]} an array of MenuItem-like objects
  */
 export function getApplicationMenu(
-  electronApp: ElectronApplication
-): Promise<MenuItemPartial[]> {
-  const promise = electronApp.evaluate(({ Menu }) => {
-    // we need this function to be in scope
-    function cleanMenuItem(menuItem: Electron.MenuItem): MenuItemPartial {
-      const returnValue = {} as MenuItemPartial
-      Object.entries(menuItem).forEach(([key, value]) => {
-        // if value is a primitive
-        if (
-          typeof value === 'string' ||
-          typeof value === 'number' ||
-          typeof value === 'boolean' ||
-          value === null
-        ) {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore - we know it's a primitive
-          returnValue[key] = value
+  electronApp: ElectronApplication,
+  retries = 3
+): Promise<MenuItemPartial[] | undefined> {
+  const promise = evaluateWithRetry(
+    electronApp,
+    ({ Menu }) => {
+      // we need this function to be in scope
+      function cleanMenuItem(menuItem: Electron.MenuItem): MenuItemPartial {
+        const returnValue = {} as MenuItemPartial
+        Object.entries(menuItem).forEach(([key, value]) => {
+          // if value is a primitive
+          if (
+            typeof value === 'string' ||
+            typeof value === 'number' ||
+            typeof value === 'boolean' ||
+            value === null
+          ) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore - we know it's a primitive
+            returnValue[key] = value
+          }
+        })
+        if (menuItem.type === 'submenu' && menuItem.submenu) {
+          returnValue['submenu'] = menuItem.submenu.items.map(cleanMenuItem)
         }
-      })
-      if (menuItem.type === 'submenu' && menuItem.submenu) {
-        returnValue['submenu'] = menuItem.submenu.items.map(cleanMenuItem)
+        return returnValue
       }
-      return returnValue
-    }
 
-    const menu = Menu.getApplicationMenu()
-    if (!menu) {
-      throw new Error('No application menu found')
-    }
-    const cleanItems = menu.items.map(cleanMenuItem)
+      const menu = Menu.getApplicationMenu()
+      if (!menu) {
+        throw new Error('No application menu found')
+      }
+      const cleanItems = menu.items.map(cleanMenuItem)
 
-    return cleanItems
-  })
+      return cleanItems
+    },
+    {},
+    retries
+  )
   return promise
 }
 

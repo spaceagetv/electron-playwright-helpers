@@ -1,4 +1,5 @@
 import { ElectronApplication } from 'playwright-core'
+import { evaluateWithRetry } from './general_helpers'
 
 export type DialogMethodStub<T extends keyof Electron.Dialog> = {
   method: T
@@ -137,29 +138,33 @@ export function stubMultipleDialogs<T extends keyof Electron.Dialog>(
   })
 
   // idea from https://github.com/microsoft/playwright/issues/8278#issuecomment-1009957411 by @MikeJerred
-  return app.evaluate(({ dialog }, mocks) => {
-    mocks.forEach((mock: DialogMethodStub<keyof Electron.Dialog>) => {
-      const thisDialog = dialog[mock.method]
-      if (!thisDialog) {
-        throw new Error(`can't find ${mock.method} on dialog module.`)
-      }
-      if (mock.method.endsWith('Sync')) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        dialog[mock.method] = () => {
-          // console.log(`Dialog.${v.method}(${args.join(', ')})`)
-          return mock.value
+  return evaluateWithRetry(
+    app,
+    ({ dialog }, mocks) => {
+      mocks.forEach((mock: DialogMethodStub<keyof Electron.Dialog>) => {
+        const thisDialog = dialog[mock.method]
+        if (!thisDialog) {
+          throw new Error(`can't find ${mock.method} on dialog module.`)
         }
-      } else {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        dialog[mock.method] = async () => {
-          // console.log(`Dialog.${v.method}(${args.join(', ')})`)
-          return mock.value
+        if (mock.method.endsWith('Sync')) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          dialog[mock.method] = () => {
+            // console.log(`Dialog.${v.method}(${args.join(', ')})`)
+            return mock.value
+          }
+        } else {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          dialog[mock.method] = async () => {
+            // console.log(`Dialog.${v.method}(${args.join(', ')})`)
+            return mock.value
+          }
         }
-      }
-    })
-  }, mocksRequired)
+      })
+    },
+    mocksRequired
+  )
 }
 
 /**
