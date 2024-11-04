@@ -1,7 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/semantic-release",
   "branches": [
-    "main"
+    "main",
+    {
+      "name": "beta",
+      "prerelease": true
+    }
   ],
   "plugins": [
     [
@@ -36,6 +40,15 @@
       }
     ],
     [
+      "@semantic-release/npm",
+      {
+        "npmPublish": true,
+        "tarballDir": "dist",
+        "distTag": "beta"
+      }
+    ],
+    "@semantic-release/github",
+    [
       "@semantic-release/git",
       {
         "assets": [
@@ -45,8 +58,6 @@
           "package-lock.json"
         ]
       }
-    ],
-    "@semantic-release/npm",
-    "@semantic-release/github"
+    ]
   ]
 }
