@@ -1,4 +1,5 @@
 import { ElectronApplication, Page } from 'playwright-core'
+import { evaluateWithRetry } from './general_helpers'
 
 /**
  * Send an `ipcRenderer.send()` (to main process) from a given window.
@@ -178,7 +179,8 @@ export function ipcMainEmit(
   message: string,
   ...args: unknown[]
 ): Promise<boolean> {
-  return electronApp.evaluate(
+  return evaluateWithRetry(
+    electronApp,
     ({ ipcMain }, { message, args }) => {
       if (ipcMain.listeners(message).length > 0) {
         // fake ipcMainEvent
@@ -215,7 +217,8 @@ export async function ipcMainCallFirstListener(
   message: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  return await electronApp.evaluate(
+  return await evaluateWithRetry(
+    electronApp,
     async ({ ipcMain }, { message, args }) => {
       if (ipcMain.listenerCount(message) > 0) {
         // fake ipcMainEvent
@@ -260,7 +263,8 @@ export async function ipcMainInvokeHandler(
   message: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  return await electronApp.evaluate(
+  return await evaluateWithRetry(
+    electronApp,
     async ({ ipcMain }, { message, args }) => {
       const ipcMainWH = ipcMain as IpcMainWithHandlers
       // this is all a bit of a hack, so let's test as we go
