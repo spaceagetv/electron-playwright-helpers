@@ -1,3 +1,10 @@
+# [1.8.0-beta.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.7.1...v1.8.0-beta.1) (2024-11-04)
+
+
+### Features
+
+* evaluateWithRetry() ([938ab35](https://github.com/spaceagetv/electron-playwright-helpers/commit/938ab356f79b1d68de9db769bc36ef79e9bb2c89))
+
 ## [1.7.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.7.0...v1.7.1) (2024-02-18)
 
 # [1.7.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.6.0...v1.7.0) (2023-11-04)
