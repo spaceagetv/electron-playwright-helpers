@@ -1,4 +1,4 @@
-import type { ElectronApplication, Page } from 'playwright-core'
+import type { ElectronApplication, JSHandle, Page } from 'playwright-core'
 import type { PageFunctionOn } from 'playwright-core/types/structs'
 
 export type EvaluateWithRetryOptions = {
@@ -89,7 +89,7 @@ export async function browserWindowWithRetry(
   app: ElectronApplication,
   page: Page,
   options: EvaluateWithRetryOptions = {}
-) {
+): Promise<JSHandle> {
   const { retries = 5, intervalMs = 200 } = options
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -107,4 +107,5 @@ export async function browserWindowWithRetry(
       // go around again
     }
   }
+  return null as never
 }
