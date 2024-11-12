@@ -1,3 +1,10 @@
+# [1.8.0-beta.4](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.3...v1.8.0-beta.4) (2024-11-12)
+
+
+### Bug Fixes
+
+* typescript type ([8bfdcfa](https://github.com/spaceagetv/electron-playwright-helpers/commit/8bfdcfa3d33f12cf05f6d765390ff6ef89d9bf02))
+
 # [1.8.0-beta.3](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.2...v1.8.0-beta.3) (2024-11-12)
 
 
