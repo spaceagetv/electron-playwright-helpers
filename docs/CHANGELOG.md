@@ -1,3 +1,10 @@
+# [1.8.0-beta.3](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.2...v1.8.0-beta.3) (2024-11-12)
+
+
+### Features
+
+* browserWindowWithRetry() ([2ae2083](https://github.com/spaceagetv/electron-playwright-helpers/commit/2ae20832821171008ec5df5b6536b46d0f7ef9b1))
+
 # [1.8.0-beta.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.1...v1.8.0-beta.2) (2024-11-12)
 
 
