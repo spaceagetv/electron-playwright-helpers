@@ -118,7 +118,9 @@ as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p></dd>
 <dt><a href="#evaluateWithRetry">evaluateWithRetry(electronApp, fn, arg, retries, retryIntervalMs)</a> ⇒ <code>Promise.&lt;R&gt;</code></dt>
 <dd><p>Electron's <code>evaluate</code> function can be flakey,
 throwing an error saying the execution context has been destroyed.
-This function retries the evaluation a few times before giving up.</p></dd>
+This function retries the evaluation several times to see if it can
+run the evaluation without an error. If it fails after the retries,
+it throws the error.</p></dd>
 <dt><a href="#stubDialog">stubDialog(app, method, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Stub a single dialog method. This is a convenience function that calls <code>stubMultipleDialogs</code>
 for a single method.</p>
@@ -286,20 +288,22 @@ as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p>
 ## evaluateWithRetry(electronApp, fn, arg, retries, retryIntervalMs) ⇒ <code>Promise.&lt;R&gt;</code>
 <p>Electron's <code>evaluate</code> function can be flakey,
 throwing an error saying the execution context has been destroyed.
-This function retries the evaluation a few times before giving up.</p>
+This function retries the evaluation several times to see if it can
+run the evaluation without an error. If it fails after the retries,
+it throws the error.</p>
 
 **Kind**: global function  
 **Returns**: <code>Promise.&lt;R&gt;</code> - <ul>
 <li>the result of the evaluation</li>
 </ul>  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| electronApp | <code>ElectronApplication</code> |  | <p>the Playwright ElectronApplication</p> |
-| fn | <code>function</code> |  | <p>the function to evaluate in the main process</p> |
-| arg | <code>Any</code> |  | <p>an argument to pass to the function</p> |
-| retries |  | <code>5</code> | <p>the number of times to retry the evaluation</p> |
-| retryIntervalMs |  | <code>200</code> | <p>the interval between retries</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| electronApp | <code>ElectronApplication</code> | <p>the Playwright ElectronApplication</p> |
+| fn | <code>function</code> | <p>the function to evaluate in the main process</p> |
+| arg | <code>Any</code> | <p>an argument to pass to the function</p> |
+| retries |  | <p>the number of times to retry the evaluation</p> |
+| retryIntervalMs |  | <p>the interval between retries</p> |
 
 <a name="ElectronAppInfo"></a>
 
