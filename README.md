@@ -121,6 +121,10 @@ throwing an error saying the execution context has been destroyed.
 This function retries the evaluation several times to see if it can
 run the evaluation without an error. If it fails after the retries,
 it throws the error.</p></dd>
+<dt><a href="#browserWindowWithRetry">browserWindowWithRetry(app, page, options)</a> ⇒</dt>
+<dd><p>Returns the BrowserWindow object that corresponds to the given Playwright page (with retries).</p>
+<p>This is basically a wrapper around <code>[app.browserWindow(page)](https://playwright.dev/docs/api/class-electronapplication#electron-application-browser-window)</code>
+that retries the operation.</p></dd>
 <dt><a href="#stubDialog">stubDialog(app, method, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Stub a single dialog method. This is a convenience function that calls <code>stubMultipleDialogs</code>
 for a single method.</p>
@@ -304,6 +308,28 @@ it throws the error.</p>
 | arg | <code>Any</code> | <p>an argument to pass to the function</p> |
 | retries |  | <p>the number of times to retry the evaluation</p> |
 | retryIntervalMs |  | <p>the interval between retries</p> |
+
+<a name="browserWindowWithRetry"></a>
+
+## browserWindowWithRetry(app, page, options) ⇒
+<p>Returns the BrowserWindow object that corresponds to the given Playwright page (with retries).</p>
+<p>This is basically a wrapper around <code>[app.browserWindow(page)](https://playwright.dev/docs/api/class-electronapplication#electron-application-browser-window)</code>
+that retries the operation.</p>
+
+**Kind**: global function  
+**Returns**: <p>A promise that resolves to the browser window.</p>  
+**Throws**:
+
+- <p>Will throw an error if all retry attempts fail.</p>
+
+
+| Param | Description |
+| --- | --- |
+| app | <p>The Electron application instance.</p> |
+| page | <p>The Playwright page instance.</p> |
+| options | <p>Optional configuration for retries.</p> |
+| options.retries | <p>The number of retry attempts. Defaults to 5.</p> |
+| options.intervalMs | <p>The interval between retries in milliseconds. Defaults to 200.</p> |
 
 <a name="ElectronAppInfo"></a>
 

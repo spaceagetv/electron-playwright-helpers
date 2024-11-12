@@ -1,4 +1,4 @@
-import type { ElectronApplication } from 'playwright-core'
+import type { ElectronApplication, Page } from 'playwright-core'
 import type { PageFunctionOn } from 'playwright-core/types/structs'
 
 export type EvaluateWithRetryOptions = {
@@ -69,4 +69,42 @@ export async function evaluateWithRetry<R, Arg>(
     }
   }
   return null as never
+}
+
+/**
+ * Returns the BrowserWindow object that corresponds to the given Playwright page (with retries).
+ *
+ * This is basically a wrapper around `[app.browserWindow(page)](https://playwright.dev/docs/api/class-electronapplication#electron-application-browser-window)`
+ * that retries the operation.
+ *
+ * @param app - The Electron application instance.
+ * @param page - The Playwright page instance.
+ * @param options - Optional configuration for retries.
+ * @param options.retries - The number of retry attempts. Defaults to 5.
+ * @param options.intervalMs - The interval between retries in milliseconds. Defaults to 200.
+ * @returns A promise that resolves to the browser window.
+ * @throws Will throw an error if all retry attempts fail.
+ */
+export async function browserWindowWithRetry(
+  app: ElectronApplication,
+  page: Page,
+  options: EvaluateWithRetryOptions = {}
+) {
+  const { retries = 5, intervalMs = 200 } = options
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await app.browserWindow(page)
+    } catch (err) {
+      if (attempt >= retries) {
+        console.error(`getBrowserWithRetries failed after ${retries} attempts`)
+        throw err
+      }
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn(
+        `getBrowserWithRetries attempt ${attempt} failed: ${message}`
+      )
+      await new Promise((resolve) => setTimeout(resolve, intervalMs))
+      // go around again
+    }
+  }
 }
