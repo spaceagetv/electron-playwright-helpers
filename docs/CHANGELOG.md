@@ -1,3 +1,10 @@
+# [1.8.0-beta.5](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.4...v1.8.0-beta.5) (2024-11-13)
+
+
+### Bug Fixes
+
+* central retry() with timeout ([105c1c1](https://github.com/spaceagetv/electron-playwright-helpers/commit/105c1c1bfaf25f908200135eee131d569367e955))
+
 # [1.8.0-beta.4](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.3...v1.8.0-beta.4) (2024-11-12)
 
 
