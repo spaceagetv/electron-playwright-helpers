@@ -34,7 +34,11 @@ export async function addTimeoutToPromise<T>(
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      reject(timeoutMessage ?? `timeout after ${timeoutMs}ms`)
+      reject(
+        timeoutMessage
+          ? new Error(timeoutMessage)
+          : new Error(`timeout after ${timeoutMs}ms`)
+      )
     }, timeoutMs)
     promise
       .then((result) => {
@@ -102,7 +106,7 @@ export function retry<T>(
     let attempts = 0
 
     timeout = setTimeout(() => {
-      reject(`timeout after ${timeoutMs}ms`)
+      reject(new Error(`retry()::timeout after ${timeoutMs}ms`))
     }, timeoutMs)
 
     const tryFn = async () => {
