@@ -1,9 +1,6 @@
 import type { ElectronApplication } from 'playwright-core'
-import {
-  electronWaitForFunction,
-  evaluateWithRetry,
-  EvaluateWithRetryOptions,
-} from './general_helpers'
+import { electronWaitForFunction, evaluateWithRetry } from './general_helpers'
+import { RetryOptions } from './utilities'
 
 /**
  * Execute the `.click()` method on the element with the given id.
@@ -20,7 +17,7 @@ import {
 export function clickMenuItemById(
   electronApp: ElectronApplication,
   id: string,
-  options: EvaluateWithRetryOptions = {}
+  options: RetryOptions = {}
 ): Promise<unknown> {
   return evaluateWithRetry(
     electronApp,
@@ -61,7 +58,7 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
   electronApp: ElectronApplication,
   property: P,
   value: MenuItemPartial[P],
-  options: EvaluateWithRetryOptions = {}
+  options: RetryOptions = {}
 ): Promise<unknown> {
   const menuItem = await findMenuItem(electronApp, property, value)
   if (!menuItem) {
@@ -119,7 +116,7 @@ export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
   electronApp: ElectronApplication,
   menuId: string,
   attribute: T,
-  options: EvaluateWithRetryOptions = {}
+  options: RetryOptions = {}
 ): Promise<Electron.MenuItem[T]> {
   const attr = attribute as keyof Electron.MenuItem
   const resultPromise = evaluateWithRetry(
@@ -178,7 +175,7 @@ export type MenuItemPartial = MenuItemPrimitive & {
 export function getMenuItemById(
   electronApp: ElectronApplication,
   menuId: string,
-  options: EvaluateWithRetryOptions = {}
+  options: RetryOptions = {}
 ): Promise<MenuItemPartial> {
   return evaluateWithRetry(
     electronApp,
@@ -234,7 +231,7 @@ export function getMenuItemById(
  */
 export function getApplicationMenu(
   electronApp: ElectronApplication,
-  options: EvaluateWithRetryOptions = {}
+  options: RetryOptions = {}
 ): Promise<MenuItemPartial[] | undefined> {
   const promise = evaluateWithRetry(
     electronApp,

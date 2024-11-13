@@ -212,6 +212,8 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 <dd><p>Add a timeout to any Promise</p></dd>
 <dt><a href="#addTimeout">addTimeout(functionName, timeoutMs, timeoutMessage, ...args)</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Add a timeout to any helper function from this library which returns a Promise.</p></dd>
+<dt><a href="#retry">retry(fn, [options])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
+<dd><p>Retries a function until it returns without throwing an error.</p></dd>
 </dl>
 
 ## Typedefs
@@ -732,4 +734,21 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 | timeoutMs | <code>5000</code> | <p>the timeout in milliseconds - defaults to 5000</p> |
 | timeoutMessage |  | <p>optional - the message to return if the timeout is reached</p> |
 | ...args |  | <p>any arguments to pass to the helper function</p> |
+
+<a name="retry"></a>
+
+## retry(fn, [options]) ⇒ <code>Promise.&lt;T&gt;</code>
+<p>Retries a function until it returns without throwing an error.</p>
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.</p>  
+**Category**: Utilities  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| fn | <code>function</code> |  | <p>The function to retry.</p> |
+| [options] | <code>RetryOptions</code> | <code>{}</code> | <p>The options for retrying the function.</p> |
+| [options.retries] | <code>number</code> | <code>5</code> | <p>The number of retry attempts.</p> |
+| [options.intervalMs] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
+| [options.timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
 
