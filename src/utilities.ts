@@ -100,13 +100,20 @@ export function retry<T>(
   fn: () => Promise<T> | T,
   options: RetryOptions = {}
 ): Promise<T> {
-  const { retries = 5, intervalMs = 200, timeoutMs = 5000 } = options
+  const { retries = 10, intervalMs = 200, timeoutMs = 5000 } = options
   let timeout: NodeJS.Timeout
   const retry = new Promise<T>((resolve, reject) => {
     let attempts = 0
+    let lastErr: unknown
 
     timeout = setTimeout(() => {
-      reject(new Error(`retry()::timeout after ${timeoutMs}ms`))
+      reject(
+        new Error(
+          `retry() :: Timeout after ${timeoutMs}ms. :: Last thrown: ${errToString(
+            lastErr
+          )}`
+        )
+      )
     }, timeoutMs)
 
     const tryFn = async () => {
@@ -114,10 +121,11 @@ export function retry<T>(
         attempts++
         const result = await fn()
         resolve(result)
-      } catch (error) {
+      } catch (err) {
         if (attempts >= retries) {
-          reject(error)
+          reject(err)
         } else {
+          lastErr = err
           setTimeout(tryFn, intervalMs)
         }
       }
@@ -127,4 +135,34 @@ export function retry<T>(
   })
   retry.finally(() => clearTimeout(timeout))
   return retry
+}
+
+/**
+ * Converts an unknown error to a string representation.
+ *
+ * This function handles different types of errors and attempts to convert them
+ * to a string in a meaningful way. It checks if the error is an object with a
+ * `toString` method and uses that method if available. If the error is a string,
+ * it returns the string directly. For other types, it converts the error to a
+ * JSON string.
+ *
+ * @category Utilities
+ *
+ * @param err - The unknown error to be converted to a string.
+ * @returns A string representation of the error.
+ */
+export function errToString(err: unknown): string {
+  if (
+    typeof err === 'object' &&
+    err &&
+    'toString' in err &&
+    typeof err.toString === 'function'
+  ) {
+    // this should catch Errors and other objects with a toString method
+    return err.toString()
+  } else if (typeof err === 'string') {
+    return err
+  } else {
+    return JSON.stringify(err)
+  }
 }

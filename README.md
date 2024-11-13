@@ -214,6 +214,13 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 <dd><p>Add a timeout to any helper function from this library which returns a Promise.</p></dd>
 <dt><a href="#retry">retry(fn, [options])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Retries a function until it returns without throwing an error.</p></dd>
+<dt><a href="#errToString">errToString(err)</a> ⇒</dt>
+<dd><p>Converts an unknown error to a string representation.</p>
+<p>This function handles different types of errors and attempts to convert them
+to a string in a meaningful way. It checks if the error is an object with a
+<code>toString</code> method and uses that method if available. If the error is a string,
+it returns the string directly. For other types, it converts the error to a
+JSON string.</p></dd>
 </dl>
 
 ## Typedefs
@@ -751,4 +758,22 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 | [options.retries] | <code>number</code> | <code>5</code> | <p>The number of retry attempts.</p> |
 | [options.intervalMs] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
 | [options.timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
+
+<a name="errToString"></a>
+
+## errToString(err) ⇒
+<p>Converts an unknown error to a string representation.</p>
+<p>This function handles different types of errors and attempts to convert them
+to a string in a meaningful way. It checks if the error is an object with a
+<code>toString</code> method and uses that method if available. If the error is a string,
+it returns the string directly. For other types, it converts the error to a
+JSON string.</p>
+
+**Kind**: global function  
+**Returns**: <p>A string representation of the error.</p>  
+**Category**: Utilities  
+
+| Param | Description |
+| --- | --- |
+| err | <p>The unknown error to be converted to a string.</p> |
 
