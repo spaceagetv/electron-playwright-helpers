@@ -72,3 +72,55 @@ export function addTimeout<T extends HelperFunctionName>(
     timeoutMessage
   ) as ReturnType<AllPromiseHelpers[T]>
 }
+
+export type RetryOptions = {
+  retries?: number
+  intervalMs?: number
+  timeoutMs?: number
+}
+
+/**
+ * Retries a function until it returns without throwing an error.
+ *
+ * @category Utilities
+ *
+ * @template T The type of the value returned by the function.
+ * @param {Function} fn The function to retry.
+ * @param {RetryOptions} [options={}] The options for retrying the function.
+ * @param {number} [options.retries=5] The number of retry attempts.
+ * @param {number} [options.intervalMs=200] The delay between each retry attempt in milliseconds.
+ * @param {number} [options.timeoutMs=5000] The maximum time to wait before giving up in milliseconds.
+ * @returns {Promise<T>} A promise that resolves with the result of the function or rejects with an error or timeout message.
+ */
+export function retry<T>(
+  fn: () => Promise<T> | T,
+  options: RetryOptions = {}
+): Promise<T> {
+  const { retries = 5, intervalMs = 200, timeoutMs = 5000 } = options
+  let timeout: NodeJS.Timeout
+  const retry = new Promise<T>((resolve, reject) => {
+    let attempts = 0
+
+    timeout = setTimeout(() => {
+      reject(`timeout after ${timeoutMs}ms`)
+    }, timeoutMs)
+
+    const tryFn = async () => {
+      try {
+        attempts++
+        const result = await fn()
+        resolve(result)
+      } catch (error) {
+        if (attempts >= retries) {
+          reject(error)
+        } else {
+          setTimeout(tryFn, intervalMs)
+        }
+      }
+    }
+
+    tryFn()
+  })
+  retry.finally(() => clearTimeout(timeout))
+  return retry
+}

@@ -1,10 +1,6 @@
 import type { ElectronApplication, JSHandle, Page } from 'playwright-core'
 import type { PageFunctionOn } from 'playwright-core/types/structs'
-
-export type EvaluateWithRetryOptions = {
-  retries?: number
-  intervalMs?: number
-}
+import { retry, RetryOptions } from './utilities'
 
 /**
  * Wait for a function to evaluate to true in the main Electron process. This really
@@ -23,7 +19,7 @@ export async function electronWaitForFunction<R, Arg>(
   electronApp: ElectronApplication,
   fn: PageFunctionOn<typeof Electron.CrossProcessExports, Arg, R>,
   arg?: Arg,
-  options: EvaluateWithRetryOptions = {}
+  options: RetryOptions = {}
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
@@ -51,24 +47,9 @@ export async function evaluateWithRetry<R, Arg>(
   electronApp: ElectronApplication,
   fn: PageFunctionOn<typeof Electron.CrossProcessExports, Arg, R>,
   arg = {} as Arg,
-  options: EvaluateWithRetryOptions = {}
+  options: RetryOptions = {}
 ): Promise<R> {
-  const { retries = 5, intervalMs = 200 } = options
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      return await electronApp.evaluate(fn, arg)
-    } catch (err) {
-      if (attempt >= retries) {
-        console.error(`evaluateWithRetry failed after ${retries} attempts`)
-        throw err
-      }
-      const message = err instanceof Error ? err.message : String(err)
-      console.warn(`evaluateWithRetry attempt ${attempt} failed: ${message}`)
-      await new Promise((resolve) => setTimeout(resolve, intervalMs))
-      // go around again
-    }
-  }
-  return null as never
+  return retry(() => electronApp.evaluate(fn, arg), options)
 }
 
 /**
@@ -88,24 +69,7 @@ export async function evaluateWithRetry<R, Arg>(
 export async function browserWindowWithRetry(
   app: ElectronApplication,
   page: Page,
-  options: EvaluateWithRetryOptions = {}
+  options: RetryOptions = {}
 ): Promise<JSHandle> {
-  const { retries = 5, intervalMs = 200 } = options
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      return await app.browserWindow(page)
-    } catch (err) {
-      if (attempt >= retries) {
-        console.error(`getBrowserWithRetries failed after ${retries} attempts`)
-        throw err
-      }
-      const message = err instanceof Error ? err.message : String(err)
-      console.warn(
-        `getBrowserWithRetries attempt ${attempt} failed: ${message}`
-      )
-      await new Promise((resolve) => setTimeout(resolve, intervalMs))
-      // go around again
-    }
-  }
-  return null as never
+  return retry(() => app.browserWindow(page), options)
 }
