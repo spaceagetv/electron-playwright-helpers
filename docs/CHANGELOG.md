@@ -1,3 +1,10 @@
+# [1.8.0-beta.6](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.5...v1.8.0-beta.6) (2024-11-13)
+
+
+### Bug Fixes
+
+* retry() reject with proper Error ([4243488](https://github.com/spaceagetv/electron-playwright-helpers/commit/4243488d783496ba432bf91f8ddfb611385157c3))
+
 # [1.8.0-beta.5](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.4...v1.8.0-beta.5) (2024-11-13)
 
 
