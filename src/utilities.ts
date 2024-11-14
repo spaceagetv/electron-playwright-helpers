@@ -103,17 +103,18 @@ export function retry<T>(
   const { retries = 10, intervalMs = 200, timeoutMs = 5000 } = options
   let timeout: NodeJS.Timeout
   const retry = new Promise<T>((resolve, reject) => {
+    const stack = new Error().stack
     let attempts = 0
     let lastErr: unknown
 
     timeout = setTimeout(() => {
-      reject(
-        new Error(
-          `retry() :: Timeout after ${timeoutMs}ms. :: Last thrown: ${errToString(
-            lastErr
-          )}`
-        )
+      const err = new Error(
+        `retry() :: Timeout after ${timeoutMs}ms. :: Last thrown: ${errToString(
+          lastErr
+        )}`
       )
+      err.stack = stack
+      reject(err)
     }, timeoutMs)
 
     const tryFn = async () => {
