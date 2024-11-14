@@ -1,3 +1,10 @@
+# [1.8.0-beta.8](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.7...v1.8.0-beta.8) (2024-11-14)
+
+
+### Bug Fixes
+
+* include stack trace in retry() timeout error ([2f7fb3b](https://github.com/spaceagetv/electron-playwright-helpers/commit/2f7fb3b4fcf49aed71d9446e77e87c33cbb93c60))
+
 # [1.8.0-beta.7](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.6...v1.8.0-beta.7) (2024-11-13)
 
 
