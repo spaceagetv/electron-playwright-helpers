@@ -23,7 +23,7 @@ export async function electronWaitForFunction<R, Arg>(
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  while (!(await evaluateWithRetry(electronApp, fn, arg, options))) {
+  while (!(await retry(() => electronApp.evaluate(fn, arg), options))) {
     // wait 100ms before trying again
     await new Promise((resolve) => setTimeout(resolve, 100))
   }

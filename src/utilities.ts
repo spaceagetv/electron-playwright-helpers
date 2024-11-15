@@ -78,13 +78,18 @@ export function addTimeout<T extends HelperFunctionName>(
 }
 
 export type RetryOptions = {
+  /** The number of times to retry before failing */
   retries?: number
+  /** The delay between each retry attempt in milliseconds */
   intervalMs?: number
+  /** The maximum time to wait before giving up (in milliseconds) */
   timeoutMs?: number
+  /** The error message or pattern to match against. Errors that don't match will throw immediately. */
+  errorMatch?: string | RegExp
 }
 
 /**
- * Retries a function until it returns without throwing an error.
+ * Retries a function until it returns without throwing an error containing a specific message.
  *
  * @category Utilities
  *
@@ -94,48 +99,43 @@ export type RetryOptions = {
  * @param {number} [options.retries=5] The number of retry attempts.
  * @param {number} [options.intervalMs=200] The delay between each retry attempt in milliseconds.
  * @param {number} [options.timeoutMs=5000] The maximum time to wait before giving up in milliseconds.
+ * @param {string|RegExp} [options.errorMatch='context or browser has been closed'] The error message or pattern to match against.
  * @returns {Promise<T>} A promise that resolves with the result of the function or rejects with an error or timeout message.
  */
-export function retry<T>(
+export async function retry<T>(
   fn: () => Promise<T> | T,
   options: RetryOptions = {}
 ): Promise<T> {
-  const { retries = 10, intervalMs = 200, timeoutMs = 5000 } = options
-  let timeout: NodeJS.Timeout
-  const retry = new Promise<T>((resolve, reject) => {
-    const stack = new Error().stack
-    let attempts = 0
-    let lastErr: unknown
+  const {
+    retries = 10,
+    intervalMs = 200,
+    timeoutMs = 5000,
+    errorMatch = 'context or browser has been closed',
+  } = options
+  let counter = 0
+  const startTime = Date.now()
 
-    timeout = setTimeout(() => {
-      const err = new Error(
-        `retry() :: Timeout after ${timeoutMs}ms. :: Last thrown: ${errToString(
-          lastErr
-        )}`
-      )
-      err.stack = stack
-      reject(err)
-    }, timeoutMs)
-
-    const tryFn = async () => {
-      try {
-        attempts++
-        const result = await fn()
-        resolve(result)
-      } catch (err) {
-        if (attempts >= retries) {
-          reject(err)
-        } else {
-          lastErr = err
-          setTimeout(tryFn, intervalMs)
-        }
+  while (counter < retries) {
+    counter++
+    try {
+      return await fn()
+    } catch (err) {
+      const errString = errToString(err)
+      if (
+        (typeof errorMatch === 'string' && !errString.includes(errorMatch)) ||
+        (errorMatch instanceof RegExp && !errorMatch.test(errString))
+      ) {
+        throw err
       }
+      if (counter >= retries) {
+        throw err
+      }
+      if (Date.now() - startTime > timeoutMs) {
+        throw new Error(`Timeout after ${timeoutMs}ms`)
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs))
     }
-
-    tryFn()
-  })
-  retry.finally(() => clearTimeout(timeout))
-  return retry
+  }
 }
 
 /**

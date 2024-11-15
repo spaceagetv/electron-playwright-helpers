@@ -1,5 +1,5 @@
 import { ElectronApplication } from 'playwright-core'
-import { evaluateWithRetry } from './general_helpers'
+import { retry } from './utilities'
 
 export type DialogMethodStub<T extends keyof Electron.Dialog> = {
   method: T
@@ -138,9 +138,8 @@ export function stubMultipleDialogs<T extends keyof Electron.Dialog>(
   })
 
   // idea from https://github.com/microsoft/playwright/issues/8278#issuecomment-1009957411 by @MikeJerred
-  return evaluateWithRetry(
-    app,
-    ({ dialog }, mocks) => {
+  return retry(() =>
+    app.evaluate(({ dialog }, mocks) => {
       mocks.forEach((mock: DialogMethodStub<keyof Electron.Dialog>) => {
         const thisDialog = dialog[mock.method]
         if (!thisDialog) {
@@ -162,8 +161,7 @@ export function stubMultipleDialogs<T extends keyof Electron.Dialog>(
           }
         }
       })
-    },
-    mocksRequired
+    }, mocksRequired)
   )
 }
 

@@ -13,5 +13,9 @@
   "conventionalCommits.scopes": [
     "JSDoc",
     "types"
+  ],
+  "cSpell.words": [
+    "mocharc",
+    "retrier"
   ]
 }
