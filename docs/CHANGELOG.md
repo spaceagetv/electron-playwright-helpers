@@ -1,3 +1,10 @@
+# [1.8.0-beta.11](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.10...v1.8.0-beta.11) (2024-11-16)
+
+
+### Bug Fixes
+
+* update TypeScript target to ES2019 in tsconfig.json ([e3eb8d6](https://github.com/spaceagetv/electron-playwright-helpers/commit/e3eb8d6fc41c61d0ef8a0771bc84f211fd9686a6))
+
 # [1.8.0-beta.10](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.9...v1.8.0-beta.10) (2024-11-16)
 
 
