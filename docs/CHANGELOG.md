@@ -1,3 +1,10 @@
+# [1.8.0-beta.9](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.8...v1.8.0-beta.9) (2024-11-16)
+
+
+### Bug Fixes
+
+* Use retry everywhere ([6839258](https://github.com/spaceagetv/electron-playwright-helpers/commit/68392582a5c4c4f803a63312faf816a6e58b82fb))
+
 # [1.8.0-beta.8](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.7...v1.8.0-beta.8) (2024-11-14)
 
 
