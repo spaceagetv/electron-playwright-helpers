@@ -1,3 +1,10 @@
+# [1.8.0-beta.14](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.13...v1.8.0-beta.14) (2024-11-16)
+
+
+### Bug Fixes
+
+* increase default retry count and expand error matching criteria ([c686f81](https://github.com/spaceagetv/electron-playwright-helpers/commit/c686f8110f1ddd6772e7567cf7d44c86a7035974))
+
 # [1.8.0-beta.13](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.12...v1.8.0-beta.13) (2024-11-16)
 
 
