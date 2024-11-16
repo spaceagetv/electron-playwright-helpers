@@ -1,3 +1,12 @@
+# [1.8.0-beta.12](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.11...v1.8.0-beta.12) (2024-11-16)
+
+
+### Bug Fixes
+
+* replace 'rm -rf' with 'rimraf' ([225016a](https://github.com/spaceagetv/electron-playwright-helpers/commit/225016a9ee4c7f3ee5ae5f4a8f6d194358d56bd3))
+* tsc —project for older TS ([a81968c](https://github.com/spaceagetv/electron-playwright-helpers/commit/a81968cd0a60df70390020bdc7afa3be1a541c06))
+* update Node.js versions in CI workflow to include 20 ([19fb0fa](https://github.com/spaceagetv/electron-playwright-helpers/commit/19fb0fadba9ad3bd4aff1d47d748815dbe768ed8))
+
 # [1.8.0-beta.11](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.10...v1.8.0-beta.11) (2024-11-16)
 
 
