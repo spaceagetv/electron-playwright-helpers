@@ -1,5 +1,5 @@
 import { ElectronApplication, Page } from 'playwright-core'
-import { evaluateWithRetry } from './general_helpers'
+import { retry } from './utilities'
 
 /**
  * Send an `ipcRenderer.send()` (to main process) from a given window.
@@ -20,18 +20,20 @@ export function ipcRendererSend(
   channel: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  return page.evaluate(
-    ({ channel, args }) => {
-      if (!require) {
-        throw new Error(
-          `Cannot access require() in renderer process. Is nodeIntegration: true?`
-        )
-      }
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { ipcRenderer } = require('electron')
-      return ipcRenderer.send(channel, ...args)
-    },
-    { channel, args }
+  return retry(() =>
+    page.evaluate(
+      ({ channel, args }) => {
+        if (!require) {
+          throw new Error(
+            `Cannot access require() in renderer process. Is nodeIntegration: true?`
+          )
+        }
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { ipcRenderer } = require('electron')
+        return ipcRenderer.send(channel, ...args)
+      },
+      { channel, args }
+    )
   )
 }
 
@@ -54,18 +56,20 @@ export function ipcRendererInvoke(
   message: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  return page.evaluate(
-    async ({ message, args }) => {
-      if (!require) {
-        throw new Error(
-          `Cannot access require() in renderer process. Is nodeIntegration: true?`
-        )
-      }
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { ipcRenderer } = require('electron')
-      return await ipcRenderer.invoke(message, ...args)
-    },
-    { message, args }
+  return retry(() =>
+    page.evaluate(
+      async ({ message, args }) => {
+        if (!require) {
+          throw new Error(
+            `Cannot access require() in renderer process. Is nodeIntegration: true?`
+          )
+        }
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { ipcRenderer } = require('electron')
+        return await ipcRenderer.invoke(message, ...args)
+      },
+      { message, args }
+    )
   )
 }
 
@@ -86,33 +90,33 @@ export function ipcRendererInvoke(
  * @returns {Promise<unknown>}
  * @fulfil {unknown} the result of the first `ipcRenderer.on()` listener
  */
-export async function ipcRendererCallFirstListener(
+export function ipcRendererCallFirstListener(
   page: Page,
   message: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  const result = await page.evaluate(
-    async ({ message, args }) => {
-      if (!require) {
-        throw new Error(
-          `Cannot access require() in renderer process. Is nodeIntegration: true?`
-        )
-      }
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { ipcRenderer } = require('electron')
-      if (ipcRenderer.listenerCount(message) > 0) {
-        // we send a fake event in place of the ipc event object
-        const event = {} as Electron.IpcRendererEvent
-        // also, we await in case the listener returns a promise
-        return await ipcRenderer.listeners(message)[0](event, ...args)
-      } else {
-        throw new Error(`No ipcRenderer listeners for '${message}'`)
-      }
-    },
-    { message, args }
+  return retry(() =>
+    page.evaluate(
+      async ({ message, args }) => {
+        if (!require) {
+          throw new Error(
+            `Cannot access require() in renderer process. Is nodeIntegration: true?`
+          )
+        }
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { ipcRenderer } = require('electron')
+        if (ipcRenderer.listenerCount(message) > 0) {
+          // we send a fake event in place of the ipc event object
+          const event = {} as Electron.IpcRendererEvent
+          // also, we await in case the listener returns a promise
+          return await ipcRenderer.listeners(message)[0](event, ...args)
+        } else {
+          throw new Error(`No ipcRenderer listeners for '${message}'`)
+        }
+      },
+      { message, args }
+    )
   )
-  // console.log(`ipcRendererCallFirstListener(${message}) result: ${result} `)
-  return result
 }
 
 /**
@@ -138,23 +142,25 @@ export function ipcRendererEmit(
   message: string,
   ...args: unknown[]
 ): Promise<boolean> {
-  return page.evaluate(
-    ({ message, args }) => {
-      if (!require) {
-        throw new Error(
-          `Cannot access require() in renderer process. Is nodeIntegration: true?`
-        )
-      }
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { ipcRenderer } = require('electron')
-      if (ipcRenderer.listenerCount(message) === 0) {
-        throw new Error(`No ipcRenderer listeners for '${message}'`)
-      }
-      // create a fake event object
-      const event = {} as Electron.IpcRendererEvent
-      return ipcRenderer.emit(message, event, ...args)
-    },
-    { message, args }
+  return retry(() =>
+    page.evaluate(
+      ({ message, args }) => {
+        if (!require) {
+          throw new Error(
+            `Cannot access require() in renderer process. Is nodeIntegration: true?`
+          )
+        }
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { ipcRenderer } = require('electron')
+        if (ipcRenderer.listenerCount(message) === 0) {
+          throw new Error(`No ipcRenderer listeners for '${message}'`)
+        }
+        // create a fake event object
+        const event = {} as Electron.IpcRendererEvent
+        return ipcRenderer.emit(message, event, ...args)
+      },
+      { message, args }
+    )
   )
 }
 
@@ -179,18 +185,19 @@ export function ipcMainEmit(
   message: string,
   ...args: unknown[]
 ): Promise<boolean> {
-  return evaluateWithRetry(
-    electronApp,
-    ({ ipcMain }, { message, args }) => {
-      if (ipcMain.listeners(message).length > 0) {
-        // fake ipcMainEvent
-        const event = {} as Electron.IpcMainEvent
-        return ipcMain.emit(message, event, ...args)
-      } else {
-        throw new Error(`No ipcMain listeners for '${message}'`)
-      }
-    },
-    { message, args }
+  return retry(() =>
+    electronApp.evaluate(
+      ({ ipcMain }, { message, args }) => {
+        if (ipcMain.listeners(message).length > 0) {
+          // fake ipcMainEvent
+          const event = {} as Electron.IpcMainEvent
+          return ipcMain.emit(message, event, ...args)
+        } else {
+          throw new Error(`No ipcMain listeners for '${message}'`)
+        }
+      },
+      { message, args }
+    )
   )
 }
 
@@ -217,18 +224,19 @@ export async function ipcMainCallFirstListener(
   message: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  return await evaluateWithRetry(
-    electronApp,
-    async ({ ipcMain }, { message, args }) => {
-      if (ipcMain.listenerCount(message) > 0) {
-        // fake ipcMainEvent
-        const event = {} as Electron.IpcMainEvent
-        return await ipcMain.listeners(message)[0](event, ...args)
-      } else {
-        throw new Error(`No listeners for message ${message}`)
-      }
-    },
-    { message, args }
+  return retry(() =>
+    electronApp.evaluate(
+      async ({ ipcMain }, { message, args }) => {
+        if (ipcMain.listenerCount(message) > 0) {
+          // fake ipcMainEvent
+          const event = {} as Electron.IpcMainEvent
+          return await ipcMain.listeners(message)[0](event, ...args)
+        } else {
+          throw new Error(`No listeners for message ${message}`)
+        }
+      },
+      { message, args }
+    )
   )
 }
 
@@ -263,34 +271,35 @@ export async function ipcMainInvokeHandler(
   message: string,
   ...args: unknown[]
 ): Promise<unknown> {
-  return await evaluateWithRetry(
-    electronApp,
-    async ({ ipcMain }, { message, args }) => {
-      const ipcMainWH = ipcMain as IpcMainWithHandlers
-      // this is all a bit of a hack, so let's test as we go
-      if (!ipcMainWH._invokeHandlers) {
-        throw new Error(`Cannot access ipcMain._invokeHandlers`)
-      }
-      const handler = ipcMainWH._invokeHandlers.get(message)
-      if (!handler) {
-        throw new Error(`No ipcMain handler registered for '${message}'`)
-      }
-      // in electron <= 24, the event object's _reply() method is called
-      let e24reply: unknown
-      const e = {} as IpcMainInvokeEventWithReply
-      e._reply = (value: unknown) => {
-        e24reply = value
-      }
-      e._throw = function (error: Error) {
-        throw error
-      }
-      // in electron >= 25, we can simply call the handler
-      const e25reply = await handler(e, ...args)
+  return retry(() =>
+    electronApp.evaluate(
+      async ({ ipcMain }, { message, args }) => {
+        const ipcMainWH = ipcMain as IpcMainWithHandlers
+        // this is all a bit of a hack, so let's test as we go
+        if (!ipcMainWH._invokeHandlers) {
+          throw new Error(`Cannot access ipcMain._invokeHandlers`)
+        }
+        const handler = ipcMainWH._invokeHandlers.get(message)
+        if (!handler) {
+          throw new Error(`No ipcMain handler registered for '${message}'`)
+        }
+        // in electron <= 24, the event object's _reply() method is called
+        let e24reply: unknown
+        const e = {} as IpcMainInvokeEventWithReply
+        e._reply = (value: unknown) => {
+          e24reply = value
+        }
+        e._throw = function (error: Error) {
+          throw error
+        }
+        // in electron >= 25, we can simply call the handler
+        const e25reply = await handler(e, ...args)
 
-      // return the value from the event object if it exists
-      // otherwise return the value from the handler
-      return (await e24reply) ?? e25reply
-    },
-    { message, args }
+        // return the value from the event object if it exists
+        // otherwise return the value from the handler
+        return (await e24reply) ?? e25reply
+      },
+      { message, args }
+    )
   )
 }

@@ -1,0 +1,20 @@
+{
+  "configurations": [
+    {
+      "name": "E2E Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/example-project/node_modules/.bin/playwright",
+      "runtimeArgs": [
+        "test",
+        "--retries=0",
+        "--max-failures=1",
+      ],
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/example-project/node_modules/.bin/playwright.cmd"
+      },
+      "cwd": "${workspaceFolder}/example-project",
+      // "preLaunchTask": "cd ./example-project && electron-forge package"
+    },
+  ],
+}

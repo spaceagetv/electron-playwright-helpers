@@ -213,7 +213,7 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 <dt><a href="#addTimeout">addTimeout(functionName, timeoutMs, timeoutMessage, ...args)</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Add a timeout to any helper function from this library which returns a Promise.</p></dd>
 <dt><a href="#retry">retry(fn, [options])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
-<dd><p>Retries a function until it returns without throwing an error.</p></dd>
+<dd><p>Retries a function until it returns without throwing an error containing a specific message.</p></dd>
 <dt><a href="#errToString">errToString(err)</a> ⇒</dt>
 <dd><p>Converts an unknown error to a string representation.</p>
 <p>This function handles different types of errors and attempts to convert them
@@ -745,7 +745,7 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 <a name="retry"></a>
 
 ## retry(fn, [options]) ⇒ <code>Promise.&lt;T&gt;</code>
-<p>Retries a function until it returns without throwing an error.</p>
+<p>Retries a function until it returns without throwing an error containing a specific message.</p>
 
 **Kind**: global function  
 **Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.</p>  
@@ -758,6 +758,7 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 | [options.retries] | <code>number</code> | <code>5</code> | <p>The number of retry attempts.</p> |
 | [options.intervalMs] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
 | [options.timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
+| [options.errorMatch] | <code>string</code> \| <code>RegExp</code> | <code>&quot;&#x27;context or browser has been closed&#x27;&quot;</code> | <p>The error message or pattern to match against.</p> |
 
 <a name="errToString"></a>
 

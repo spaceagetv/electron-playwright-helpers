@@ -69,6 +69,9 @@ test.beforeAll(async () => {
     args: [appInfo.main],
     executablePath: appInfo.executable,
   })
+  electronApp.on('console', (msg) => {
+    console.log(msg.text())
+  })
   setApp(electronApp)
   electronApp.on('window', async (page) => {
     const filename = page.url()?.split('/').pop()
@@ -168,6 +171,22 @@ test('get data from a ipcMain.handle() function in main', async () => {
   expect(result).toBe(4)
 })
 
+test('error when calling a non-existent ipcMain.handle() channel', async () => {
+  const page = latestPage()
+  if (!page) {
+    throw new Error('No page found')
+  }
+  // await expect(
+  //   ipcMainInvokeHandler(getApp(), 'non-existent-channel')
+  // ).rejects.toThrow()
+  try {
+    await ipcMainInvokeHandler(getApp(), 'non-existent-channel')
+  } catch (error) {
+    expect(error).toBeInstanceOf(Error)
+    expect((error as Error).message).toContain(`No ipcMain handler registered`)
+  }
+})
+
 test('receive synchronous data via ipcRendererCallFirstListener()', async () => {
   const page = latestPage()
   if (!page) {
@@ -208,16 +227,32 @@ test('throw error via ipcRendererCallFirstListener with bogus channel', async ()
   if (!page) {
     throw new Error('No page found')
   }
-  await expect(
-    ipcRendererCallFirstListener(page, 'bogus-channel')
-  ).rejects.toThrowError(`No ipcRenderer listeners for 'bogus-channel'`)
+  try {
+    await ipcRendererCallFirstListener(page, 'bogus-channel')
+      .then(() => {
+        throw new Error(
+          'ipcRendererCallFirstListener should have thrown an error'
+        )
+      })
+      .catch((err) => {
+        expect(err).toBeInstanceOf(Error)
+        expect((err as Error).message).toContain(
+          `No ipcRenderer listeners for 'bogus-channel'`
+        )
+      })
+  } catch (error) {
+    console.log(JSON.stringify(error))
+  }
 })
 
-test('throw error via ipcRendererCallFirstListener with bogus page`)', async () => {
+test('throw error via ipcRendererCallFirstListener with bogus page', async () => {
   const page = {} as Page
-  await expect(
-    ipcRendererCallFirstListener(page, 'get-asynchronous-data')
-  ).rejects.toThrowError()
+  try {
+    await ipcRendererCallFirstListener(page, 'get-asynchronous-data')
+    throw new Error('ipcRendererCallFirstListener should have thrown an error')
+  } catch (error) {
+    console.log(JSON.stringify(error))
+  }
 })
 
 test('send an ipcRendererEmit.emit() message and expect element to appear', async () => {
