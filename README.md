@@ -214,6 +214,20 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 <dd><p>Add a timeout to any helper function from this library which returns a Promise.</p></dd>
 <dt><a href="#retry">retry(fn, [options])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Retries a function until it returns without throwing an error containing a specific message.</p></dd>
+<dt><a href="#setRetryOptions">setRetryOptions(options)</a> ⇒</dt>
+<dd><p>Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
+You can reset the defaults at any time by calling resetRetryDefaults().</p></dd>
+<dt><a href="#getRetryOptions">getRetryOptions()</a> ⇒</dt>
+<dd><p>Gets the current default retry options.</p></dd>
+<dt><a href="#resetRetryOptions">resetRetryOptions()</a></dt>
+<dd><p>Resets the retry options to their default values.</p>
+<p>The default values are:</p>
+<ul>
+<li>retries: 5</li>
+<li>intervalMs: 200</li>
+<li>timeoutMs: 5000</li>
+<li>errorMatch: 'context or browser has been closed'</li>
+</ul></dd>
 <dt><a href="#errToString">errToString(err)</a> ⇒</dt>
 <dd><p>Converts an unknown error to a string representation.</p>
 <p>This function handles different types of errors and attempts to convert them
@@ -758,8 +772,44 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 | [options.retries] | <code>number</code> | <code>5</code> | <p>The number of retry attempts.</p> |
 | [options.intervalMs] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
 | [options.timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
-| [options.errorMatch] | <code>string</code> \| <code>RegExp</code> | <code>&quot;&#x27;context or browser has been closed&#x27;&quot;</code> | <p>The error message or pattern to match against.</p> |
+| [options.errorMatch] | <code>string</code> \| <code>RegExp</code> | <code>&quot;[&#x27;context or browser has been closed&#x27;, &#x27;Promise was collected&#x27;]&quot;</code> | <p>The error message or pattern to match against.</p> |
 
+<a name="setRetryOptions"></a>
+
+## setRetryOptions(options) ⇒
+<p>Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
+You can reset the defaults at any time by calling resetRetryDefaults().</p>
+
+**Kind**: global function  
+**Returns**: <p>The updated retry options.</p>  
+**Category**: Utilities  
+
+| Param | Description |
+| --- | --- |
+| options | <p>A partial object containing the retry options to be set.</p> |
+
+<a name="getRetryOptions"></a>
+
+## getRetryOptions() ⇒
+<p>Gets the current default retry options.</p>
+
+**Kind**: global function  
+**Returns**: <p>The current retry options.</p>  
+**Category**: Utilities  
+<a name="resetRetryOptions"></a>
+
+## resetRetryOptions()
+<p>Resets the retry options to their default values.</p>
+<p>The default values are:</p>
+<ul>
+<li>retries: 5</li>
+<li>intervalMs: 200</li>
+<li>timeoutMs: 5000</li>
+<li>errorMatch: 'context or browser has been closed'</li>
+</ul>
+
+**Kind**: global function  
+**Category**: Utilities  
 <a name="errToString"></a>
 
 ## errToString(err) ⇒
