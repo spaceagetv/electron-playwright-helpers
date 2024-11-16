@@ -1,3 +1,10 @@
+# [1.8.0-beta.10](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.9...v1.8.0-beta.10) (2024-11-16)
+
+
+### Bug Fixes
+
+* update build script to use specific tsconfig and add new tsconfig.build.json ([86be85b](https://github.com/spaceagetv/electron-playwright-helpers/commit/86be85bb6f95cfeb7f14ba594357b1d01efd3797))
+
 # [1.8.0-beta.9](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.8...v1.8.0-beta.9) (2024-11-16)
 
 
