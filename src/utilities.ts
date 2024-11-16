@@ -84,8 +84,12 @@ export type RetryOptions = {
   intervalMs?: number
   /** The maximum time to wait before giving up (in milliseconds) */
   timeoutMs?: number
-  /** The error message or pattern to match against. Errors that don't match will throw immediately. */
-  errorMatch?: string | RegExp
+  /**
+   * The error message or pattern to match against. Errors that don't match will throw immediately.
+   * If a string or array of strings, the error will throw if it does not contain (one of) the passed string(s).
+   * If a RegExp, the error will throw if it does not match the pattern.
+   */
+  errorMatch?: string | string[] | RegExp
 }
 
 /**
@@ -99,19 +103,17 @@ export type RetryOptions = {
  * @param {number} [options.retries=5] The number of retry attempts.
  * @param {number} [options.intervalMs=200] The delay between each retry attempt in milliseconds.
  * @param {number} [options.timeoutMs=5000] The maximum time to wait before giving up in milliseconds.
- * @param {string|RegExp} [options.errorMatch='context or browser has been closed'] The error message or pattern to match against.
+ * @param {string|RegExp} [options.errorMatch=['context or browser has been closed', 'Promise was collected']] The error message or pattern to match against.
  * @returns {Promise<T>} A promise that resolves with the result of the function or rejects with an error or timeout message.
  */
 export async function retry<T>(
   fn: () => Promise<T> | T,
   options: RetryOptions = {}
 ): Promise<T> {
-  const {
-    retries = 10,
-    intervalMs = 200,
-    timeoutMs = 5000,
-    errorMatch = 'context or browser has been closed',
-  } = options
+  const { retries, intervalMs, timeoutMs, errorMatch } = {
+    ...getRetryOptions(),
+    ...options,
+  }
   let counter = 0
   const startTime = Date.now()
 
@@ -122,8 +124,13 @@ export async function retry<T>(
     } catch (err) {
       const errString = errToString(err)
       if (
-        (typeof errorMatch === 'string' && !errString.includes(errorMatch)) ||
-        (errorMatch instanceof RegExp && !errorMatch.test(errString))
+        (typeof errorMatch === 'string' &&
+          !errString.toLowerCase().includes(errorMatch.toLowerCase())) ||
+        (errorMatch instanceof RegExp && !errorMatch.test(errString)) ||
+        (Array.isArray(errorMatch) &&
+          !errorMatch.some((match) =>
+            errString.toLowerCase().includes(match.toLowerCase())
+          ))
       ) {
         throw err
       }
@@ -136,6 +143,55 @@ export async function retry<T>(
       await new Promise((resolve) => setTimeout(resolve, intervalMs))
     }
   }
+}
+
+const retryDefaults: RetryOptions = {
+  retries: 5,
+  intervalMs: 200,
+  timeoutMs: 5000,
+  errorMatch: ['context or browser has been closed', 'Promise was collected'],
+}
+
+const currentRetryOptions: RetryOptions = { ...retryDefaults }
+
+/**
+ * Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
+ * You can reset the defaults at any time by calling resetRetryOptions().
+ *
+ * @category Utilities
+ *
+ * @param options - A partial object containing the retry options to be set.
+ * @returns The updated retry options.
+ */
+export function setRetryOptions(options: Partial<RetryOptions>): RetryOptions {
+  Object.assign(currentRetryOptions, options)
+  return retryDefaults
+}
+
+/**
+ * Gets the current default retry options.
+ *
+ * @category Utilities
+ *
+ * @returns The current retry options.
+ */
+export function getRetryOptions(): RetryOptions {
+  return { ...currentRetryOptions }
+}
+
+/**
+ * Resets the retry options to their default values.
+ *
+ * The default values are:
+ * - retries: 5
+ * - intervalMs: 200
+ * - timeoutMs: 5000
+ * - errorMatch: 'context or browser has been closed'
+ *
+ * @category Utilities
+ */
+export function resetRetryOptions(): void {
+  Object.assign(currentRetryOptions, retryDefaults)
 }
 
 /**
