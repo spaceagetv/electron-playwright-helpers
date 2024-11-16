@@ -11,7 +11,7 @@
   "homepage": "https://github.com/spaceagetv/electron-playwright-helpers#readme",
   "scripts": {
     "make": "npm run make:compile && npm run make:doc",
-    "make:compile": "rimraf dist; tsc -p tsconfig.build.json",
+    "make:compile": "rimraf dist && tsc --project tsconfig.build.json",
     "make:doc": "npx jsdoc2md --template ./readme-template.hbs.md --files ./src/*.ts --configure ./jsdoc2md.json > ./README.md",
     "lint": "npx eslint src/**/*.ts",
     "lint:fix": "npx eslint src/**/*.ts --fix",
