@@ -1,3 +1,10 @@
+# [1.8.0-beta.13](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.12...v1.8.0-beta.13) (2024-11-16)
+
+
+### Features
+
+* add retry options management functions and update error matching logic ([ed8a92c](https://github.com/spaceagetv/electron-playwright-helpers/commit/ed8a92c6f913f83cc7a20c3133c90a69ab14bfc7))
+
 # [1.8.0-beta.12](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.11...v1.8.0-beta.12) (2024-11-16)
 
 

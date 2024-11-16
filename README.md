@@ -216,7 +216,7 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 <dd><p>Retries a function until it returns without throwing an error containing a specific message.</p></dd>
 <dt><a href="#setRetryOptions">setRetryOptions(options)</a> ⇒</dt>
 <dd><p>Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
-You can reset the defaults at any time by calling resetRetryDefaults().</p></dd>
+You can reset the defaults at any time by calling resetRetryOptions().</p></dd>
 <dt><a href="#getRetryOptions">getRetryOptions()</a> ⇒</dt>
 <dd><p>Gets the current default retry options.</p></dd>
 <dt><a href="#resetRetryOptions">resetRetryOptions()</a></dt>
@@ -778,7 +778,7 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 
 ## setRetryOptions(options) ⇒
 <p>Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
-You can reset the defaults at any time by calling resetRetryDefaults().</p>
+You can reset the defaults at any time by calling resetRetryOptions().</p>
 
 **Kind**: global function  
 **Returns**: <p>The updated retry options.</p>  
