@@ -146,10 +146,14 @@ export async function retry<T>(
 }
 
 const retryDefaults: RetryOptions = {
-  retries: 5,
+  retries: 20,
   intervalMs: 200,
   timeoutMs: 5000,
-  errorMatch: ['context or browser has been closed', 'Promise was collected'],
+  errorMatch: [
+    'context or browser has been closed',
+    'Promise was collected',
+    'Execution context was destroyed',
+  ],
 }
 
 const currentRetryOptions: RetryOptions = { ...retryDefaults }
