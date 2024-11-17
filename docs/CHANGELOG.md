@@ -1,3 +1,10 @@
+# [1.8.0-beta.16](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.15...v1.8.0-beta.16) (2024-11-17)
+
+
+### Bug Fixes
+
+* update retry options and improve tests for retryUntilTruthy ([2f024d1](https://github.com/spaceagetv/electron-playwright-helpers/commit/2f024d185c93b504163200b30be1be73ffe4f3bf))
+
 # [1.8.0-beta.15](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.14...v1.8.0-beta.15) (2024-11-17)
 
 
