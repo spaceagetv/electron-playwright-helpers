@@ -78,12 +78,10 @@ export function addTimeout<T extends HelperFunctionName>(
 }
 
 export type RetryOptions = {
-  /** The number of times to retry before failing */
-  retries?: number
-  /** The delay between each retry attempt in milliseconds */
-  intervalMs?: number
   /** The maximum time to wait before giving up (in milliseconds) */
-  timeoutMs?: number
+  timeout?: number
+  /** The delay between each retry attempt in milliseconds. Or use "raf" for requestAnimationFrame. */
+  poll?: number | 'raf'
   /**
    * The error message or pattern to match against. Errors that don't match will throw immediately.
    * If a string or array of strings, the error will throw if it does not contain (one of) the passed string(s).
@@ -98,6 +96,9 @@ export type RetryOptions = {
  * Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
  * It will often throw errors like "context or browser has been closed" or "Promise was collected" for no apparent reason.
  * This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.
+ *
+ *
+ * @example
  *
  * You can simply wrap your Playwright calls in this function to make them more reliable:
  *
@@ -121,7 +122,6 @@ export type RetryOptions = {
  * @template T The type of the value returned by the function.
  * @param {Function} fn The function to retry.
  * @param {RetryOptions} [options={}] The options for retrying the function.
- * @param {number} [options.retries=5] The number of retry attempts.
  * @param {number} [options.intervalMs=200] The delay between each retry attempt in milliseconds.
  * @param {number} [options.timeoutMs=5000] The maximum time to wait before giving up in milliseconds.
  * @param {string|string[]|RegExp} [options.errorMatch=['context or browser has been closed', 'Promise was collected', 'Execution context was destroyed']] String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.
@@ -131,18 +131,19 @@ export async function retry<T>(
   fn: () => Promise<T> | T,
   options: RetryOptions = {}
 ): Promise<T> {
-  const { retries, intervalMs, timeoutMs, errorMatch } = {
+  const { poll, timeout, errorMatch } = {
     ...getRetryOptions(),
     ...options,
   }
-  let counter = 0
   const startTime = Date.now()
 
-  while (counter < retries) {
-    counter++
+  let lastErr: unknown
+
+  while (Date.now() - startTime < timeout) {
     try {
       return await fn()
     } catch (err) {
+      lastErr = err
       const errString = errToString(err)
       if (
         (typeof errorMatch === 'string' &&
@@ -155,21 +156,27 @@ export async function retry<T>(
       ) {
         throw err
       }
-      if (counter >= retries) {
-        throw err
+      if (Date.now() - startTime > timeout) {
+        continue
       }
-      if (Date.now() - startTime > timeoutMs) {
-        throw new Error(`Timeout after ${timeoutMs}ms`)
+      if (poll === 'raf') {
+        if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+          await new Promise((resolve) => requestAnimationFrame(resolve))
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 20))
+        }
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, poll))
       }
-      await new Promise((resolve) => setTimeout(resolve, intervalMs))
     }
   }
+  const errMessage = lastErr ? ' Last trow: ' + errToString(lastErr) : ''
+  throw new Error(`retry()::Timeout after ${timeout}ms.${errMessage}`)
 }
 
 const retryDefaults: RetryOptions = {
-  retries: 20,
-  intervalMs: 200,
-  timeoutMs: 5000,
+  poll: 200,
+  timeout: 5000,
   errorMatch: [
     'context or browser has been closed',
     'Promise was collected',
@@ -208,7 +215,7 @@ export function getRetryOptions(): RetryOptions {
  * Resets the retry options to their default values.
  *
  * The default values are:
- * - retries: 5
+ * - retries: 20
  * - intervalMs: 200
  * - timeoutMs: 5000
  * - errorMatch: 'context or browser has been closed'
@@ -219,6 +226,19 @@ export function resetRetryOptions(): void {
   Object.assign(currentRetryOptions, retryDefaults)
 }
 
+export type RetryUntilTruthyOptions = {
+  /** The maximum time (milliseconds) to wait for a truthy result. Default 5000. */
+  timeout: number
+  /** The interval (milliseconds) between each retry (after a falsy result) */
+  poll: number | 'raf'
+  /** The maximum amount of time (milliseconds) to wait for an individual try to return a result */
+  retryTimeout: number
+  /** The amount of time (milliseconds) to wait before retrying after an error */
+  retryPoll: number
+  /** The error message or pattern to match against. Errors that don't match will throw immediately. */
+  retryErrorMatch: string | string[] | RegExp
+}
+
 /**
  * Retries a given function until it returns a truthy value or the timeout is reached.
  *
@@ -226,29 +246,63 @@ export function resetRetryOptions(): void {
  * method – but with more flexibility and control over the retry attempts. It also defaults to ignoring common errors due to
  * the way that Playwright handles browser contexts.
  *
+ * @example
+ *
+ * ```javascript
+ * test('my test', async () => {
+ *   // this will fail immediately if Playwright's context gets weird:
+ *   const oldWay = await page.waitForFunction(() => document.body.classList.contains('ready'))
+ *
+ *  // this will not fail if Playwright's context gets weird:
+ *   const newWay = await retryUntilTruthy(() =>
+ *     page.evaluate(() => document.body.classList.contains('ready'))
+ *   )
+ * })
+ * ```
+ *
  * @template T - The type of the value returned by the function.
- * @param {Function} fn - The function to retry. It can return a promise or a value.
+ * @param {Function} fn - The function to retry. It can return a promise or a value. It should NOT return void/undefined.
  * @param {number} [timeoutMs=5000] - The maximum time in milliseconds to keep retrying the function. Defaults to 5000ms.
  * @param {number} [intervalMs=100] - The delay between each retry attempt in milliseconds. Defaults to 100ms.
- * @param {RetryOptions} [options={}] - Optional options for each retry attempt.
+ * @param {number} [options.retryTimeout=5000] - The maximum time in milliseconds to wait for an individual try to return a result. Defaults to 5000ms.
+ * @param {number} [options.retryPoll=200] - The delay between each retry attempt in milliseconds. Defaults to 200ms.
+ * @param {string|string[]|RegExp} [options.retryErrorMatch] - The error message or pattern to match against. Errors that don't match will throw immediately.
  * @returns {Promise<T>} - A promise that resolves to the truthy value returned by the function.
  * @throws {Error} - Throws an error if the timeout is reached before a truthy value is returned.
  */
 export async function retryUntilTruthy<T>(
   fn: () => Promise<T> | T,
-  timeoutMs = 5000,
-  intervalMs = 100,
-  options: RetryOptions = {}
+  options: Partial<RetryUntilTruthyOptions> = {}
 ): Promise<T> {
-  const timeoutTime = Date.now() + timeoutMs
+  const {
+    timeout = 5000,
+    poll = 100,
+    retryPoll,
+    retryTimeout,
+    retryErrorMatch,
+  } = options
+  const retryOptions: RetryOptions = {
+    ...(retryPoll && { poll: retryPoll }),
+    ...(retryTimeout && { timeout: retryTimeout }),
+    ...(retryErrorMatch && { errorMatch: retryErrorMatch }),
+  }
+  const timeoutTime = Date.now() + timeout
   while (Date.now() < timeoutTime) {
-    const result = await retry(fn, options)
+    const result = await retry(fn, retryOptions)
     if (result) {
       return result
     }
-    await new Promise((resolve) => setTimeout(resolve, intervalMs))
+    if (poll === 'raf') {
+      if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      }
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, poll))
+    }
   }
-  throw new Error(`Timeout after ${timeoutMs}ms`)
+  throw new Error(`retryUntilTruthy::Timeout after ${timeout}ms`)
 }
 
 /**

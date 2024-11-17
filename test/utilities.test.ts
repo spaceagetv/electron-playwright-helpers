@@ -1,14 +1,10 @@
 import { expect } from 'chai'
 import {
   addTimeoutToPromise,
-  addTimeout,
-  retry,
-  setRetryOptions,
+  errToString,
   getRetryOptions,
   resetRetryOptions,
-  retryUntilTruthy,
-  errToString,
-  HelperFunctionName,
+  setRetryOptions,
 } from '../src/utilities'
 
 describe('Utilities', () => {
@@ -55,8 +51,8 @@ describe('Utilities', () => {
 
   describe('setRetryOptions', () => {
     it('should set the retry options', () => {
-      const options = setRetryOptions({ retries: 10 })
-      expect(options.retries).to.equal(10)
+      const options = setRetryOptions({ timeout: 10 })
+      expect(options.timeout).to.equal(10)
     })
   })
 
@@ -64,16 +60,16 @@ describe('Utilities', () => {
     it('should get the current retry options', () => {
       resetRetryOptions()
       const options = getRetryOptions()
-      expect(options.retries).to.equal(20)
+      expect(options.timeout).to.equal(5000)
     })
   })
 
   describe('resetRetryOptions', () => {
     it('should reset the retry options to default values', () => {
-      setRetryOptions({ retries: 10 })
+      setRetryOptions({ poll: 10 })
       resetRetryOptions()
       const options = getRetryOptions()
-      expect(options.retries).to.equal(20)
+      expect(options.poll).to.equal(200)
     })
   })
 

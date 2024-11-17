@@ -125,7 +125,7 @@ it throws the error.</p></dd>
 <dd><p>Returns the BrowserWindow object that corresponds to the given Playwright page (with retries).</p>
 <p>This is basically a wrapper around <code>[app.browserWindow(page)](https://playwright.dev/docs/api/class-electronapplication#electron-application-browser-window)</code>
 that retries the operation.</p></dd>
-<dt><a href="#retryUntilTruthy">retryUntilTruthy(fn, [timeoutMs], [intervalMs], [options])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
+<dt><a href="#retryUntilTruthy">retryUntilTruthy(fn, [timeoutMs], [intervalMs])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Retries a given function until it returns a truthy value or the timeout is reached.</p>
 <p>This offers similar functionality to Playwright's <a href="https://playwright.dev/docs/api/class-page#page-wait-for-function"><code>page.waitForFunction()</code></a>
 method – but with more flexibility and control over the retry attempts. It also defaults to ignoring common errors due to
@@ -221,21 +221,7 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 <dd><p>Retries a function until it returns without throwing an error.</p>
 <p>Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
 It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Promise was collected&quot; for no apparent reason.
-This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p>
-<p>You can simply wrap your Playwright calls in this function to make them more reliable:</p>
-<pre class="prettyprint source lang-javascript"><code>test('my test', async () => {
-  // instead of this:
-  const oldWayRenderer = await page.evaluate(() => document.body.classList.contains('active'))
-  const oldWayMain = await electronApp.evaluate(({}) => document.body.classList.contains('active'))
-  // use this:
-  const newWay = await retry(() =>
-    page.evaluate(() => document.body.classList.contains('active'))
-  )
-  // note the `() =>` in front of the original function call
-  // and the `await` keyword in front of `retry`,
-  // but NOT in front of `page.evaluate`
-})
-</code></pre></dd>
+This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p></dd>
 <dt><a href="#setRetryOptions">setRetryOptions(options)</a> ⇒</dt>
 <dd><p>Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
 You can reset the defaults at any time by calling resetRetryOptions().</p></dd>
@@ -245,7 +231,7 @@ You can reset the defaults at any time by calling resetRetryOptions().</p></dd>
 <dd><p>Resets the retry options to their default values.</p>
 <p>The default values are:</p>
 <ul>
-<li>retries: 5</li>
+<li>retries: 20</li>
 <li>intervalMs: 200</li>
 <li>timeoutMs: 5000</li>
 <li>errorMatch: 'context or browser has been closed'</li>
@@ -378,7 +364,7 @@ that retries the operation.</p>
 
 <a name="retryUntilTruthy"></a>
 
-## retryUntilTruthy(fn, [timeoutMs], [intervalMs], [options]) ⇒ <code>Promise.&lt;T&gt;</code>
+## retryUntilTruthy(fn, [timeoutMs], [intervalMs]) ⇒ <code>Promise.&lt;T&gt;</code>
 <p>Retries a given function until it returns a truthy value or the timeout is reached.</p>
 <p>This offers similar functionality to Playwright's <a href="https://playwright.dev/docs/api/class-page#page-wait-for-function"><code>page.waitForFunction()</code></a>
 method – but with more flexibility and control over the retry attempts. It also defaults to ignoring common errors due to
@@ -397,11 +383,25 @@ the way that Playwright handles browser contexts.</p>
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| fn | <code>function</code> |  | <p>The function to retry. It can return a promise or a value.</p> |
+| fn | <code>function</code> |  | <p>The function to retry. It can return a promise or a value. It should NOT return void/undefined.</p> |
 | [timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time in milliseconds to keep retrying the function. Defaults to 5000ms.</p> |
 | [intervalMs] | <code>number</code> | <code>100</code> | <p>The delay between each retry attempt in milliseconds. Defaults to 100ms.</p> |
-| [options] | <code>RetryOptions</code> | <code>{}</code> | <p>Optional options for each retry attempt.</p> |
+| [options.retryTimeout] | <code>number</code> | <code>5000</code> | <p>The maximum time in milliseconds to wait for an individual try to return a result. Defaults to 5000ms.</p> |
+| [options.retryPoll] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds. Defaults to 200ms.</p> |
+| [options.retryErrorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> |  | <p>The error message or pattern to match against. Errors that don't match will throw immediately.</p> |
 
+**Example**  
+```javascript
+test('my test', async () => {
+  // this will fail immediately if Playwright's context gets weird:
+  const oldWay = await page.waitForFunction(() => document.body.classList.contains('ready'))
+
+ // this will not fail if Playwright's context gets weird:
+  const newWay = await retryUntilTruthy(() =>
+    page.evaluate(() => document.body.classList.contains('ready'))
+  )
+})
+```
 <a name="ElectronAppInfo"></a>
 
 ## ElectronAppInfo
@@ -811,8 +811,24 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 <p>Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
 It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Promise was collected&quot; for no apparent reason.
 This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p>
-<p>You can simply wrap your Playwright calls in this function to make them more reliable:</p>
-<pre class="prettyprint source lang-javascript"><code>test('my test', async () => {
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.</p>  
+**Category**: Utilities  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| fn | <code>function</code> |  | <p>The function to retry.</p> |
+| [options] | <code>RetryOptions</code> | <code>{}</code> | <p>The options for retrying the function.</p> |
+| [options.intervalMs] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
+| [options.timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
+| [options.errorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> | <code>&quot;[&#x27;context or browser has been closed&#x27;, &#x27;Promise was collected&#x27;, &#x27;Execution context was destroyed&#x27;]&quot;</code> | <p>String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.</p> |
+
+**Example**  
+You can simply wrap your Playwright calls in this function to make them more reliable:
+
+```javascript
+test('my test', async () => {
   // instead of this:
   const oldWayRenderer = await page.evaluate(() => document.body.classList.contains('active'))
   const oldWayMain = await electronApp.evaluate(({}) => document.body.classList.contains('active'))
@@ -824,21 +840,7 @@ This function retries a given function until it returns without throwing one of 
   // and the `await` keyword in front of `retry`,
   // but NOT in front of `page.evaluate`
 })
-</code></pre>
-
-**Kind**: global function  
-**Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.</p>  
-**Category**: Utilities  
-
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| fn | <code>function</code> |  | <p>The function to retry.</p> |
-| [options] | <code>RetryOptions</code> | <code>{}</code> | <p>The options for retrying the function.</p> |
-| [options.retries] | <code>number</code> | <code>5</code> | <p>The number of retry attempts.</p> |
-| [options.intervalMs] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
-| [options.timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
-| [options.errorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> | <code>&quot;[&#x27;context or browser has been closed&#x27;, &#x27;Promise was collected&#x27;, &#x27;Execution context was destroyed&#x27;]&quot;</code> | <p>String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.</p> |
-
+```
 <a name="setRetryOptions"></a>
 
 ## setRetryOptions(options) ⇒
@@ -867,7 +869,7 @@ You can reset the defaults at any time by calling resetRetryOptions().</p>
 <p>Resets the retry options to their default values.</p>
 <p>The default values are:</p>
 <ul>
-<li>retries: 5</li>
+<li>retries: 20</li>
 <li>intervalMs: 200</li>
 <li>timeoutMs: 5000</li>
 <li>errorMatch: 'context or browser has been closed'</li>

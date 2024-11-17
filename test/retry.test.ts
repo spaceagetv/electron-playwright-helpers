@@ -17,8 +17,7 @@ describe('retry', () => {
 
     await expect(
       retry(fn, {
-        retries: 5,
-        intervalMs: 0,
+        poll: 'raf',
         errorMatch: 'Counter too low',
       })
     ).to.eventually.equal(3)
@@ -28,7 +27,7 @@ describe('retry', () => {
     const fn = async () => {
       throw new Error('Always fails')
     }
-    await expect(retry(fn, { retries: 5, intervalMs: 0 })).to.be.rejectedWith(
+    await expect(retry(fn, { poll: 10, timeout: 20 })).to.be.rejectedWith(
       'Always fails'
     )
   })
@@ -40,7 +39,7 @@ describe('retry', () => {
       throw new Error('Unexpected error')
     }
 
-    await expect(retry(fn, { retries: 5, intervalMs: 0 })).to.be.rejectedWith(
+    await expect(retry(fn, { timeout: 10 })).to.be.rejectedWith(
       'Unexpected error'
     )
 
@@ -56,22 +55,20 @@ describe('retry', () => {
 
     await expect(
       retry(fn, {
-        retries: 3,
-        intervalMs: 0,
+        timeout: 20,
+        poll: 2,
         errorMatch: 'Always fails',
       })
     ).to.be.rejectedWith('Always fails')
 
-    expect(counter).to.equal(3)
+    expect(counter).to.be.greaterThan(1)
   })
 
   it('should succeed immediately if the function succeeds on the first try', async () => {
     const fn = async () => {
       return 'success'
     }
-    await expect(retry(fn, { retries: 5, intervalMs: 0 })).to.eventually.equal(
-      'success'
-    )
+    await expect(retry(fn)).to.eventually.equal('success')
   })
 
   it('should succeed immediately if the function succeeds on the first try with a non-zero interval', async () => {
@@ -80,9 +77,7 @@ describe('retry', () => {
       counter++
       return 'success'
     }
-    await expect(
-      retry(fn, { retries: 5, intervalMs: 1000 })
-    ).to.eventually.equal('success')
+    await expect(retry(fn)).to.eventually.equal('success')
     expect(counter).to.equal(1)
   })
 
@@ -92,9 +87,8 @@ describe('retry', () => {
     }
     await expect(
       retry(fn, {
-        retries: 50,
-        intervalMs: 100,
-        timeoutMs: 50,
+        poll: 100,
+        timeout: 50,
         errorMatch: 'Always fails',
       })
     ).to.be.rejectedWith('Timeout')
@@ -112,8 +106,7 @@ describe('retry', () => {
 
     await expect(
       retry(fn, {
-        retries: 5,
-        intervalMs: 0,
+        poll: 'raf',
         errorMatch: /counter too low/,
       })
     ).to.eventually.equal(5)
@@ -126,8 +119,8 @@ describe('retry', () => {
 
     await expect(
       retry(fn, {
-        retries: 5,
-        intervalMs: 0,
+        timeout: 10,
+        poll: 0,
         errorMatch: /counter too low/,
       })
     ).to.be.rejectedWith('Something else')
@@ -142,8 +135,8 @@ describe('retry', () => {
 
     await expect(
       retry(fn, {
-        retries: 5,
-        intervalMs: 0,
+        timeout: 10,
+        poll: 2,
         errorMatch: 'A',
       })
     ).to.be.rejectedWith('B')
@@ -159,7 +152,7 @@ describe('retry', () => {
     }
 
     await expect(
-      retry(fn, { retries: 5, intervalMs: 0, errorMatch: 'fail' })
+      retry(fn, { timeout: 1000, errorMatch: 'fail' })
     ).to.be.rejectedWith('fail')
 
     expect(counter).to.equal(5)
