@@ -93,7 +93,28 @@ export type RetryOptions = {
 }
 
 /**
- * Retries a function until it returns without throwing an error containing a specific message.
+ * Retries a function until it returns without throwing an error.
+ *
+ * Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
+ * It will often throw errors like "context or browser has been closed" or "Promise was collected" for no apparent reason.
+ * This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.
+ *
+ * You can simply wrap your Playwright calls in this function to make them more reliable:
+ *
+ * ```javascript
+ * test('my test', async () => {
+ *   // instead of this:
+ *   const oldWayRenderer = await page.evaluate(() => document.body.classList.contains('active'))
+ *   const oldWayMain = await electronApp.evaluate(({}) => document.body.classList.contains('active'))
+ *   // use this:
+ *   const newWay = await retry(() =>
+ *     page.evaluate(() => document.body.classList.contains('active'))
+ *   )
+ *   // note the `() =>` in front of the original function call
+ *   // and the `await` keyword in front of `retry`,
+ *   // but NOT in front of `page.evaluate`
+ * })
+ * ```
  *
  * @category Utilities
  *
@@ -103,7 +124,7 @@ export type RetryOptions = {
  * @param {number} [options.retries=5] The number of retry attempts.
  * @param {number} [options.intervalMs=200] The delay between each retry attempt in milliseconds.
  * @param {number} [options.timeoutMs=5000] The maximum time to wait before giving up in milliseconds.
- * @param {string|RegExp} [options.errorMatch=['context or browser has been closed', 'Promise was collected']] The error message or pattern to match against.
+ * @param {string|string[]|RegExp} [options.errorMatch=['context or browser has been closed', 'Promise was collected', 'Execution context was destroyed']] String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.
  * @returns {Promise<T>} A promise that resolves with the result of the function or rejects with an error or timeout message.
  */
 export async function retry<T>(
@@ -169,7 +190,7 @@ const currentRetryOptions: RetryOptions = { ...retryDefaults }
  */
 export function setRetryOptions(options: Partial<RetryOptions>): RetryOptions {
   Object.assign(currentRetryOptions, options)
-  return retryDefaults
+  return currentRetryOptions
 }
 
 /**
@@ -199,6 +220,38 @@ export function resetRetryOptions(): void {
 }
 
 /**
+ * Retries a given function until it returns a truthy value or the timeout is reached.
+ *
+ * This offers similar functionality to Playwright's [`page.waitForFunction()`](https://playwright.dev/docs/api/class-page#page-wait-for-function)
+ * method – but with more flexibility and control over the retry attempts. It also defaults to ignoring common errors due to
+ * the way that Playwright handles browser contexts.
+ *
+ * @template T - The type of the value returned by the function.
+ * @param {Function} fn - The function to retry. It can return a promise or a value.
+ * @param {number} [timeoutMs=5000] - The maximum time in milliseconds to keep retrying the function. Defaults to 5000ms.
+ * @param {number} [intervalMs=100] - The delay between each retry attempt in milliseconds. Defaults to 100ms.
+ * @param {RetryOptions} [options={}] - Optional options for each retry attempt.
+ * @returns {Promise<T>} - A promise that resolves to the truthy value returned by the function.
+ * @throws {Error} - Throws an error if the timeout is reached before a truthy value is returned.
+ */
+export async function retryUntilTruthy<T>(
+  fn: () => Promise<T> | T,
+  timeoutMs = 5000,
+  intervalMs = 100,
+  options: RetryOptions = {}
+): Promise<T> {
+  const timeoutTime = Date.now() + timeoutMs
+  while (Date.now() < timeoutTime) {
+    const result = await retry(fn, options)
+    if (result) {
+      return result
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs))
+  }
+  throw new Error(`Timeout after ${timeoutMs}ms`)
+}
+
+/**
  * Converts an unknown error to a string representation.
  *
  * This function handles different types of errors and attempts to convert them
@@ -213,13 +266,7 @@ export function resetRetryOptions(): void {
  * @returns A string representation of the error.
  */
 export function errToString(err: unknown): string {
-  if (
-    typeof err === 'object' &&
-    err &&
-    'toString' in err &&
-    typeof err.toString === 'function'
-  ) {
-    // this should catch Errors and other objects with a toString method
+  if (err instanceof Error) {
     return err.toString()
   } else if (typeof err === 'string') {
     return err
