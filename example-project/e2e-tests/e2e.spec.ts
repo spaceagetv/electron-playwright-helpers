@@ -26,6 +26,7 @@ import {
   ipcRendererInvoke,
   ipcRendererSend,
   parseElectronApp,
+  retryUntilTruthy,
   stubDialog,
   waitForMenuItemStatus,
 } from '../../src' // <-- replace with 'electron-playwright-helpers'
@@ -435,4 +436,50 @@ test('dialog.showSaveDialog stubbing', async () => {
   // get the currently "opened" file path
   const filePath2 = await ipcMainInvokeHandler(app, 'get-opened-file')
   expect(filePath2).toBe('/path/to/new-saved-file.txt')
+})
+
+test.describe('retryUntilTruthy()', () => {
+  test('retryUntilTruthy() returns true', async () => {
+    const page = latestPage()
+    if (!page) {
+      throw new Error('No page found')
+    }
+    const result = await retryUntilTruthy(() =>
+      page.evaluate(() => document.getElementById('new-window'))
+    )
+    expect(result).toBeTruthy()
+  })
+
+  test('retryUntilTruthy() timeout when returning false', async () => {
+    const page = latestPage()
+    if (!page) {
+      throw new Error('No page found')
+    }
+    await expect(
+      retryUntilTruthy(
+        () =>
+          page.evaluate(() => document.getElementById('non-existent-element')),
+        { timeout: 500 }
+      )
+    ).rejects.toThrow('Timeout after 500ms')
+  })
+
+  test('retryUntilTruthy() return truthy after a few iterations', async () => {
+    const page = latestPage()
+    if (!page) {
+      throw new Error('No page found')
+    }
+    await expect(
+      retryUntilTruthy(() =>
+        page.evaluate(() => {
+          const w = window as Window & { counter?: number }
+          if (!w.counter) {
+            w.counter = 0
+          }
+          w.counter++
+          return w.counter > 3
+        })
+      )
+    ).resolves.toBeTruthy()
+  })
 })

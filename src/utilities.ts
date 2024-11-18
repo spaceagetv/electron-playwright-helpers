@@ -79,15 +79,17 @@ export function addTimeout<T extends HelperFunctionName>(
 
 export type RetryOptions = {
   /** The maximum time to wait before giving up (in milliseconds) */
-  timeout?: number
+  timeout: number
   /** The delay between each retry attempt in milliseconds. Or use "raf" for requestAnimationFrame. */
-  poll?: number | 'raf'
+  poll: number | 'raf'
   /**
    * The error message or pattern to match against. Errors that don't match will throw immediately.
    * If a string or array of strings, the error will throw if it does not contain (one of) the passed string(s).
    * If a RegExp, the error will throw if it does not match the pattern.
    */
-  errorMatch?: string | string[] | RegExp
+  errorMatch: string | string[] | RegExp
+  /** If true, the retry function will be disabled and will throw immediately. */
+  disable: boolean
 }
 
 /**
@@ -122,22 +124,25 @@ export type RetryOptions = {
  * @template T The type of the value returned by the function.
  * @param {Function} fn The function to retry.
  * @param {RetryOptions} [options={}] The options for retrying the function.
- * @param {number} [options.intervalMs=200] The delay between each retry attempt in milliseconds.
- * @param {number} [options.timeoutMs=5000] The maximum time to wait before giving up in milliseconds.
+ * @param {number} [options.timeout=5000] The maximum time to wait before giving up in milliseconds.
+ * @param {number} [options.poll=200] The delay between each retry attempt in milliseconds.
  * @param {string|string[]|RegExp} [options.errorMatch=['context or browser has been closed', 'Promise was collected', 'Execution context was destroyed']] String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.
  * @returns {Promise<T>} A promise that resolves with the result of the function or rejects with an error or timeout message.
  */
 export async function retry<T>(
   fn: () => Promise<T> | T,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<T> {
   const { poll, timeout, errorMatch } = {
     ...getRetryOptions(),
     ...options,
   }
+  let lastErr: unknown
   const startTime = Date.now()
 
-  let lastErr: unknown
+  if (options.disable) {
+    return fn()
+  }
 
   while (Date.now() - startTime < timeout) {
     try {
@@ -156,7 +161,7 @@ export async function retry<T>(
       ) {
         throw err
       }
-      if (Date.now() - startTime > timeout) {
+      if (Date.now() - startTime >= timeout) {
         continue
       }
       if (poll === 'raf') {
@@ -175,6 +180,7 @@ export async function retry<T>(
 }
 
 const retryDefaults: RetryOptions = {
+  disable: false,
   poll: 200,
   timeout: 5000,
   errorMatch: [
@@ -237,6 +243,8 @@ export type RetryUntilTruthyOptions = {
   retryPoll: number
   /** The error message or pattern to match against. Errors that don't match will throw immediately. */
   retryErrorMatch: string | string[] | RegExp
+  /** If true, the retry function will be disabled and will throw immediately. */
+  retryDisable: boolean
 }
 
 /**
@@ -280,11 +288,13 @@ export async function retryUntilTruthy<T>(
     retryPoll,
     retryTimeout,
     retryErrorMatch,
+    retryDisable,
   } = options
   const retryOptions: RetryOptions = {
-    ...(retryPoll && { poll: retryPoll }),
-    ...(retryTimeout && { timeout: retryTimeout }),
+    ...(retryPoll !== undefined && { poll: retryPoll }),
+    ...(retryTimeout !== undefined && { timeout: retryTimeout }),
     ...(retryErrorMatch && { errorMatch: retryErrorMatch }),
+    ...(retryDisable !== undefined && { disable: retryDisable }),
   }
   const timeoutTime = Date.now() + timeout
   while (Date.now() < timeoutTime) {

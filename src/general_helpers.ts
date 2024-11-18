@@ -1,4 +1,4 @@
-import type { ElectronApplication, JSHandle, Page } from 'playwright-core'
+import type { ElectronApplication } from 'playwright-core'
 import type { PageFunctionOn } from 'playwright-core/types/structs'
 import { retry, RetryOptions } from './utilities'
 
@@ -19,7 +19,7 @@ export async function electronWaitForFunction<R, Arg>(
   electronApp: ElectronApplication,
   fn: PageFunctionOn<typeof Electron.CrossProcessExports, Arg, R>,
   arg?: Arg,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
@@ -47,29 +47,7 @@ export async function evaluateWithRetry<R, Arg>(
   electronApp: ElectronApplication,
   fn: PageFunctionOn<typeof Electron.CrossProcessExports, Arg, R>,
   arg = {} as Arg,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<R> {
   return retry(() => electronApp.evaluate(fn, arg), options)
-}
-
-/**
- * Returns the BrowserWindow object that corresponds to the given Playwright page (with retries).
- *
- * This is basically a wrapper around `[app.browserWindow(page)](https://playwright.dev/docs/api/class-electronapplication#electron-application-browser-window)`
- * that retries the operation.
- *
- * @param app - The Electron application instance.
- * @param page - The Playwright page instance.
- * @param options - Optional configuration for retries.
- * @param options.retries - The number of retry attempts. Defaults to 5.
- * @param options.intervalMs - The interval between retries in milliseconds. Defaults to 200.
- * @returns A promise that resolves to the browser window.
- * @throws Will throw an error if all retry attempts fail.
- */
-export async function browserWindowWithRetry(
-  app: ElectronApplication,
-  page: Page,
-  options: RetryOptions = {}
-): Promise<JSHandle> {
-  return retry(() => app.browserWindow(page), options)
 }

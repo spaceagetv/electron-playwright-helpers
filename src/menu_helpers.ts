@@ -17,7 +17,7 @@ import { RetryOptions, retry } from './utilities'
 export function clickMenuItemById(
   electronApp: ElectronApplication,
   id: string,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<unknown> {
   return retry(
     () =>
@@ -33,7 +33,7 @@ export function clickMenuItemById(
           throw new Error(`Menu item with id ${menuId} not found`)
         }
       }, id),
-    options
+    { disable: true, ...options }
   )
 }
 
@@ -57,7 +57,7 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
   electronApp: ElectronApplication,
   property: P,
   value: MenuItemPartial[P],
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<unknown> {
   const menuItem = await findMenuItem(electronApp, property, value)
   if (!menuItem) {
@@ -95,7 +95,7 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
         }
         await mI.click()
       }, menuItem.commandId),
-    options
+    { disable: true, ...options }
   )
 }
 
@@ -114,7 +114,7 @@ export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
   electronApp: ElectronApplication,
   menuId: string,
   attribute: T,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<Electron.MenuItem[T]> {
   const attr = attribute as keyof Electron.MenuItem
   const resultPromise = retry(
@@ -175,7 +175,7 @@ export type MenuItemPartial = MenuItemPrimitive & {
 export function getMenuItemById(
   electronApp: ElectronApplication,
   menuId: string,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<MenuItemPartial> {
   return retry(
     () =>
@@ -233,7 +233,7 @@ export function getMenuItemById(
  */
 export function getApplicationMenu(
   electronApp: ElectronApplication,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<MenuItemPartial[] | undefined> {
   const promise = retry(
     () =>
