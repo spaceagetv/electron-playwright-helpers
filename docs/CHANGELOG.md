@@ -1,3 +1,10 @@
+# [1.8.0-beta.19](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.18...v1.8.0-beta.19) (2024-11-18)
+
+
+### Bug Fixes
+
+* improve error handling for ipc helpers ([3102d34](https://github.com/spaceagetv/electron-playwright-helpers/commit/3102d3448ed479036d9b68d4db8e9cbf6d408f07))
+
 # [1.8.0-beta.18](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.17...v1.8.0-beta.18) (2024-11-18)
 
 
