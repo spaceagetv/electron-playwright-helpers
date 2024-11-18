@@ -1,4 +1,4 @@
-import type { ElectronApplication, JSHandle, Page } from 'playwright-core'
+import type { ElectronApplication } from 'playwright-core'
 import type { PageFunctionOn } from 'playwright-core/types/structs'
 import { retry, RetryOptions } from './utilities'
 

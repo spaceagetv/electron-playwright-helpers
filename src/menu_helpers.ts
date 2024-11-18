@@ -33,7 +33,7 @@ export function clickMenuItemById(
           throw new Error(`Menu item with id ${menuId} not found`)
         }
       }, id),
-    options
+    { disable: true, ...options }
   )
 }
 
@@ -95,7 +95,7 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
         }
         await mI.click()
       }, menuItem.commandId),
-    options
+    { disable: true, ...options }
   )
 }
 
