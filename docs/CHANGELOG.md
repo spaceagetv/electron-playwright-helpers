@@ -1,3 +1,10 @@
+# [1.8.0-beta.18](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.17...v1.8.0-beta.18) (2024-11-18)
+
+
+### Bug Fixes
+
+* don’t throw context error when retry is disabled ([1fc1789](https://github.com/spaceagetv/electron-playwright-helpers/commit/1fc1789a9024833c80c209243e3b08d8cd53c0c8))
+
 # [1.8.0-beta.17](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.16...v1.8.0-beta.17) (2024-11-18)
 
 
