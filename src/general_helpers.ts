@@ -19,7 +19,7 @@ export async function electronWaitForFunction<R, Arg>(
   electronApp: ElectronApplication,
   fn: PageFunctionOn<typeof Electron.CrossProcessExports, Arg, R>,
   arg?: Arg,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
@@ -47,7 +47,7 @@ export async function evaluateWithRetry<R, Arg>(
   electronApp: ElectronApplication,
   fn: PageFunctionOn<typeof Electron.CrossProcessExports, Arg, R>,
   arg = {} as Arg,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<R> {
   return retry(() => electronApp.evaluate(fn, arg), options)
 }
@@ -69,7 +69,7 @@ export async function evaluateWithRetry<R, Arg>(
 export async function browserWindowWithRetry(
   app: ElectronApplication,
   page: Page,
-  options: RetryOptions = {}
+  options: Partial<RetryOptions> = {}
 ): Promise<JSHandle> {
   return retry(() => app.browserWindow(page), options)
 }
