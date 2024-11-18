@@ -140,12 +140,24 @@ export async function retry<T>(
   let lastErr: unknown
   const startTime = Date.now()
 
-  if (options.disable) {
-    return fn()
+  let tries = 0
+
+  const shouldContinue = () => {
+    // always run once
+    if (tries < 1) return true
+    // if retries are disabled, don't run a second time
+    if (options.disable) return false
+    // if timeout is not reached, keep trying
+    if (Date.now() - startTime < timeout) {
+      return true
+    }
+    return false
   }
 
-  while (Date.now() - startTime < timeout) {
+  while (shouldContinue()) {
+    tries++
     try {
+      // Do it!
       return await fn()
     } catch (err) {
       lastErr = err
@@ -159,15 +171,23 @@ export async function retry<T>(
             errString.toLowerCase().includes(match.toLowerCase())
           ))
       ) {
+        // it's not a matching error, throw immediately
         throw err
       }
-      if (Date.now() - startTime >= timeout) {
-        continue
+      if (!shouldContinue()) {
+        if (options.disable) {
+          // if matching error was thrown, but retries are disabled
+          // just return undefined
+          return
+        }
+        break
       }
       if (poll === 'raf') {
         if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+          // we're in a renderer environment and can use requestAnimationFrame
           await new Promise((resolve) => requestAnimationFrame(resolve))
         } else {
+          // we're in Node.js or another environment without requestAnimationFrame
           await new Promise((resolve) => setTimeout(resolve, 20))
         }
       } else {
