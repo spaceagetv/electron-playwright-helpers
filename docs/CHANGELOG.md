@@ -1,3 +1,11 @@
+# [1.8.0-beta.17](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.16...v1.8.0-beta.17) (2024-11-18)
+
+
+### Bug Fixes
+
+* disable option for retry ([3f7f9be](https://github.com/spaceagetv/electron-playwright-helpers/commit/3f7f9beca162265953d3dbb7507276f5056c3805))
+* disable retry on menuItemClick ƒs ([14a410e](https://github.com/spaceagetv/electron-playwright-helpers/commit/14a410ea0cf2a33bc251de5f8e2d555ba9670930))
+
 # [1.8.0-beta.16](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.15...v1.8.0-beta.16) (2024-11-17)
 
 
