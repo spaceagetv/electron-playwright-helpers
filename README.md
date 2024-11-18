@@ -121,10 +121,6 @@ throwing an error saying the execution context has been destroyed.
 This function retries the evaluation several times to see if it can
 run the evaluation without an error. If it fails after the retries,
 it throws the error.</p></dd>
-<dt><a href="#browserWindowWithRetry">browserWindowWithRetry(app, page, options)</a> ⇒</dt>
-<dd><p>Returns the BrowserWindow object that corresponds to the given Playwright page (with retries).</p>
-<p>This is basically a wrapper around <code>[app.browserWindow(page)](https://playwright.dev/docs/api/class-electronapplication#electron-application-browser-window)</code>
-that retries the operation.</p></dd>
 <dt><a href="#retryUntilTruthy">retryUntilTruthy(fn, [timeoutMs], [intervalMs])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Retries a given function until it returns a truthy value or the timeout is reached.</p>
 <p>This offers similar functionality to Playwright's <a href="https://playwright.dev/docs/api/class-page#page-wait-for-function"><code>page.waitForFunction()</code></a>
@@ -339,28 +335,6 @@ it throws the error.</p>
 | arg | <code>Any</code> | <p>an argument to pass to the function</p> |
 | retries |  | <p>the number of times to retry the evaluation</p> |
 | retryIntervalMs |  | <p>the interval between retries</p> |
-
-<a name="browserWindowWithRetry"></a>
-
-## browserWindowWithRetry(app, page, options) ⇒
-<p>Returns the BrowserWindow object that corresponds to the given Playwright page (with retries).</p>
-<p>This is basically a wrapper around <code>[app.browserWindow(page)](https://playwright.dev/docs/api/class-electronapplication#electron-application-browser-window)</code>
-that retries the operation.</p>
-
-**Kind**: global function  
-**Returns**: <p>A promise that resolves to the browser window.</p>  
-**Throws**:
-
-- <p>Will throw an error if all retry attempts fail.</p>
-
-
-| Param | Description |
-| --- | --- |
-| app | <p>The Electron application instance.</p> |
-| page | <p>The Playwright page instance.</p> |
-| options | <p>Optional configuration for retries.</p> |
-| options.retries | <p>The number of retry attempts. Defaults to 5.</p> |
-| options.intervalMs | <p>The interval between retries in milliseconds. Defaults to 200.</p> |
 
 <a name="retryUntilTruthy"></a>
 
@@ -820,8 +794,8 @@ This function retries a given function until it returns without throwing one of 
 | --- | --- | --- | --- |
 | fn | <code>function</code> |  | <p>The function to retry.</p> |
 | [options] | <code>RetryOptions</code> | <code>{}</code> | <p>The options for retrying the function.</p> |
-| [options.intervalMs] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
-| [options.timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
+| [options.timeout] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
+| [options.poll] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
 | [options.errorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> | <code>&quot;[&#x27;context or browser has been closed&#x27;, &#x27;Promise was collected&#x27;, &#x27;Execution context was destroyed&#x27;]&quot;</code> | <p>String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.</p> |
 
 **Example**  
