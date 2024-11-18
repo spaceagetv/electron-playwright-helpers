@@ -252,6 +252,16 @@ export function resetRetryOptions(): void {
   Object.assign(currentRetryOptions, retryDefaults)
 }
 
+export function isRetryOptions(options: unknown): options is RetryOptions {
+  if (typeof options !== 'object' || options === null) {
+    // if it's not an object
+    return false
+  }
+  const validKeys = Object.keys(retryDefaults)
+  // if every one of the keys in the passed object is a valid key
+  return Object.keys(options).every((key) => validKeys.includes(key))
+}
+
 export type RetryUntilTruthyOptions = {
   /** The maximum time (milliseconds) to wait for a truthy result. Default 5000. */
   timeout: number

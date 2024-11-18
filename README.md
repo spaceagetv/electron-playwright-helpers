@@ -150,34 +150,34 @@ to test your application's behavior when the user selects a file, or cancels the
 for all dialog methods. This is useful if you want to ensure that dialogs are not displayed
 during your tests. However, you may want to use <code>stubDialog</code> or <code>stubMultipleDialogs</code> to
 control the return value of specific dialog methods (e.g. <code>showOpenDialog</code>) during your tests.</p></dd>
-<dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
+<dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an ipcMain message from the main process.
 This will trigger all ipcMain listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
 It simply emits an event in the main process.</p></dd>
-<dt><a href="#ipcMainCallFirstListener">ipcMainCallFirstListener(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcMainCallFirstListener">ipcMainCallFirstListener(electronApp, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Call the first listener for a given ipcMain message in the main process
 and return its result.</p>
 <p>NOTE: ipcMain listeners usually don't return a value, but we're using
 this to retrieve test data from the main process.</p>
 <p>Generally, it's probably better to use <code>ipcMainInvokeHandler()</code> instead.</p></dd>
-<dt><a href="#ipcMainInvokeHandler">ipcMainInvokeHandler(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcMainInvokeHandler">ipcMainInvokeHandler(electronApp, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Get the return value of an <code>ipcMain.handle()</code> function</p></dd>
-<dt><a href="#ipcRendererSend">ipcRendererSend(page, channel, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcRendererSend">ipcRendererSend(page, channel, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Send an <code>ipcRenderer.send()</code> (to main process) from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this BrowserWindow.</p></dd>
-<dt><a href="#ipcRendererInvoke">ipcRendererInvoke(page, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcRendererInvoke">ipcRendererInvoke(page, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Send an ipcRenderer.invoke() from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this window</p></dd>
-<dt><a href="#ipcRendererCallFirstListener">ipcRendererCallFirstListener(page, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcRendererCallFirstListener">ipcRendererCallFirstListener(page, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Call just the first listener for a given ipcRenderer channel in a given window.
 <em>UNLIKE MOST Electron ipcRenderer listeners</em>, this function SHOULD return a value.</p>
 <p>This function does not send data between main and renderer processes.
 It simply retrieves data from the renderer process.</p>
 <p>Note: nodeIntegration must be true for this BrowserWindow.</p></dd>
-<dt><a href="#ipcRendererEmit">ipcRendererEmit(page, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
+<dt><a href="#ipcRendererEmit">ipcRendererEmit(page, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an IPC message to a given window.
 This will trigger all ipcRenderer listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -494,7 +494,7 @@ control the return value of specific dialog methods (e.g. <code>showOpenDialog</
 
 <a name="ipcMainEmit"></a>
 
-## ipcMainEmit(electronApp, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
+## ipcMainEmit(electronApp, message, ...args, retryOptions) ⇒ <code>Promise.&lt;boolean&gt;</code>
 <p>Emit an ipcMain message from the main process.
 This will trigger all ipcMain listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -510,10 +510,11 @@ It simply emits an event in the main process.</p>
 | electronApp | <code>ElectronApplication</code> | <p>the ElectronApplication object from Playwright</p> |
 | message | <code>string</code> | <p>the channel to call all ipcMain listeners for</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="ipcMainCallFirstListener"></a>
 
-## ipcMainCallFirstListener(electronApp, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcMainCallFirstListener(electronApp, message, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Call the first listener for a given ipcMain message in the main process
 and return its result.</p>
 <p>NOTE: ipcMain listeners usually don't return a value, but we're using
@@ -530,10 +531,11 @@ this to retrieve test data from the main process.</p>
 | electronApp | <code>ElectronApplication</code> | <p>the ElectronApplication object from Playwright</p> |
 | message | <code>string</code> | <p>the channel to call the first listener for</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="ipcMainInvokeHandler"></a>
 
-## ipcMainInvokeHandler(electronApp, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcMainInvokeHandler(electronApp, message, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Get the return value of an <code>ipcMain.handle()</code> function</p>
 
 **Kind**: global function  
@@ -545,10 +547,11 @@ this to retrieve test data from the main process.</p>
 | electronApp | <code>ElectronApplication</code> | <p>the ElectronApplication object from Playwright</p> |
 | message | <code>string</code> | <p>the channel to call the first listener for</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="ipcRendererSend"></a>
 
-## ipcRendererSend(page, channel, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcRendererSend(page, channel, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Send an <code>ipcRenderer.send()</code> (to main process) from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this BrowserWindow.</p>
@@ -562,10 +565,11 @@ in the webPreferences for this BrowserWindow.</p>
 | page | <code>Page</code> | <p>the Playwright Page to send the ipcRenderer.send() from</p> |
 | channel | <code>string</code> | <p>the channel to send the ipcRenderer.send() to</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send to the <code>ipcRenderer.send()</code></p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional last argument - options for retrying upon error</p> |
 
 <a name="ipcRendererInvoke"></a>
 
-## ipcRendererInvoke(page, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcRendererInvoke(page, message, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Send an ipcRenderer.invoke() from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this window</p>
@@ -579,10 +583,11 @@ in the webPreferences for this window</p>
 | page | <code>Page</code> | <p>the Playwright Page to send the ipcRenderer.invoke() from</p> |
 | message | <code>string</code> | <p>the channel to send the ipcRenderer.invoke() to</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send to the ipcRenderer.invoke()</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional last argument - options for retrying upon error</p> |
 
 <a name="ipcRendererCallFirstListener"></a>
 
-## ipcRendererCallFirstListener(page, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcRendererCallFirstListener(page, message, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Call just the first listener for a given ipcRenderer channel in a given window.
 <em>UNLIKE MOST Electron ipcRenderer listeners</em>, this function SHOULD return a value.</p>
 <p>This function does not send data between main and renderer processes.
@@ -598,10 +603,11 @@ It simply retrieves data from the renderer process.</p>
 | page | <code>Page</code> | <p>The Playwright Page to with the <code>ipcRenderer.on()</code> listener</p> |
 | message | <code>string</code> | <p>The channel to call the first listener for</p> |
 | ...args | <code>unknown</code> | <p>optional - One or more arguments to send to the ipcRenderer.on() listener</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="ipcRendererEmit"></a>
 
-## ipcRendererEmit(page, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
+## ipcRendererEmit(page, message, ...args, retryOptions) ⇒ <code>Promise.&lt;boolean&gt;</code>
 <p>Emit an IPC message to a given window.
 This will trigger all ipcRenderer listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -618,6 +624,7 @@ It simply emits an event in the renderer process.</p>
 | page | <code>Page</code> | <p>the Playwright Page to with the ipcRenderer.on() listener</p> |
 | message | <code>string</code> | <p>the channel to call all ipcRenderer listeners for</p> |
 | ...args | <code>unknown</code> | <p>optional - one or more arguments to send</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="clickMenuItemById"></a>
 
