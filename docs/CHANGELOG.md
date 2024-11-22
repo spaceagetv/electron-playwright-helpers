@@ -1,3 +1,10 @@
+# [1.8.0-beta.20](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.19...v1.8.0-beta.20) (2024-11-22)
+
+
+### Bug Fixes
+
+* tweaks ([23edf67](https://github.com/spaceagetv/electron-playwright-helpers/commit/23edf678aa72496a572ef48b3e627f2b0a68b46a))
+
 # [1.8.0-beta.19](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.18...v1.8.0-beta.19) (2024-11-18)
 
 
