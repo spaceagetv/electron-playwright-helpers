@@ -483,3 +483,16 @@ test.describe('retryUntilTruthy()', () => {
     ).resolves.toBeTruthy()
   })
 })
+
+test('stress test: run electronApp.evaluate()', async () => {
+  test.setTimeout(60000)
+  const app = getApp()
+  const iterations = 10000
+  const startTime = Date.now()
+  for (let i = 0; i < iterations; i++) {
+    const displays = await app.evaluate(({ screen }) => screen.getAllDisplays())
+    expect(displays).toBeTruthy()
+    expect(displays.length).toBeGreaterThan(0)
+  }
+  console.log(`${iterations} iterations took ${Date.now() - startTime}ms`)
+})

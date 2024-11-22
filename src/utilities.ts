@@ -195,7 +195,7 @@ export async function retry<T>(
       }
     }
   }
-  const errMessage = lastErr ? ' Last trow: ' + errToString(lastErr) : ''
+  const errMessage = lastErr ? ' Last throw: ' + errToString(lastErr) : ''
   throw new Error(`retry()::Timeout after ${timeout}ms.${errMessage}`)
 }
 
@@ -206,7 +206,10 @@ const retryDefaults: RetryOptions = {
   errorMatch: [
     'context or browser has been closed',
     'Promise was collected',
+    // Execution context was destroyed, most likely because of a navigation.
     'Execution context was destroyed',
+    // "Cannot read properties of undefined (reading 'getOwnerBrowserWindow')"
+    `reading 'getOwnerBrowserWindow'`,
   ],
 }
 
