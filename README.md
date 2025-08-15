@@ -185,11 +185,9 @@ or reliable as using <code>clickMenuItemById()</code> if the menu item has an id
 <dt><a href="#getMenuItemAttribute">getMenuItemAttribute(electronApp, menuId, attribute)</a> ⇒ <code>Promise.&lt;string&gt;</code></dt>
 <dd><p>Get a given attribute the MenuItem with the given id.</p></dd>
 <dt><a href="#getMenuItemById">getMenuItemById(electronApp, menuId)</a> ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code></dt>
-<dd><p>Get information about the MenuItem with the given id. Returns serializable values including
-primitives, objects, arrays, and other non-recursive data structures.</p></dd>
+<dd><p>Get information about the MenuItem with the given id</p></dd>
 <dt><a href="#getApplicationMenu">getApplicationMenu(electronApp)</a> ⇒ <code>Promise.&lt;Array.&lt;MenuItemPartial&gt;&gt;</code></dt>
-<dd><p>Get the current state of the application menu. Contains serializable values including
-primitives, objects, arrays, and other non-recursive data structures.
+<dd><p>Get the current state of the application menu. Contains only primitive values and submenus..
 Very similar to menu
 <a href="https://www.electronjs.org/docs/latest/api/menu#examples">construction template structure</a>
 in Electron.</p></dd>
@@ -575,8 +573,7 @@ or reliable as using <code>clickMenuItemById()</code> if the menu item has an id
 <a name="getMenuItemById"></a>
 
 ## getMenuItemById(electronApp, menuId) ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code>
-<p>Get information about the MenuItem with the given id. Returns serializable values including
-primitives, objects, arrays, and other non-recursive data structures.</p>
+<p>Get information about the MenuItem with the given id</p>
 
 **Kind**: global function  
 **Category**: Menu  
@@ -590,8 +587,7 @@ primitives, objects, arrays, and other non-recursive data structures.</p>
 <a name="getApplicationMenu"></a>
 
 ## getApplicationMenu(electronApp) ⇒ <code>Promise.&lt;Array.&lt;MenuItemPartial&gt;&gt;</code>
-<p>Get the current state of the application menu. Contains serializable values including
-primitives, objects, arrays, and other non-recursive data structures.
+<p>Get the current state of the application menu. Contains only primitive values and submenus..
 Very similar to menu
 <a href="https://www.electronjs.org/docs/latest/api/menu#examples">construction template structure</a>
 in Electron.</p>

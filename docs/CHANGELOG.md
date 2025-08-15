@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0...v1.8.1) (2025-08-15)
+
+
+### Reverts
+
+* Revert "feat: better menuItem representation" ([d80343f](https://github.com/spaceagetv/electron-playwright-helpers/commit/d80343fc8cd2eb94c88e1c6f2b99422d0ff2fb68))
+
 # [1.8.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.7.1...v1.8.0) (2025-08-15)
 
 
