@@ -63,40 +63,39 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
   if (!menuItem) {
     throw new Error(`Menu item with ${property} = ${value} not found`)
   }
-  return await retry(
-    () =>
-      electronApp.evaluate(async ({ Menu }, commandId) => {
-        const menu = Menu.getApplicationMenu()
-        if (!menu) {
-          throw new Error('No application menu found')
-        }
-        // recurse through the menu to find menu item with matching commandId
-        function findMenuItem(
-          menu: Electron.Menu,
-          commandId: number
-        ): Electron.MenuItem | undefined {
-          for (const item of menu.items) {
-            if (item.type === 'submenu' && item.submenu) {
-              const found = findMenuItem(item.submenu, commandId)
-              if (found) {
-                return found
-              }
-            } else if (item.commandId === commandId) {
-              return item
-            }
+  if (menuItem.commandId === undefined) {
+    throw new Error(`Menu item with ${property} = ${value} has no commandId`)
+  }
+  return await electronApp.evaluate(async ({ Menu }, commandId) => {
+    const menu = Menu.getApplicationMenu()
+    if (!menu) {
+      throw new Error('No application menu found')
+    }
+    // recurse through the menu to find menu item with matching commandId
+    function findMenuItem(
+      menu: Electron.Menu,
+      commandId: number
+    ): Electron.MenuItem | undefined {
+      for (const item of menu.items) {
+        if (item.type === 'submenu' && item.submenu) {
+          const found = findMenuItem(item.submenu, commandId)
+          if (found) {
+            return found
           }
+        } else if (item.commandId === commandId) {
+          return item
         }
-        const mI = findMenuItem(menu, commandId)
-        if (!mI) {
-          throw new Error(`Menu item with commandId ${commandId} not found`)
-        }
-        if (!mI.click) {
-          throw new Error(`Menu item has no click method`)
-        }
-        await mI.click()
-      }, menuItem.commandId),
-    { disable: true, ...options }
-  )
+      }
+    }
+    const mI = findMenuItem(menu, commandId)
+    if (!mI) {
+      throw new Error(`Menu item with commandId ${commandId} not found`)
+    }
+    if (!mI.click) {
+      throw new Error(`Menu item has no click method`)
+    }
+    await mI.click()
+  }, menuItem.commandId)
 }
 
 /**
@@ -143,27 +142,67 @@ export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
   return resultPromise as Promise<Electron.MenuItem[T]>
 }
 
-// https://stackoverflow.com/a/69756175/14350317
-type PickByType<T, Value> = {
-  [P in keyof T as T[P] extends Value | undefined ? P : never]: T[P]
+/** Serializable value types that can be safely transferred via Playwright */
+type SerializableValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | object
+  | SerializableValue[]
+  | { [key: string]: SerializableValue }
+
+/** Serialized representation of an Electron.NativeImage converted successfully */
+export type SerializedNativeImageSuccess = {
+  type: 'NativeImage'
+  dataURL: string
+  size: { width: number; height: number }
+  isEmpty: boolean
 }
 
-/** Limit to just primitive MenuItem attributes */
-type MenuItemPrimitive = PickByType<
-  Electron.MenuItem,
-  string | number | boolean | null
->
+/** Serialized representation of an Electron.NativeImage converted with an error */
+export type SerializedNativeImageError = {
+  type: 'NativeImage'
+  error: string
+}
+
+/** Serialized representation of an Electron.NativeImage */
+export type SerializedNativeImage =
+  | SerializedNativeImageSuccess
+  | SerializedNativeImageError
+
+/** Type guard to check if a SerializedNativeImage is a success case */
+export function isSerializedNativeImageSuccess(
+  image: SerializedNativeImage
+): image is SerializedNativeImageSuccess {
+  return 'dataURL' in image
+}
+
+/** Type guard to check if a SerializedNativeImage is an error case */
+export function isSerializedNativeImageError(
+  image: SerializedNativeImage
+): image is SerializedNativeImageError {
+  return 'error' in image
+}
 
 /**
  * A MenuItemConstructorOptions-like Electron MenuItem
- * containing only primitive and null values
+ * containing serializable values (primitives, objects, arrays) but no circular references
  */
-export type MenuItemPartial = MenuItemPrimitive & {
+export type MenuItemPartial = {
+  -readonly [K in keyof Electron.MenuItem]?: K extends 'icon'
+    ? SerializedNativeImage | undefined
+    : Electron.MenuItem[K] extends SerializableValue
+    ? Electron.MenuItem[K]
+    : SerializableValue
+} & {
   submenu?: MenuItemPartial[]
 }
 
 /**
- * Get information about the MenuItem with the given id
+ * Get information about the MenuItem with the given id. Returns serializable values including
+ * primitives, objects, arrays, and other non-recursive data structures.
  *
  * @category Menu
  *
@@ -181,34 +220,83 @@ export function getMenuItemById(
     () =>
       electronApp.evaluate(
         ({ Menu }, { menuId }) => {
-          // we need this function to be in scope
-          function cleanMenuItem(menuItem: Electron.MenuItem): MenuItemPartial {
-            const returnValue = {} as MenuItemPartial
-            Object.entries(menuItem).forEach(([key, value]) => {
-              // if value is a primitive
-              if (
-                typeof value === 'string' ||
-                typeof value === 'number' ||
-                typeof value === 'boolean' ||
-                value === null
-              ) {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                returnValue[key] = value
+          // we need this function to be in scope/context for the electronApp.evaluate
+          function cleanMenuItem(
+            menuItem: Electron.MenuItem,
+            visited = new WeakSet()
+          ): MenuItemPartial {
+            // Check for circular references
+            if (visited.has(menuItem)) {
+              return { id: menuItem.id, label: '[Circular Reference]' }
+            }
+            visited.add(menuItem)
+
+            const returnValue = {} as Record<string, SerializableValue>
+
+            Object.entries(menuItem).forEach(([k, v]) => {
+              const key = k as keyof Electron.MenuItem
+              const value = v as Electron.MenuItem[keyof Electron.MenuItem]
+              try {
+                if (value === null || value === undefined) {
+                  returnValue[key] = value
+                } else if (
+                  typeof value === 'string' ||
+                  typeof value === 'number' ||
+                  typeof value === 'boolean'
+                ) {
+                  returnValue[key] = value
+                } else if (value instanceof Date) {
+                  // Convert dates to ISO strings for serialization
+                  returnValue[key] = value.toISOString()
+                } else if (
+                  value &&
+                  typeof value === 'object' &&
+                  value.constructor &&
+                  value.constructor.name === 'NativeImage'
+                ) {
+                  // Handle nativeImage objects by converting to data URL
+                  try {
+                    returnValue[key] = {
+                      type: 'NativeImage',
+                      dataURL: (value as Electron.NativeImage).toDataURL(),
+                      size: (value as Electron.NativeImage).getSize(),
+                      isEmpty: (value as Electron.NativeImage).isEmpty(),
+                    }
+                  } catch (imageError) {
+                    returnValue[key] = {
+                      type: 'NativeImage',
+                      error: 'Failed to serialize image',
+                    }
+                  }
+                } else if (
+                  (Array.isArray(value) && key !== 'submenu') ||
+                  typeof value === 'object'
+                ) {
+                  returnValue[key] = structuredClone(value)
+                }
+                // Skip functions and other non-serializable types
+              } catch (error) {
+                // Skip properties that can't be accessed or serialized
               }
             })
+
             if (menuItem.type === 'submenu' && menuItem.submenu) {
-              returnValue['submenu'] = menuItem.submenu.items.map(cleanMenuItem)
+              returnValue['submenu'] = menuItem.submenu.items.map((item) =>
+                cleanMenuItem(item, visited)
+              )
             }
-            return returnValue
+
+            return returnValue as MenuItemPartial
           }
+
           const menu = Menu.getApplicationMenu()
           if (!menu) {
             throw new Error('No application menu found')
           }
           const menuItem = menu.getMenuItemById(menuId)
           if (menuItem) {
-            return cleanMenuItem(menuItem)
+            const visited = new WeakSet<Electron.MenuItem>()
+            return cleanMenuItem(menuItem, visited)
           } else {
             throw new Error(`Menu item with id ${menuId} not found`)
           }
@@ -220,7 +308,8 @@ export function getMenuItemById(
 }
 
 /**
- * Get the current state of the application menu. Contains only primitive values and submenus..
+ * Get the current state of the application menu. Contains serializable values including
+ * primitives, objects, arrays, and other non-recursive data structures.
  * Very similar to menu
  * [construction template structure](https://www.electronjs.org/docs/latest/api/menu#examples)
  * in Electron.
@@ -234,43 +323,89 @@ export function getMenuItemById(
 export function getApplicationMenu(
   electronApp: ElectronApplication,
   options: Partial<RetryOptions> = {}
-): Promise<MenuItemPartial[] | undefined> {
-  const promise = retry(
+): Promise<MenuItemPartial[]> {
+  return retry(
     () =>
       electronApp.evaluate(({ Menu }) => {
-        // we need this function to be in scope
-        function cleanMenuItem(menuItem: Electron.MenuItem): MenuItemPartial {
-          const returnValue = {} as MenuItemPartial
-          Object.entries(menuItem).forEach(([key, value]) => {
-            // if value is a primitive
-            if (
-              typeof value === 'string' ||
-              typeof value === 'number' ||
-              typeof value === 'boolean' ||
-              value === null
-            ) {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore - we know it's a primitive
-              returnValue[key] = value
+        // we need this function to be in scope/context for the electronApp.evaluate
+        function cleanMenuItem(
+          menuItem: Electron.MenuItem,
+          visited = new WeakSet()
+        ): MenuItemPartial {
+          // Check for circular references
+          if (visited.has(menuItem)) {
+            return { id: menuItem.id, label: '[Circular Reference]' }
+          }
+          visited.add(menuItem)
+
+          const returnValue = {} as Record<string, SerializableValue>
+
+          Object.entries(menuItem).forEach(([k, v]) => {
+            const key = k as keyof Electron.MenuItem
+            const value = v as Electron.MenuItem[keyof Electron.MenuItem]
+            try {
+              if (value === null || value === undefined) {
+                returnValue[key] = value
+              } else if (
+                typeof value === 'string' ||
+                typeof value === 'number' ||
+                typeof value === 'boolean'
+              ) {
+                returnValue[key] = value
+              } else if (value instanceof Date) {
+                // Convert dates to ISO strings for serialization
+                returnValue[key] = value.toISOString()
+              } else if (
+                value &&
+                typeof value === 'object' &&
+                value.constructor &&
+                value.constructor.name === 'NativeImage'
+              ) {
+                // Handle nativeImage objects by converting to data URL
+                try {
+                  returnValue[key] = {
+                    type: 'NativeImage',
+                    dataURL: (value as Electron.NativeImage).toDataURL(),
+                    size: (value as Electron.NativeImage).getSize(),
+                    isEmpty: (value as Electron.NativeImage).isEmpty(),
+                  }
+                } catch (imageError) {
+                  returnValue[key] = {
+                    type: 'NativeImage',
+                    error: 'Failed to serialize image',
+                  }
+                }
+              } else if (
+                (Array.isArray(value) && key !== 'submenu') ||
+                typeof value === 'object'
+              ) {
+                returnValue[key] = structuredClone(value)
+              }
+              // Skip functions and other non-serializable types
+            } catch (error) {
+              // Skip properties that can't be accessed or serialized
             }
           })
+
           if (menuItem.type === 'submenu' && menuItem.submenu) {
-            returnValue['submenu'] = menuItem.submenu.items.map(cleanMenuItem)
+            returnValue['submenu'] = menuItem.submenu.items.map((item) =>
+              cleanMenuItem(item, visited)
+            )
           }
-          return returnValue
+
+          return returnValue as MenuItemPartial
         }
 
         const menu = Menu.getApplicationMenu()
         if (!menu) {
           throw new Error('No application menu found')
         }
-        const cleanItems = menu.items.map(cleanMenuItem)
+        const cleanItems = menu.items.map((item) => cleanMenuItem(item))
 
         return cleanItems
-      }, {}),
+      }),
     options
   )
-  return promise
 }
 
 /**

@@ -115,6 +115,10 @@ and the path to the app's main file.</p>
 should be part of the Playwright API, but it's not.</p>
 <p>This function is to <code>electronApp.evaluate()</code>
 as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p></dd>
+<dt><a href="#isSerializedNativeImageSuccess">isSerializedNativeImageSuccess()</a></dt>
+<dd><p>Type guard to check if a SerializedNativeImage is a success case</p></dd>
+<dt><a href="#isSerializedNativeImageError">isSerializedNativeImageError()</a></dt>
+<dd><p>Type guard to check if a SerializedNativeImage is an error case</p></dd>
 <dt><a href="#evaluateWithRetry">evaluateWithRetry(electronApp, fn, arg, retries, retryIntervalMs)</a> ⇒ <code>Promise.&lt;R&gt;</code></dt>
 <dd><p>Electron's <code>evaluate</code> function can be flakey,
 throwing an error saying the execution context has been destroyed.
@@ -196,9 +200,11 @@ or reliable as using <code>clickMenuItemById()</code> if the menu item has an id
 <dt><a href="#getMenuItemAttribute">getMenuItemAttribute(electronApp, menuId, attribute)</a> ⇒ <code>Promise.&lt;string&gt;</code></dt>
 <dd><p>Get a given attribute the MenuItem with the given id.</p></dd>
 <dt><a href="#getMenuItemById">getMenuItemById(electronApp, menuId)</a> ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code></dt>
-<dd><p>Get information about the MenuItem with the given id</p></dd>
+<dd><p>Get information about the MenuItem with the given id. Returns serializable values including
+primitives, objects, arrays, and other non-recursive data structures.</p></dd>
 <dt><a href="#getApplicationMenu">getApplicationMenu(electronApp)</a> ⇒ <code>Promise.&lt;Array.&lt;MenuItemPartial&gt;&gt;</code></dt>
-<dd><p>Get the current state of the application menu. Contains only primitive values and submenus..
+<dd><p>Get the current state of the application menu. Contains serializable values including
+primitives, objects, arrays, and other non-recursive data structures.
 Very similar to menu
 <a href="https://www.electronjs.org/docs/latest/api/menu#examples">construction template structure</a>
 in Electron.</p></dd>
@@ -376,6 +382,18 @@ test('my test', async () => {
   )
 })
 ```
+<a name="isSerializedNativeImageSuccess"></a>
+
+## isSerializedNativeImageSuccess()
+<p>Type guard to check if a SerializedNativeImage is a success case</p>
+
+**Kind**: global function  
+<a name="isSerializedNativeImageError"></a>
+
+## isSerializedNativeImageError()
+<p>Type guard to check if a SerializedNativeImage is an error case</p>
+
+**Kind**: global function  
 <a name="ElectronAppInfo"></a>
 
 ## ElectronAppInfo
@@ -679,7 +697,8 @@ or reliable as using <code>clickMenuItemById()</code> if the menu item has an id
 <a name="getMenuItemById"></a>
 
 ## getMenuItemById(electronApp, menuId) ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code>
-<p>Get information about the MenuItem with the given id</p>
+<p>Get information about the MenuItem with the given id. Returns serializable values including
+primitives, objects, arrays, and other non-recursive data structures.</p>
 
 **Kind**: global function  
 **Category**: Menu  
@@ -693,7 +712,8 @@ or reliable as using <code>clickMenuItemById()</code> if the menu item has an id
 <a name="getApplicationMenu"></a>
 
 ## getApplicationMenu(electronApp) ⇒ <code>Promise.&lt;Array.&lt;MenuItemPartial&gt;&gt;</code>
-<p>Get the current state of the application menu. Contains only primitive values and submenus..
+<p>Get the current state of the application menu. Contains serializable values including
+primitives, objects, arrays, and other non-recursive data structures.
 Very similar to menu
 <a href="https://www.electronjs.org/docs/latest/api/menu#examples">construction template structure</a>
 in Electron.</p>
