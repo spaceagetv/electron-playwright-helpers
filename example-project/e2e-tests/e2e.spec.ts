@@ -255,12 +255,9 @@ test('throw error via ipcRendererCallFirstListener with bogus channel', async ()
 
 test('throw error via ipcRendererCallFirstListener with bogus page', async () => {
   const page = {} as Page
-  try {
-    await ipcRendererCallFirstListener(page, 'get-asynchronous-data')
-    throw new Error('ipcRendererCallFirstListener should have thrown an error')
-  } catch (error) {
-    console.log(JSON.stringify(error))
-  }
+  await expect(
+    ipcRendererCallFirstListener(page, 'get-asynchronous-data')
+  ).rejects.toThrow()
 })
 
 test('send an ipcRendererEmit.emit() message and expect element to appear', async () => {
