@@ -25,6 +25,8 @@ import {
   ipcRendererEmit,
   ipcRendererInvoke,
   ipcRendererSend,
+  isSerializedNativeImageSuccess,
+  isSerializedNativeImageError,
   parseElectronApp,
   retryUntilTruthy,
   stubDialog,
@@ -67,7 +69,12 @@ test.beforeAll(async () => {
   // set the CI environment variable to true
   process.env.CI = 'e2e'
   const electronApp = await electron.launch({
-    args: [appInfo.main],
+    args: [
+      appInfo.main,
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu-sandbox',
+    ],
     executablePath: appInfo.executable,
   })
   electronApp.on('console', (msg) => {
@@ -436,6 +443,46 @@ test('dialog.showSaveDialog stubbing', async () => {
   // get the currently "opened" file path
   const filePath2 = await ipcMainInvokeHandler(app, 'get-opened-file')
   expect(filePath2).toBe('/path/to/new-saved-file.txt')
+})
+
+test('skull menu item with nativeImage is properly serialized', async () => {
+  const electronApp = getApp()
+
+  // Get the skull menu item by ID
+  const skullMenuItem = await getMenuItemById(electronApp, 'skull-menu-item')
+  expect(skullMenuItem).toBeTruthy()
+  if (!skullMenuItem) return
+
+  // Check basic properties
+  expect(skullMenuItem.label).toBe('Skull')
+  expect(skullMenuItem.id).toBe('skull-menu-item')
+
+  // Check that the nativeImage icon is properly serialized
+  expect(skullMenuItem.icon).toBeTruthy()
+  if (skullMenuItem.icon && typeof skullMenuItem.icon === 'object') {
+    const iconData = skullMenuItem.icon
+    expect(iconData.type).toBe('NativeImage')
+    // Should have either a dataURL or an error message
+    if (isSerializedNativeImageSuccess(iconData)) {
+      // Success case - has dataURL, size, and isEmpty
+      expect(iconData.dataURL).toBeTruthy()
+      expect(iconData.dataURL).toMatch(/^data:image\//)
+      expect(iconData.size).toBeTruthy()
+      expect(typeof iconData.isEmpty).toBe('boolean')
+      expect(iconData.isEmpty).toBe(false)
+    } else if (isSerializedNativeImageError(iconData)) {
+      // Error case - has error message
+      expect(iconData.error).toBeTruthy()
+      expect(typeof iconData.error).toBe('string')
+    }
+  }
+})
+
+test('click skull menu item', async () => {
+  const electronApp = getApp()
+  // This should work without throwing an error
+  await clickMenuItemById(electronApp, 'skull-menu-item')
+  // The click just logs to console, so we just verify it doesn't throw
 })
 
 test.describe('retryUntilTruthy()', () => {

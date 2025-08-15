@@ -1,3 +1,26 @@
+## [1.8.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.1...v1.8.2) (2025-08-15)
+
+
+### Bug Fixes
+
+* better menuItem representation ([69a59ff](https://github.com/spaceagetv/electron-playwright-helpers/commit/69a59ff6f4598991ea1ea93dae4b576ab2ab66a3))
+* test on Node 18, 20, 22 ([23d0b2a](https://github.com/spaceagetv/electron-playwright-helpers/commit/23d0b2ae7df8490f5ed5073a0fdc1695a4fbaeaa))
+* Ubuntu test compatibility ([76d07ca](https://github.com/spaceagetv/electron-playwright-helpers/commit/76d07ca40120629f905bb702b70316543134030c))
+
+## [1.8.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0...v1.8.1) (2025-08-15)
+
+
+### Reverts
+
+* Revert "feat: better menuItem representation" ([d80343f](https://github.com/spaceagetv/electron-playwright-helpers/commit/d80343fc8cd2eb94c88e1c6f2b99422d0ff2fb68))
+
+# [1.8.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.7.1...v1.8.0) (2025-08-15)
+
+
+### Features
+
+* better menuItem representation ([72d4f21](https://github.com/spaceagetv/electron-playwright-helpers/commit/72d4f21448e1d959e70c515c8850eeb4c2c487f7))
+
 # [1.8.0-beta.20](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.0-beta.19...v1.8.0-beta.20) (2024-11-22)
 
 
