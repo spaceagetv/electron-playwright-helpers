@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.7.1...v1.8.0) (2025-08-15)
+
+
+### Features
+
+* better menuItem representation ([72d4f21](https://github.com/spaceagetv/electron-playwright-helpers/commit/72d4f21448e1d959e70c515c8850eeb4c2c487f7))
+
 ## [1.7.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.7.0...v1.7.1) (2024-02-18)
 
 # [1.7.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.6.0...v1.7.0) (2023-11-04)
