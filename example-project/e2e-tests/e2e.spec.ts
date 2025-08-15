@@ -398,3 +398,40 @@ test('dialog.showSaveDialog stubbing', async () => {
   const filePath2 = await ipcMainInvokeHandler(app, 'get-opened-file')
   expect(filePath2).toBe('/path/to/new-saved-file.txt')
 })
+
+test('skull menu item with nativeImage is properly serialized', async () => {
+  const electronApp = getApp()
+
+  // Get the skull menu item by ID
+  const skullMenuItem = await getMenuItemById(electronApp, 'skull-menu-item')
+  expect(skullMenuItem).toBeTruthy()
+  if (!skullMenuItem) return
+
+  // Check basic properties
+  expect(skullMenuItem.label).toBe('Skull')
+  expect(skullMenuItem.id).toBe('skull-menu-item')
+
+  // Check that the nativeImage icon is properly serialized
+  expect(skullMenuItem.icon).toBeTruthy()
+  if (skullMenuItem.icon && typeof skullMenuItem.icon === 'object') {
+    const iconData = skullMenuItem.icon as Record<string, unknown>
+    expect(iconData.type).toBe('NativeImage')
+    // Should have either a dataURL or an error message
+    expect(iconData.dataURL || iconData.error).toBeTruthy()
+    if (iconData.dataURL) {
+      // If we have a dataURL, it should start with data:image/
+      expect(iconData.dataURL).toMatch(/^data:image\//)
+      // Should have size information
+      expect(iconData.size).toBeTruthy()
+      expect(typeof iconData.isEmpty).toBe('boolean')
+      expect(iconData.isEmpty).toBe(false)
+    }
+  }
+})
+
+test('click skull menu item', async () => {
+  const electronApp = getApp()
+  // This should work without throwing an error
+  await clickMenuItemById(electronApp, 'skull-menu-item')
+  // The click just logs to console, so we just verify it doesn't throw
+})

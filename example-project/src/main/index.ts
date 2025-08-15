@@ -1,4 +1,12 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, dialog } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  MenuItem,
+  dialog,
+  nativeImage,
+} from 'electron'
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string
@@ -91,6 +99,37 @@ ipcMain.handle('get-opened-file', () => {
 
 function initMenu() {
   const menu = Menu.getApplicationMenu()
+
+  // Create a nativeImage from base64 encoded skull PNG with multiple representations
+  const skullImageBase64 =
+    'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAActJREFUWEftVm1NxUAQnOcAHIADcAAScAAKAAWAAnAADsABOAAH4ODhADrJbbO97se1r0lDwv56r727nZ2dnesGK8dm5fzYFcBBKeBrbiFTAJwAeAawlyQjmDsATy2gWgDcArhpOcxYc5EByQBsq4pfAFwD8Cg/AnDZvT9XYLj20CsgAvCjNpFSMjElaubMXB4AnXwfwPeUzGot9UIWJUb5LACfXd9E3VmLWnFJQR8AjvUmK4EsZt9mj1eFjBP0Wp4NGK0BcBEXM5aqXrCIoN8AnHo9kerPAFDxSwYn47Eurq5SANTPtZiisXrvgHMUGZZ4R+frRDqJB0wYocvRZHSwOj3/VhsFQA9OJ6LyOQHRxkjAenSzFvcCn8uAZUyWZXtMmgwQtacBvhN/eCh2zGdkjSYlRnXf/b4q/5mkjlADGgDHhOOSBUFRO1ayei/FSZEOWuz5ACvKDtWaabFrYTD0Ac0CLZPW6YW27AywK3DL7bQbLmHHOvmgemvcpNpdr2I5J72SI7/XFEdgvRbpItwWZReO6d/ZaJT3AiCcqAyA5Q1ysP7es4BGntLX8A9gCgONrR8tC3P8CQDygTqXgfC7soWBuYmb9q0O4Bea3mshp/RlaQAAAABJRU5ErkJggg=='
+  const skullImage32px = nativeImage.createFromDataURL(
+    `data:image/png;base64,${skullImageBase64}`
+  )
+
+  // Create a properly sized nativeImage with multiple representations
+  const skullImage = nativeImage.createEmpty()
+
+  // Add 16x16 representation for 1x displays (standard density)
+  const skullImage16px = skullImage32px.resize({ width: 16, height: 16 })
+  skullImage.addRepresentation({
+    scaleFactor: 1.0,
+    buffer: skullImage16px.toPNG(),
+  })
+
+  // Add 32x32 representation for 2x displays (retina/high-DPI)
+  skullImage.addRepresentation({
+    scaleFactor: 2.0,
+    buffer: skullImage32px.toPNG(),
+  })
+
+  console.log(
+    'Created skull image with representations, size:',
+    skullImage.getSize(),
+    'isEmpty:',
+    skullImage.isEmpty()
+  )
+
   // create the "New Window" MenuItem
   const newWindow = new MenuItem({
     label: 'New Window',
@@ -132,6 +171,16 @@ function initMenu() {
     checked: false,
   })
 
+  // create a skull menu item with nativeImage icon
+  const skullMenuItem = new MenuItem({
+    label: 'Skull',
+    id: 'skull-menu-item',
+    icon: skullImage,
+    click: () => {
+      console.log('Skull menu item clicked! 💀')
+    },
+  })
+
   const fileMenu = menu.items.find(
     // typescript wants "fileMenu", but items seem to be .toLowerCase()
     (item) => item.role === ('filemenu' as 'fileMenu')
@@ -150,6 +199,8 @@ function initMenu() {
     fileMenu.submenu.insert(3, saveFileItem)
     // add the checkbox menu item to the end of the File menu
     fileMenu.submenu.append(checkbox)
+    // add the skull menu item to test nativeImage handling
+    fileMenu.submenu.append(skullMenuItem)
   }
   // update the application menu
   Menu.setApplicationMenu(menu)
