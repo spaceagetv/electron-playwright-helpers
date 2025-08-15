@@ -115,16 +115,16 @@ and the path to the app's main file.</p>
 should be part of the Playwright API, but it's not.</p>
 <p>This function is to <code>electronApp.evaluate()</code>
 as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p></dd>
-<dt><a href="#isSerializedNativeImageSuccess">isSerializedNativeImageSuccess()</a></dt>
-<dd><p>Type guard to check if a SerializedNativeImage is a success case</p></dd>
-<dt><a href="#isSerializedNativeImageError">isSerializedNativeImageError()</a></dt>
-<dd><p>Type guard to check if a SerializedNativeImage is an error case</p></dd>
 <dt><a href="#evaluateWithRetry">evaluateWithRetry(electronApp, fn, arg, retries, retryIntervalMs)</a> ⇒ <code>Promise.&lt;R&gt;</code></dt>
 <dd><p>Electron's <code>evaluate</code> function can be flakey,
 throwing an error saying the execution context has been destroyed.
 This function retries the evaluation several times to see if it can
 run the evaluation without an error. If it fails after the retries,
 it throws the error.</p></dd>
+<dt><a href="#isSerializedNativeImageSuccess">isSerializedNativeImageSuccess()</a></dt>
+<dd><p>Type guard to check if a SerializedNativeImage is a success case</p></dd>
+<dt><a href="#isSerializedNativeImageError">isSerializedNativeImageError()</a></dt>
+<dd><p>Type guard to check if a SerializedNativeImage is an error case</p></dd>
 <dt><a href="#retryUntilTruthy">retryUntilTruthy(fn, [timeoutMs], [intervalMs])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Retries a given function until it returns a truthy value or the timeout is reached.</p>
 <p>This offers similar functionality to Playwright's <a href="https://playwright.dev/docs/api/class-page#page-wait-for-function"><code>page.waitForFunction()</code></a>
@@ -342,6 +342,18 @@ it throws the error.</p>
 | retries |  | <p>the number of times to retry the evaluation</p> |
 | retryIntervalMs |  | <p>the interval between retries</p> |
 
+<a name="isSerializedNativeImageSuccess"></a>
+
+## isSerializedNativeImageSuccess()
+<p>Type guard to check if a SerializedNativeImage is a success case</p>
+
+**Kind**: global function  
+<a name="isSerializedNativeImageError"></a>
+
+## isSerializedNativeImageError()
+<p>Type guard to check if a SerializedNativeImage is an error case</p>
+
+**Kind**: global function  
 <a name="retryUntilTruthy"></a>
 
 ## retryUntilTruthy(fn, [timeoutMs], [intervalMs]) ⇒ <code>Promise.&lt;T&gt;</code>
@@ -382,18 +394,6 @@ test('my test', async () => {
   )
 })
 ```
-<a name="isSerializedNativeImageSuccess"></a>
-
-## isSerializedNativeImageSuccess()
-<p>Type guard to check if a SerializedNativeImage is a success case</p>
-
-**Kind**: global function  
-<a name="isSerializedNativeImageError"></a>
-
-## isSerializedNativeImageError()
-<p>Type guard to check if a SerializedNativeImage is an error case</p>
-
-**Kind**: global function  
 <a name="ElectronAppInfo"></a>
 
 ## ElectronAppInfo
