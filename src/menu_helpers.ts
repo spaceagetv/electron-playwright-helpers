@@ -272,7 +272,7 @@ export function getMenuItemById(
                   (Array.isArray(value) && key !== 'submenu') ||
                   typeof value === 'object'
                 ) {
-                  returnValue[key] = JSON.parse(JSON.stringify(value))
+                  returnValue[key] = structuredClone(value)
                 }
                 // Skip functions and other non-serializable types
               } catch (error) {
@@ -379,7 +379,7 @@ export function getApplicationMenu(
                 (Array.isArray(value) && key !== 'submenu') ||
                 typeof value === 'object'
               ) {
-                returnValue[key] = JSON.parse(JSON.stringify(value))
+                returnValue[key] = structuredClone(value)
               }
               // Skip functions and other non-serializable types
             } catch (error) {
