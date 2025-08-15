@@ -56,9 +56,6 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
   if (!menuItem) {
     throw new Error(`Menu item with ${property} = ${value} not found`)
   }
-  if (menuItem.commandId === undefined) {
-    throw new Error(`Menu item with ${property} = ${value} has no commandId`)
-  }
   return await electronApp.evaluate(async ({ Menu }, commandId) => {
     const menu = Menu.getApplicationMenu()
     if (!menu) {
@@ -130,31 +127,27 @@ export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
   return resultPromise as Promise<Electron.MenuItem[T]>
 }
 
-/** Serializable value types that can be safely transferred via Playwright */
-type SerializableValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | SerializableValue[]
-  | { [key: string]: SerializableValue }
+// https://stackoverflow.com/a/69756175/14350317
+type PickByType<T, Value> = {
+  [P in keyof T as T[P] extends Value | undefined ? P : never]: T[P]
+}
+
+/** Limit to just primitive MenuItem attributes */
+type MenuItemPrimitive = PickByType<
+  Electron.MenuItem,
+  string | number | boolean | null
+>
 
 /**
  * A MenuItemConstructorOptions-like Electron MenuItem
- * containing serializable values (primitives, objects, arrays) but no circular references
+ * containing only primitive and null values
  */
-export type MenuItemPartial = Partial<{
-  [K in keyof Electron.MenuItem]: Electron.MenuItem[K] extends SerializableValue
-    ? Electron.MenuItem[K]
-    : SerializableValue
-}> & {
+export type MenuItemPartial = MenuItemPrimitive & {
   submenu?: MenuItemPartial[]
 }
 
 /**
- * Get information about the MenuItem with the given id. Returns serializable values including
- * primitives, objects, arrays, and other non-recursive data structures.
+ * Get information about the MenuItem with the given id
  *
  * @category Menu
  *
@@ -169,97 +162,27 @@ export function getMenuItemById(
 ): Promise<MenuItemPartial> {
   return electronApp.evaluate(
     ({ Menu }, { menuId }) => {
-      // we need this function to be in scope/context for the electronApp.evaluate
-      function cleanMenuItem(
-        menuItem: Electron.MenuItem,
-        visited = new WeakSet()
-      ): MenuItemPartial {
-        // Check for circular references
-        if (visited.has(menuItem)) {
-          return { id: menuItem.id, label: '[Circular Reference]' }
-        }
-        visited.add(menuItem)
-
+      // we need this function to be in scope
+      function cleanMenuItem(menuItem: Electron.MenuItem): MenuItemPartial {
         const returnValue = {} as MenuItemPartial
-
         Object.entries(menuItem).forEach(([key, value]) => {
-          try {
-            if (value === null || value === undefined) {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              returnValue[key] = value
-            } else if (
-              typeof value === 'string' ||
-              typeof value === 'number' ||
-              typeof value === 'boolean'
-            ) {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              returnValue[key] = value
-            } else if (value instanceof Date) {
-              // Convert dates to ISO strings for serialization
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              returnValue[key] = value.toISOString()
-            } else if (
-              value &&
-              typeof value === 'object' &&
-              value.constructor &&
-              value.constructor.name === 'NativeImage'
-            ) {
-              // Handle nativeImage objects by converting to data URL
-              try {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                returnValue[key] = {
-                  type: 'NativeImage',
-                  dataURL: value.toDataURL(),
-                  size: value.getSize(),
-                  isEmpty: value.isEmpty(),
-                }
-              } catch (imageError) {
-                // If image conversion fails, store basic info
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                returnValue[key] = {
-                  type: 'NativeImage',
-                  error: 'Failed to serialize image',
-                }
-              }
-            } else if (Array.isArray(value)) {
-              // Handle arrays recursively
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              returnValue[key] = value.map((item) => {
-                if (item && typeof item === 'object') {
-                  return cleanMenuItem(item, visited)
-                }
-                return item
-              })
-            } else if (
-              typeof value === 'object' &&
-              value.constructor === Object
-            ) {
-              // Handle plain objects recursively
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              returnValue[key] = cleanMenuItem(value, visited)
-            }
-            // Skip functions and other non-serializable types
-          } catch (error) {
-            // Skip properties that can't be accessed or serialized
+          // if value is a primitive
+          if (
+            typeof value === 'string' ||
+            typeof value === 'number' ||
+            typeof value === 'boolean' ||
+            value === null
+          ) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            returnValue[key] = value
           }
         })
-
         if (menuItem.type === 'submenu' && menuItem.submenu) {
-          returnValue['submenu'] = menuItem.submenu.items.map((item) =>
-            cleanMenuItem(item, visited)
-          )
+          returnValue['submenu'] = menuItem.submenu.items.map(cleanMenuItem)
         }
-
         return returnValue
       }
-
       const menu = Menu.getApplicationMenu()
       if (!menu) {
         throw new Error('No application menu found')
@@ -276,8 +199,7 @@ export function getMenuItemById(
 }
 
 /**
- * Get the current state of the application menu. Contains serializable values including
- * primitives, objects, arrays, and other non-recursive data structures.
+ * Get the current state of the application menu. Contains only primitive values and submenus..
  * Very similar to menu
  * [construction template structure](https://www.electronjs.org/docs/latest/api/menu#examples)
  * in Electron.
@@ -293,93 +215,24 @@ export function getApplicationMenu(
 ): Promise<MenuItemPartial[]> {
   const promise = electronApp.evaluate(({ Menu }) => {
     // we need this function to be in scope
-    function cleanMenuItem(
-      menuItem: Electron.MenuItem,
-      visited = new WeakSet()
-    ): MenuItemPartial {
-      // Check for circular references
-      if (visited.has(menuItem)) {
-        return { id: menuItem.id, label: '[Circular Reference]' }
-      }
-      visited.add(menuItem)
-
+    function cleanMenuItem(menuItem: Electron.MenuItem): MenuItemPartial {
       const returnValue = {} as MenuItemPartial
-
       Object.entries(menuItem).forEach(([key, value]) => {
-        try {
-          if (value === null || value === undefined) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            returnValue[key] = value
-          } else if (
-            typeof value === 'string' ||
-            typeof value === 'number' ||
-            typeof value === 'boolean'
-          ) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            returnValue[key] = value
-          } else if (value instanceof Date) {
-            // Convert dates to ISO strings for serialization
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            returnValue[key] = value.toISOString()
-          } else if (
-            value &&
-            typeof value === 'object' &&
-            value.constructor &&
-            value.constructor.name === 'NativeImage'
-          ) {
-            // Handle nativeImage objects by converting to data URL
-            try {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              returnValue[key] = {
-                type: 'NativeImage',
-                dataURL: value.toDataURL(),
-                size: value.getSize(),
-                isEmpty: value.isEmpty(),
-              }
-            } catch (imageError) {
-              // If image conversion fails, store basic info
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              returnValue[key] = {
-                type: 'NativeImage',
-                error: 'Failed to serialize image',
-              }
-            }
-          } else if (Array.isArray(value)) {
-            // Handle arrays recursively
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            returnValue[key] = value.map((item) => {
-              if (item && typeof item === 'object') {
-                return cleanMenuItem(item, visited)
-              }
-              return item
-            })
-          } else if (
-            typeof value === 'object' &&
-            value.constructor === Object
-          ) {
-            // Handle plain objects recursively
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            returnValue[key] = cleanMenuItem(value, visited)
-          }
-          // Skip functions and other non-serializable types
-        } catch (error) {
-          // Skip properties that can't be accessed or serialized
+        // if value is a primitive
+        if (
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean' ||
+          value === null
+        ) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore - we know it's a primitive
+          returnValue[key] = value
         }
       })
-
       if (menuItem.type === 'submenu' && menuItem.submenu) {
-        returnValue['submenu'] = menuItem.submenu.items.map((item) =>
-          cleanMenuItem(item, visited)
-        )
+        returnValue['submenu'] = menuItem.submenu.items.map(cleanMenuItem)
       }
-
       return returnValue
     }
 
@@ -387,7 +240,7 @@ export function getApplicationMenu(
     if (!menu) {
       throw new Error('No application menu found')
     }
-    const cleanItems = menu.items.map((item) => cleanMenuItem(item))
+    const cleanItems = menu.items.map(cleanMenuItem)
 
     return cleanItems
   })
