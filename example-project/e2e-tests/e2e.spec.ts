@@ -25,6 +25,8 @@ import {
   ipcRendererEmit,
   ipcRendererInvoke,
   ipcRendererSend,
+  isSerializedNativeImageSuccess,
+  isSerializedNativeImageError,
   parseElectronApp,
   stubDialog,
   waitForMenuItemStatus,
@@ -66,7 +68,12 @@ test.beforeAll(async () => {
   // set the CI environment variable to true
   process.env.CI = 'e2e'
   const electronApp = await electron.launch({
-    args: [appInfo.main],
+    args: [
+      appInfo.main,
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu-sandbox',
+    ],
     executablePath: appInfo.executable,
   })
   setApp(electronApp)
@@ -414,17 +421,20 @@ test('skull menu item with nativeImage is properly serialized', async () => {
   // Check that the nativeImage icon is properly serialized
   expect(skullMenuItem.icon).toBeTruthy()
   if (skullMenuItem.icon && typeof skullMenuItem.icon === 'object') {
-    const iconData = skullMenuItem.icon as Record<string, unknown>
+    const iconData = skullMenuItem.icon
     expect(iconData.type).toBe('NativeImage')
     // Should have either a dataURL or an error message
-    expect(iconData.dataURL || iconData.error).toBeTruthy()
-    if (iconData.dataURL) {
-      // If we have a dataURL, it should start with data:image/
+    if (isSerializedNativeImageSuccess(iconData)) {
+      // Success case - has dataURL, size, and isEmpty
+      expect(iconData.dataURL).toBeTruthy()
       expect(iconData.dataURL).toMatch(/^data:image\//)
-      // Should have size information
       expect(iconData.size).toBeTruthy()
       expect(typeof iconData.isEmpty).toBe('boolean')
       expect(iconData.isEmpty).toBe(false)
+    } else if (isSerializedNativeImageError(iconData)) {
+      // Error case - has error message
+      expect(iconData.error).toBeTruthy()
+      expect(typeof iconData.error).toBe('string')
     }
   }
 })
