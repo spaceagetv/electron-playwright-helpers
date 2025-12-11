@@ -97,6 +97,69 @@ ipcMain.handle('get-opened-file', () => {
   return openedFile
 })
 
+// Additional dialog functions for testing matchers
+async function showDeleteConfirmation() {
+  const result = await dialog.showMessageBox({
+    type: 'warning',
+    title: 'Delete File',
+    message: 'Are you sure you want to delete this file?',
+    detail: 'This action cannot be undone.',
+    buttons: ['Cancel', 'Delete'],
+    defaultId: 0,
+    cancelId: 0,
+  })
+  return result.response
+}
+
+async function showSaveChangesDialog() {
+  const result = await dialog.showMessageBox({
+    type: 'question',
+    title: 'Save Changes',
+    message: 'Do you want to save your changes?',
+    buttons: ['Save', "Don't Save", 'Cancel'],
+    defaultId: 0,
+    cancelId: 2,
+  })
+  return result.response
+}
+
+async function showSelectImageDialog() {
+  const result = await dialog.showOpenDialog({
+    title: 'Select Image',
+    message: 'Choose an image file',
+    buttonLabel: 'Select',
+    properties: ['openFile'],
+    filters: [{ name: 'Images', extensions: ['png', 'jpg', 'gif'] }],
+  })
+  return result
+}
+
+async function showExportDialog() {
+  const result = await dialog.showSaveDialog({
+    title: 'Export File',
+    message: 'Choose where to export',
+    buttonLabel: 'Export',
+    defaultPath: 'export.txt',
+  })
+  return result
+}
+
+ipcMain.handle('show-delete-confirmation', async () => {
+  return await showDeleteConfirmation()
+})
+
+ipcMain.handle('show-save-changes-dialog', async () => {
+  return await showSaveChangesDialog()
+})
+
+ipcMain.handle('show-select-image-dialog', async () => {
+  return await showSelectImageDialog()
+})
+
+ipcMain.handle('show-export-dialog', async () => {
+  return await showExportDialog()
+})
+
 function initMenu() {
   const menu = Menu.getApplicationMenu()
 
