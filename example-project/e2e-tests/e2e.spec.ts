@@ -30,6 +30,7 @@ import {
   parseElectronApp,
   retryUntilTruthy,
   stubDialog,
+  stubDialogMatchers,
   waitForMenuItemStatus,
 } from '../../src' // <-- replace with 'electron-playwright-helpers'
 
@@ -539,4 +540,308 @@ test('stress test: run electronApp.evaluate()', async () => {
     expect(displays.length).toBeGreaterThan(0)
   }
   console.log(`${iterations} iterations took ${Date.now() - startTime}ms`)
+})
+
+test.describe('Dialog Matchers', () => {
+  test('stubDialogMatchers with exact string match on title', async () => {
+    const app = getApp()
+
+    // Set up matchers for different dialogs
+    await stubDialogMatchers(app, [
+      {
+        method: 'showMessageBox',
+        matcher: { title: 'Delete File' },
+        value: { response: 1 }, // Click "Delete" button (index 1)
+      },
+      {
+        method: 'showMessageBox',
+        matcher: { title: 'Save Changes' },
+        value: { response: 0 }, // Click "Save" button (index 0)
+      },
+    ])
+
+    // Test the delete confirmation dialog
+    const deleteResponse = await ipcMainInvokeHandler(
+      app,
+      'show-delete-confirmation'
+    )
+    expect(deleteResponse).toBe(1) // Should have clicked "Delete"
+
+    // Test the save changes dialog
+    const saveResponse = await ipcMainInvokeHandler(
+      app,
+      'show-save-changes-dialog'
+    )
+    expect(saveResponse).toBe(0) // Should have clicked "Save"
+  })
+
+  test('stubDialogMatchers with regex match on title', async () => {
+    const app = getApp()
+
+    // Set up matchers using regex patterns
+    await stubDialogMatchers(app, [
+      {
+        method: 'showMessageBox',
+        matcher: { title: /delete/i }, // Case-insensitive regex
+        value: { response: 0 }, // Click "Cancel" button (index 0)
+      },
+    ])
+
+    // Test the delete confirmation dialog
+    const deleteResponse = await ipcMainInvokeHandler(
+      app,
+      'show-delete-confirmation'
+    )
+    expect(deleteResponse).toBe(0) // Should have clicked "Cancel"
+  })
+
+  test('stubDialogMatchers with message matcher', async () => {
+    const app = getApp()
+
+    // Set up matchers based on message content
+    await stubDialogMatchers(app, [
+      {
+        method: 'showMessageBox',
+        matcher: { message: /save your changes/i },
+        value: { response: 2 }, // Click "Cancel" button (index 2)
+      },
+      {
+        method: 'showMessageBox',
+        matcher: { message: /delete this file/i },
+        value: { response: 1 }, // Click "Delete" button (index 1)
+      },
+    ])
+
+    // Test the save changes dialog
+    const saveResponse = await ipcMainInvokeHandler(
+      app,
+      'show-save-changes-dialog'
+    )
+    expect(saveResponse).toBe(2) // Should have clicked "Cancel"
+
+    // Test the delete confirmation dialog
+    const deleteResponse = await ipcMainInvokeHandler(
+      app,
+      'show-delete-confirmation'
+    )
+    expect(deleteResponse).toBe(1) // Should have clicked "Delete"
+  })
+
+  test('stubDialogMatchers with button text matcher', async () => {
+    const app = getApp()
+
+    // Match dialogs that have a specific button
+    await stubDialogMatchers(app, [
+      {
+        method: 'showMessageBox',
+        matcher: { buttons: /Don't Save/i },
+        value: { response: 1 }, // Click "Don't Save" button (index 1)
+      },
+    ])
+
+    // Test the save changes dialog (it has "Don't Save" button)
+    const saveResponse = await ipcMainInvokeHandler(
+      app,
+      'show-save-changes-dialog'
+    )
+    expect(saveResponse).toBe(1) // Should have clicked "Don't Save"
+  })
+
+  test('stubDialogMatchers with type matcher', async () => {
+    const app = getApp()
+
+    // Match dialogs by their type
+    await stubDialogMatchers(app, [
+      {
+        method: 'showMessageBox',
+        matcher: { type: 'warning' },
+        value: { response: 0 }, // Click "Cancel" for warning dialogs
+      },
+      {
+        method: 'showMessageBox',
+        matcher: { type: 'question' },
+        value: { response: 2 }, // Click last button for question dialogs
+      },
+    ])
+
+    // Test the delete confirmation dialog (type: 'warning')
+    const deleteResponse = await ipcMainInvokeHandler(
+      app,
+      'show-delete-confirmation'
+    )
+    expect(deleteResponse).toBe(0) // Should have clicked "Cancel"
+
+    // Test the save changes dialog (type: 'question')
+    const saveResponse = await ipcMainInvokeHandler(
+      app,
+      'show-save-changes-dialog'
+    )
+    expect(saveResponse).toBe(2) // Should have clicked "Cancel"
+  })
+
+  test('stubDialogMatchers with showOpenDialog matcher', async () => {
+    const app = getApp()
+
+    // Set up matchers for open dialogs
+    await stubDialogMatchers(app, [
+      {
+        method: 'showOpenDialog',
+        matcher: { title: 'Select Image' },
+        value: {
+          filePaths: ['/path/to/selected-image.png'],
+          canceled: false,
+        },
+      },
+    ])
+
+    // Test the select image dialog
+    const result = await ipcMainInvokeHandler(app, 'show-select-image-dialog')
+    expect(result.canceled).toBe(false)
+    expect(result.filePaths).toEqual(['/path/to/selected-image.png'])
+  })
+
+  test('stubDialogMatchers with showSaveDialog matcher', async () => {
+    const app = getApp()
+
+    // Set up matchers for save dialogs
+    await stubDialogMatchers(app, [
+      {
+        method: 'showSaveDialog',
+        matcher: { title: /export/i },
+        value: {
+          filePath: '/path/to/exported-file.txt',
+          canceled: false,
+        },
+      },
+    ])
+
+    // Test the export dialog
+    const result = await ipcMainInvokeHandler(app, 'show-export-dialog')
+    expect(result.canceled).toBe(false)
+    expect(result.filePath).toBe('/path/to/exported-file.txt')
+  })
+
+  test('stubDialogMatchers with multiple matchers for same method (first match wins)', async () => {
+    const app = getApp()
+
+    // Set up multiple matchers for showMessageBox
+    // The first matching stub should win
+    await stubDialogMatchers(app, [
+      {
+        method: 'showMessageBox',
+        matcher: { title: 'Delete File' }, // More specific
+        value: { response: 1 },
+      },
+      {
+        method: 'showMessageBox',
+        matcher: { type: 'warning' }, // Less specific (also matches Delete File)
+        value: { response: 0 },
+      },
+    ])
+
+    // The delete dialog matches both matchers, but the first one (title match) should win
+    const deleteResponse = await ipcMainInvokeHandler(
+      app,
+      'show-delete-confirmation'
+    )
+    expect(deleteResponse).toBe(1) // First matcher wins
+  })
+
+  test('stubDialogMatchers with combined matchers', async () => {
+    const app = getApp()
+
+    // Use multiple properties in a single matcher
+    await stubDialogMatchers(app, [
+      {
+        method: 'showMessageBox',
+        matcher: {
+          type: 'warning',
+          title: /delete/i,
+          detail: /cannot be undone/i,
+        },
+        value: { response: 1 }, // Click "Delete"
+      },
+    ])
+
+    // The delete dialog matches all conditions
+    const deleteResponse = await ipcMainInvokeHandler(
+      app,
+      'show-delete-confirmation'
+    )
+    expect(deleteResponse).toBe(1)
+  })
+
+  test('stubDialogMatchers defaults when no matcher matches', async () => {
+    const app = getApp()
+
+    // Set up a matcher that won't match our dialog
+    await stubDialogMatchers(app, [
+      {
+        method: 'showMessageBox',
+        matcher: { title: 'Non-existent Dialog' },
+        value: { response: 99 },
+      },
+    ])
+
+    // The delete dialog doesn't match, so it should return default (response: 0)
+    const deleteResponse = await ipcMainInvokeHandler(
+      app,
+      'show-delete-confirmation'
+    )
+    expect(deleteResponse).toBe(0) // Default response
+  })
+
+  test('stubDialogMatchers with throwOnUnmatched option', async () => {
+    const app = getApp()
+
+    // Set up matchers with throwOnUnmatched
+    await stubDialogMatchers(
+      app,
+      [
+        {
+          method: 'showMessageBox',
+          matcher: { title: 'Non-existent Dialog' },
+          value: { response: 99 },
+        },
+      ],
+      { throwOnUnmatched: true }
+    )
+
+    // The delete dialog doesn't match, so it should throw
+    await expect(
+      ipcMainInvokeHandler(app, 'show-delete-confirmation')
+    ).rejects.toThrow(/No matching stub for showMessageBox/)
+  })
+
+  test('stubDialogMatchers with empty matcher (matches all)', async () => {
+    const app = getApp()
+
+    // An empty matcher should match any dialog of that method
+    await stubDialogMatchers(app, [
+      {
+        method: 'showOpenDialog',
+        matcher: {}, // Matches all open dialogs
+        value: { filePaths: ['/catch-all-path.txt'], canceled: false },
+      },
+    ])
+
+    // The select image dialog should match the catch-all
+    const result = await ipcMainInvokeHandler(app, 'show-select-image-dialog')
+    expect(result.filePaths).toEqual(['/catch-all-path.txt'])
+  })
+
+  test('stubDialogMatchers with buttonLabel matcher for open dialog', async () => {
+    const app = getApp()
+
+    await stubDialogMatchers(app, [
+      {
+        method: 'showOpenDialog',
+        matcher: { buttonLabel: 'Select' },
+        value: { filePaths: ['/selected-via-button-label.png'], canceled: false },
+      },
+    ])
+
+    const result = await ipcMainInvokeHandler(app, 'show-select-image-dialog')
+    expect(result.filePaths).toEqual(['/selected-via-button-label.png'])
+  })
 })
