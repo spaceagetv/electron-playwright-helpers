@@ -1,3 +1,5 @@
+## [2.0.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.0.0...v2.0.1) (2025-12-13)
+
 # [2.0.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.2...v2.0.0) (2025-12-13)
 
 
