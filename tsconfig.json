@@ -1,6 +1,6 @@
 {
-  "extends": "@tsconfig/node12/tsconfig.json",
   "compilerOptions": {
+    "target": "ES2019",
     "allowJs": true,
     "module": "commonjs",
     "skipLibCheck": true,
@@ -20,6 +20,7 @@
     }
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts",
+    "test/**/*.ts"
   ]
 }

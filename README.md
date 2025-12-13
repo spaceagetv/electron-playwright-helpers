@@ -73,6 +73,116 @@ Yes, please! Pull requests are always welcome. Feel free to add or suggest new f
 
 Please use [Conventional Commit](https://www.conventionalcommits.org/) messages for your commits. This project uses [semantic-release](https://github.com/semantic-release/semantic-release) to automatically publish new versions to NPM. The commit messages are used to determine the version number and changelog. We're also using Prettier as our code format and ESlint to enforce formatting, so please make sure your code is formatted before submitting a PR.
 
+## Migrating from v1.x to v2.0
+
+Version 2.0 introduces significant improvements to handle flakiness issues that appeared with Electron 27+ and Playwright. Starting with Electron 27, Playwright's `evaluate()` calls became unreliable, often throwing errors like "context or browser has been closed", "Promise was collected", or "Execution context was destroyed" seemingly at random.
+
+### What's New in v2.0
+
+#### Built-in Retry Logic
+
+All helper functions now automatically retry operations that fail due to Playwright context issues. This happens transparently - your existing code will work without changes, but will be more reliable.
+
+#### New Utility Functions
+
+- **`retry(fn, options)`** - Wrap any Playwright call to automatically retry on context errors
+- **`retryUntilTruthy(fn, options)`** - Like Playwright's `page.waitForFunction()` but with automatic retry on errors
+- **`setRetryOptions(options)`** - Configure default retry behavior globally
+- **`getRetryOptions()`** - Get current retry configuration
+- **`resetRetryOptions()`** - Reset retry options to defaults
+
+#### Conditional Dialog Stubbing (New!)
+
+- **`stubDialogMatchers(app, stubs, options)`** - Stub dialogs with conditional matching based on dialog options
+- **`clearDialogMatchers(app)`** - Clear dialog matcher stubs
+
+### Breaking Changes
+
+#### 1. Node.js 18+ Required
+
+Version 2.0 requires Node.js 18 or later due to modern JavaScript features like `structuredClone()`.
+
+#### 2. IPC Helper Function Signatures
+
+IPC helpers now accept an optional `RetryOptions` object as the last argument:
+
+```typescript
+// v1.x
+await ipcRendererSend(page, 'my-channel', arg1, arg2)
+
+// v2.0 - still works exactly the same
+await ipcRendererSend(page, 'my-channel', arg1, arg2)
+
+// v2.0 - with retry options
+await ipcRendererSend(page, 'my-channel', arg1, arg2, { timeout: 10000 })
+```
+
+This applies to: `ipcRendererSend`, `ipcRendererInvoke`, `ipcRendererEmit`, `ipcRendererCallFirstListener`, `ipcMainEmit`, `ipcMainCallFirstListener`, `ipcMainInvokeHandler`
+
+#### 3. Menu Helper Function Signatures
+
+Menu helpers now accept an optional `RetryOptions` object:
+
+```typescript
+// v1.x
+await clickMenuItemById(electronApp, 'my-menu-item')
+
+// v2.0 - still works exactly the same
+await clickMenuItemById(electronApp, 'my-menu-item')
+
+// v2.0 - with retry options
+await clickMenuItemById(electronApp, 'my-menu-item', { timeout: 10000 })
+```
+
+### Migration Steps
+
+For most projects, upgrading is straightforward:
+
+1. **Update Node.js** to version 18 or later
+2. **Update the package**: `npm install electron-playwright-helpers@latest`
+3. **Test your suite** - existing code should work without changes
+
+### Customizing Retry Behavior
+
+If you need to adjust retry behavior globally:
+
+```typescript
+import { setRetryOptions, resetRetryOptions } from 'electron-playwright-helpers'
+
+// Increase timeout for slow CI environments
+setRetryOptions({
+  timeout: 10000,  // 10 seconds (default: 5000)
+  poll: 500,       // poll every 500ms (default: 200)
+})
+
+// Reset to defaults
+resetRetryOptions()
+```
+
+Or disable retries for specific calls:
+
+```typescript
+await ipcRendererSend(page, 'channel', arg, { disable: true })
+```
+
+### Using the New Retry Functions
+
+If you have custom Playwright `evaluate()` calls that aren't using our helpers, wrap them with `retry()`:
+
+```typescript
+import { retry, retryUntilTruthy } from 'electron-playwright-helpers'
+
+// Wrap evaluate calls to handle context errors
+const result = await retry(() =>
+  electronApp.evaluate(({ app }) => app.getName())
+)
+
+// Wait for a condition with automatic error recovery
+await retryUntilTruthy(() =>
+  page.evaluate(() => document.body.classList.contains('ready'))
+)
+```
+
 ## Additional Resources
 
 * [Electron Playwright Example](https://github.com/spaceagetv/electron-playwright-example) - an example of how to use this library
@@ -115,10 +225,21 @@ and the path to the app's main file.</p>
 should be part of the Playwright API, but it's not.</p>
 <p>This function is to <code>electronApp.evaluate()</code>
 as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p></dd>
+<dt><a href="#evaluateWithRetry">evaluateWithRetry(electronApp, fn, arg, retries, retryIntervalMs)</a> ⇒ <code>Promise.&lt;R&gt;</code></dt>
+<dd><p>Electron's <code>evaluate</code> function can be flakey,
+throwing an error saying the execution context has been destroyed.
+This function retries the evaluation several times to see if it can
+run the evaluation without an error. If it fails after the retries,
+it throws the error.</p></dd>
 <dt><a href="#isSerializedNativeImageSuccess">isSerializedNativeImageSuccess()</a></dt>
 <dd><p>Type guard to check if a SerializedNativeImage is a success case</p></dd>
 <dt><a href="#isSerializedNativeImageError">isSerializedNativeImageError()</a></dt>
 <dd><p>Type guard to check if a SerializedNativeImage is an error case</p></dd>
+<dt><a href="#retryUntilTruthy">retryUntilTruthy(fn, [timeoutMs], [intervalMs])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
+<dd><p>Retries a given function until it returns a truthy value or the timeout is reached.</p>
+<p>This offers similar functionality to Playwright's <a href="https://playwright.dev/docs/api/class-page#page-wait-for-function"><code>page.waitForFunction()</code></a>
+method – but with more flexibility and control over the retry attempts. It also defaults to ignoring common errors due to
+the way that Playwright handles browser contexts.</p></dd>
 <dt><a href="#stubDialog">stubDialog(app, method, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Stub a single dialog method. This is a convenience function that calls <code>stubMultipleDialogs</code>
 for a single method.</p>
@@ -143,34 +264,34 @@ to test your application's behavior when the user selects a file, or cancels the
 for all dialog methods. This is useful if you want to ensure that dialogs are not displayed
 during your tests. However, you may want to use <code>stubDialog</code> or <code>stubMultipleDialogs</code> to
 control the return value of specific dialog methods (e.g. <code>showOpenDialog</code>) during your tests.</p></dd>
-<dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
+<dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an ipcMain message from the main process.
 This will trigger all ipcMain listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
 It simply emits an event in the main process.</p></dd>
-<dt><a href="#ipcMainCallFirstListener">ipcMainCallFirstListener(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcMainCallFirstListener">ipcMainCallFirstListener(electronApp, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Call the first listener for a given ipcMain message in the main process
 and return its result.</p>
 <p>NOTE: ipcMain listeners usually don't return a value, but we're using
 this to retrieve test data from the main process.</p>
 <p>Generally, it's probably better to use <code>ipcMainInvokeHandler()</code> instead.</p></dd>
-<dt><a href="#ipcMainInvokeHandler">ipcMainInvokeHandler(electronApp, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcMainInvokeHandler">ipcMainInvokeHandler(electronApp, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Get the return value of an <code>ipcMain.handle()</code> function</p></dd>
-<dt><a href="#ipcRendererSend">ipcRendererSend(page, channel, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcRendererSend">ipcRendererSend(page, channel, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Send an <code>ipcRenderer.send()</code> (to main process) from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this BrowserWindow.</p></dd>
-<dt><a href="#ipcRendererInvoke">ipcRendererInvoke(page, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcRendererInvoke">ipcRendererInvoke(page, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Send an ipcRenderer.invoke() from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this window</p></dd>
-<dt><a href="#ipcRendererCallFirstListener">ipcRendererCallFirstListener(page, message, ...args)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
+<dt><a href="#ipcRendererCallFirstListener">ipcRendererCallFirstListener(page, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;unknown&gt;</code></dt>
 <dd><p>Call just the first listener for a given ipcRenderer channel in a given window.
 <em>UNLIKE MOST Electron ipcRenderer listeners</em>, this function SHOULD return a value.</p>
 <p>This function does not send data between main and renderer processes.
 It simply retrieves data from the renderer process.</p>
 <p>Note: nodeIntegration must be true for this BrowserWindow.</p></dd>
-<dt><a href="#ipcRendererEmit">ipcRendererEmit(page, message, ...args)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
+<dt><a href="#ipcRendererEmit">ipcRendererEmit(page, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an IPC message to a given window.
 This will trigger all ipcRenderer listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -208,6 +329,32 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 <dd><p>Add a timeout to any Promise</p></dd>
 <dt><a href="#addTimeout">addTimeout(functionName, timeoutMs, timeoutMessage, ...args)</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Add a timeout to any helper function from this library which returns a Promise.</p></dd>
+<dt><a href="#retry">retry(fn, [options])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
+<dd><p>Retries a function until it returns without throwing an error.</p>
+<p>Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
+It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Promise was collected&quot; for no apparent reason.
+This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p></dd>
+<dt><a href="#setRetryOptions">setRetryOptions(options)</a> ⇒</dt>
+<dd><p>Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
+You can reset the defaults at any time by calling resetRetryOptions().</p></dd>
+<dt><a href="#getRetryOptions">getRetryOptions()</a> ⇒</dt>
+<dd><p>Gets the current default retry options.</p></dd>
+<dt><a href="#resetRetryOptions">resetRetryOptions()</a></dt>
+<dd><p>Resets the retry options to their default values.</p>
+<p>The default values are:</p>
+<ul>
+<li>retries: 20</li>
+<li>intervalMs: 200</li>
+<li>timeoutMs: 5000</li>
+<li>errorMatch: 'context or browser has been closed'</li>
+</ul></dd>
+<dt><a href="#errToString">errToString(err)</a> ⇒</dt>
+<dd><p>Converts an unknown error to a string representation.</p>
+<p>This function handles different types of errors and attempts to convert them
+to a string in a meaningful way. It checks if the error is an object with a
+<code>toString</code> method and uses that method if available. If the error is a string,
+it returns the string directly. For other types, it converts the error to a
+JSON string.</p></dd>
 </dl>
 
 ## Typedefs
@@ -283,6 +430,28 @@ as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p>
 | fn | <code>function</code> | <p>the function to evaluate in the main process - must return a boolean</p> |
 | arg | <code>Any</code> | <p>optional - an argument to pass to the function</p> |
 
+<a name="evaluateWithRetry"></a>
+
+## evaluateWithRetry(electronApp, fn, arg, retries, retryIntervalMs) ⇒ <code>Promise.&lt;R&gt;</code>
+<p>Electron's <code>evaluate</code> function can be flakey,
+throwing an error saying the execution context has been destroyed.
+This function retries the evaluation several times to see if it can
+run the evaluation without an error. If it fails after the retries,
+it throws the error.</p>
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;R&gt;</code> - <ul>
+<li>the result of the evaluation</li>
+</ul>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| electronApp | <code>ElectronApplication</code> | <p>the Playwright ElectronApplication</p> |
+| fn | <code>function</code> | <p>the function to evaluate in the main process</p> |
+| arg | <code>Any</code> | <p>an argument to pass to the function</p> |
+| retries |  | <p>the number of times to retry the evaluation</p> |
+| retryIntervalMs |  | <p>the interval between retries</p> |
+
 <a name="isSerializedNativeImageSuccess"></a>
 
 ## isSerializedNativeImageSuccess()
@@ -295,6 +464,46 @@ as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p>
 <p>Type guard to check if a SerializedNativeImage is an error case</p>
 
 **Kind**: global function  
+<a name="retryUntilTruthy"></a>
+
+## retryUntilTruthy(fn, [timeoutMs], [intervalMs]) ⇒ <code>Promise.&lt;T&gt;</code>
+<p>Retries a given function until it returns a truthy value or the timeout is reached.</p>
+<p>This offers similar functionality to Playwright's <a href="https://playwright.dev/docs/api/class-page#page-wait-for-function"><code>page.waitForFunction()</code></a>
+method – but with more flexibility and control over the retry attempts. It also defaults to ignoring common errors due to
+the way that Playwright handles browser contexts.</p>
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;T&gt;</code> - <ul>
+<li>A promise that resolves to the truthy value returned by the function.</li>
+</ul>  
+**Throws**:
+
+- <code>Error</code> <ul>
+<li>Throws an error if the timeout is reached before a truthy value is returned.</li>
+</ul>
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| fn | <code>function</code> |  | <p>The function to retry. It can return a promise or a value. It should NOT return void/undefined.</p> |
+| [timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time in milliseconds to keep retrying the function. Defaults to 5000ms.</p> |
+| [intervalMs] | <code>number</code> | <code>100</code> | <p>The delay between each retry attempt in milliseconds. Defaults to 100ms.</p> |
+| [options.retryTimeout] | <code>number</code> | <code>5000</code> | <p>The maximum time in milliseconds to wait for an individual try to return a result. Defaults to 5000ms.</p> |
+| [options.retryPoll] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds. Defaults to 200ms.</p> |
+| [options.retryErrorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> |  | <p>The error message or pattern to match against. Errors that don't match will throw immediately.</p> |
+
+**Example**  
+```javascript
+test('my test', async () => {
+  // this will fail immediately if Playwright's context gets weird:
+  const oldWay = await page.waitForFunction(() => document.body.classList.contains('ready'))
+
+ // this will not fail if Playwright's context gets weird:
+  const newWay = await retryUntilTruthy(() =>
+    page.evaluate(() => document.body.classList.contains('ready'))
+  )
+})
+```
 <a name="ElectronAppInfo"></a>
 
 ## ElectronAppInfo
@@ -413,7 +622,7 @@ control the return value of specific dialog methods (e.g. <code>showOpenDialog</
 
 <a name="ipcMainEmit"></a>
 
-## ipcMainEmit(electronApp, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
+## ipcMainEmit(electronApp, message, ...args, retryOptions) ⇒ <code>Promise.&lt;boolean&gt;</code>
 <p>Emit an ipcMain message from the main process.
 This will trigger all ipcMain listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -429,10 +638,11 @@ It simply emits an event in the main process.</p>
 | electronApp | <code>ElectronApplication</code> | <p>the ElectronApplication object from Playwright</p> |
 | message | <code>string</code> | <p>the channel to call all ipcMain listeners for</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="ipcMainCallFirstListener"></a>
 
-## ipcMainCallFirstListener(electronApp, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcMainCallFirstListener(electronApp, message, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Call the first listener for a given ipcMain message in the main process
 and return its result.</p>
 <p>NOTE: ipcMain listeners usually don't return a value, but we're using
@@ -449,10 +659,11 @@ this to retrieve test data from the main process.</p>
 | electronApp | <code>ElectronApplication</code> | <p>the ElectronApplication object from Playwright</p> |
 | message | <code>string</code> | <p>the channel to call the first listener for</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="ipcMainInvokeHandler"></a>
 
-## ipcMainInvokeHandler(electronApp, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcMainInvokeHandler(electronApp, message, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Get the return value of an <code>ipcMain.handle()</code> function</p>
 
 **Kind**: global function  
@@ -464,10 +675,11 @@ this to retrieve test data from the main process.</p>
 | electronApp | <code>ElectronApplication</code> | <p>the ElectronApplication object from Playwright</p> |
 | message | <code>string</code> | <p>the channel to call the first listener for</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="ipcRendererSend"></a>
 
-## ipcRendererSend(page, channel, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcRendererSend(page, channel, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Send an <code>ipcRenderer.send()</code> (to main process) from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this BrowserWindow.</p>
@@ -481,10 +693,11 @@ in the webPreferences for this BrowserWindow.</p>
 | page | <code>Page</code> | <p>the Playwright Page to send the ipcRenderer.send() from</p> |
 | channel | <code>string</code> | <p>the channel to send the ipcRenderer.send() to</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send to the <code>ipcRenderer.send()</code></p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional last argument - options for retrying upon error</p> |
 
 <a name="ipcRendererInvoke"></a>
 
-## ipcRendererInvoke(page, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcRendererInvoke(page, message, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Send an ipcRenderer.invoke() from a given window.</p>
 <p>Note: nodeIntegration must be true and contextIsolation must be false
 in the webPreferences for this window</p>
@@ -498,10 +711,11 @@ in the webPreferences for this window</p>
 | page | <code>Page</code> | <p>the Playwright Page to send the ipcRenderer.invoke() from</p> |
 | message | <code>string</code> | <p>the channel to send the ipcRenderer.invoke() to</p> |
 | ...args | <code>unknown</code> | <p>one or more arguments to send to the ipcRenderer.invoke()</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional last argument - options for retrying upon error</p> |
 
 <a name="ipcRendererCallFirstListener"></a>
 
-## ipcRendererCallFirstListener(page, message, ...args) ⇒ <code>Promise.&lt;unknown&gt;</code>
+## ipcRendererCallFirstListener(page, message, ...args, retryOptions) ⇒ <code>Promise.&lt;unknown&gt;</code>
 <p>Call just the first listener for a given ipcRenderer channel in a given window.
 <em>UNLIKE MOST Electron ipcRenderer listeners</em>, this function SHOULD return a value.</p>
 <p>This function does not send data between main and renderer processes.
@@ -517,10 +731,11 @@ It simply retrieves data from the renderer process.</p>
 | page | <code>Page</code> | <p>The Playwright Page to with the <code>ipcRenderer.on()</code> listener</p> |
 | message | <code>string</code> | <p>The channel to call the first listener for</p> |
 | ...args | <code>unknown</code> | <p>optional - One or more arguments to send to the ipcRenderer.on() listener</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="ipcRendererEmit"></a>
 
-## ipcRendererEmit(page, message, ...args) ⇒ <code>Promise.&lt;boolean&gt;</code>
+## ipcRendererEmit(page, message, ...args, retryOptions) ⇒ <code>Promise.&lt;boolean&gt;</code>
 <p>Emit an IPC message to a given window.
 This will trigger all ipcRenderer listeners for the message.</p>
 <p>This does not transfer data between main and renderer processes.
@@ -537,6 +752,7 @@ It simply emits an event in the renderer process.</p>
 | page | <code>Page</code> | <p>the Playwright Page to with the ipcRenderer.on() listener</p> |
 | message | <code>string</code> | <p>the channel to call all ipcRenderer listeners for</p> |
 | ...args | <code>unknown</code> | <p>optional - one or more arguments to send</p> |
+| retryOptions | <code>RetryOptions</code> | <p>optional - options for retrying upon error</p> |
 
 <a name="clickMenuItemById"></a>
 
@@ -698,4 +914,95 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 | timeoutMs | <code>5000</code> | <p>the timeout in milliseconds - defaults to 5000</p> |
 | timeoutMessage |  | <p>optional - the message to return if the timeout is reached</p> |
 | ...args |  | <p>any arguments to pass to the helper function</p> |
+
+<a name="retry"></a>
+
+## retry(fn, [options]) ⇒ <code>Promise.&lt;T&gt;</code>
+<p>Retries a function until it returns without throwing an error.</p>
+<p>Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
+It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Promise was collected&quot; for no apparent reason.
+This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p>
+
+**Kind**: global function  
+**Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.</p>  
+**Category**: Utilities  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| fn | <code>function</code> |  | <p>The function to retry.</p> |
+| [options] | <code>RetryOptions</code> | <code>{}</code> | <p>The options for retrying the function.</p> |
+| [options.timeout] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
+| [options.poll] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
+| [options.errorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> | <code>&quot;[&#x27;context or browser has been closed&#x27;, &#x27;Promise was collected&#x27;, &#x27;Execution context was destroyed&#x27;]&quot;</code> | <p>String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.</p> |
+
+**Example**  
+You can simply wrap your Playwright calls in this function to make them more reliable:
+
+```javascript
+test('my test', async () => {
+  // instead of this:
+  const oldWayRenderer = await page.evaluate(() => document.body.classList.contains('active'))
+  const oldWayMain = await electronApp.evaluate(({}) => document.body.classList.contains('active'))
+  // use this:
+  const newWay = await retry(() =>
+    page.evaluate(() => document.body.classList.contains('active'))
+  )
+  // note the `() =>` in front of the original function call
+  // and the `await` keyword in front of `retry`,
+  // but NOT in front of `page.evaluate`
+})
+```
+<a name="setRetryOptions"></a>
+
+## setRetryOptions(options) ⇒
+<p>Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
+You can reset the defaults at any time by calling resetRetryOptions().</p>
+
+**Kind**: global function  
+**Returns**: <p>The updated retry options.</p>  
+**Category**: Utilities  
+
+| Param | Description |
+| --- | --- |
+| options | <p>A partial object containing the retry options to be set.</p> |
+
+<a name="getRetryOptions"></a>
+
+## getRetryOptions() ⇒
+<p>Gets the current default retry options.</p>
+
+**Kind**: global function  
+**Returns**: <p>The current retry options.</p>  
+**Category**: Utilities  
+<a name="resetRetryOptions"></a>
+
+## resetRetryOptions()
+<p>Resets the retry options to their default values.</p>
+<p>The default values are:</p>
+<ul>
+<li>retries: 20</li>
+<li>intervalMs: 200</li>
+<li>timeoutMs: 5000</li>
+<li>errorMatch: 'context or browser has been closed'</li>
+</ul>
+
+**Kind**: global function  
+**Category**: Utilities  
+<a name="errToString"></a>
+
+## errToString(err) ⇒
+<p>Converts an unknown error to a string representation.</p>
+<p>This function handles different types of errors and attempts to convert them
+to a string in a meaningful way. It checks if the error is an object with a
+<code>toString</code> method and uses that method if available. If the error is a string,
+it returns the string directly. For other types, it converts the error to a
+JSON string.</p>
+
+**Kind**: global function  
+**Returns**: <p>A string representation of the error.</p>  
+**Category**: Utilities  
+
+| Param | Description |
+| --- | --- |
+| err | <p>The unknown error to be converted to a string.</p> |
 

@@ -1,5 +1,6 @@
 import type { ElectronApplication } from 'playwright-core'
 import { electronWaitForFunction } from './general_helpers'
+import { RetryOptions, retry } from './utilities'
 
 /**
  * Execute the `.click()` method on the element with the given id.
@@ -15,20 +16,25 @@ import { electronWaitForFunction } from './general_helpers'
  */
 export function clickMenuItemById(
   electronApp: ElectronApplication,
-  id: string
+  id: string,
+  options: Partial<RetryOptions> = {}
 ): Promise<unknown> {
-  return electronApp.evaluate(({ Menu }, menuId) => {
-    const menu = Menu.getApplicationMenu()
-    if (!menu) {
-      throw new Error('No application menu found')
-    }
-    const menuItem = menu.getMenuItemById(menuId)
-    if (menuItem) {
-      return menuItem.click()
-    } else {
-      throw new Error(`Menu item with id ${menuId} not found`)
-    }
-  }, id)
+  return retry(
+    () =>
+      electronApp.evaluate(({ Menu }, menuId) => {
+        const menu = Menu.getApplicationMenu()
+        if (!menu) {
+          throw new Error('No application menu found')
+        }
+        const menuItem = menu.getMenuItemById(menuId)
+        if (menuItem) {
+          return menuItem.click()
+        } else {
+          throw new Error(`Menu item with id ${menuId} not found`)
+        }
+      }, id),
+    { disable: true, ...options }
+  )
 }
 
 /**
@@ -50,7 +56,8 @@ export function clickMenuItemById(
 export async function clickMenuItem<P extends keyof MenuItemPartial>(
   electronApp: ElectronApplication,
   property: P,
-  value: MenuItemPartial[P]
+  value: MenuItemPartial[P],
+  options: Partial<RetryOptions> = {}
 ): Promise<unknown> {
   const menuItem = await findMenuItem(electronApp, property, value)
   if (!menuItem) {
@@ -105,27 +112,32 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
 export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
   electronApp: ElectronApplication,
   menuId: string,
-  attribute: T
+  attribute: T,
+  options: Partial<RetryOptions> = {}
 ): Promise<Electron.MenuItem[T]> {
   const attr = attribute as keyof Electron.MenuItem
-  const resultPromise = electronApp.evaluate(
-    ({ Menu }, { menuId, attr }) => {
-      const menu = Menu.getApplicationMenu()
-      if (!menu) {
-        throw new Error('No application menu found')
-      }
-      const menuItem = menu.getMenuItemById(menuId)
-      if (!menuItem) {
-        throw new Error(`Menu item with id "${menuId}" not found`)
-      } else if (menuItem[attr] === undefined) {
-        throw new Error(
-          `Menu item with id "${menuId}" has no attribute "${attr}"`
-        )
-      } else {
-        return menuItem[attr]
-      }
-    },
-    { menuId, attr }
+  const resultPromise = retry(
+    () =>
+      electronApp.evaluate(
+        ({ Menu }, { menuId, attr }) => {
+          const menu = Menu.getApplicationMenu()
+          if (!menu) {
+            throw new Error('No application menu found')
+          }
+          const menuItem = menu.getMenuItemById(menuId)
+          if (!menuItem) {
+            throw new Error(`Menu item with id "${menuId}" not found`)
+          } else if (menuItem[attr] === undefined) {
+            throw new Error(
+              `Menu item with id "${menuId}" has no attribute "${attr}"`
+            )
+          } else {
+            return menuItem[attr]
+          }
+        },
+        { menuId, attr }
+      ),
+    options
   )
   return resultPromise as Promise<Electron.MenuItem[T]>
 }
@@ -201,92 +213,97 @@ export type MenuItemPartial = {
  */
 export function getMenuItemById(
   electronApp: ElectronApplication,
-  menuId: string
+  menuId: string,
+  options: Partial<RetryOptions> = {}
 ): Promise<MenuItemPartial> {
-  return electronApp.evaluate(
-    ({ Menu }, { menuId }) => {
-      // we need this function to be in scope/context for the electronApp.evaluate
-      function cleanMenuItem(
-        menuItem: Electron.MenuItem,
-        visited = new WeakSet()
-      ): MenuItemPartial {
-        // Check for circular references
-        if (visited.has(menuItem)) {
-          return { id: menuItem.id, label: '[Circular Reference]' }
-        }
-        visited.add(menuItem)
-
-        const returnValue = {} as Record<string, SerializableValue>
-
-        Object.entries(menuItem).forEach(([k, v]) => {
-          const key = k as keyof Electron.MenuItem
-          const value = v as Electron.MenuItem[keyof Electron.MenuItem]
-          try {
-            if (value === null || value === undefined) {
-              returnValue[key] = value
-            } else if (
-              typeof value === 'string' ||
-              typeof value === 'number' ||
-              typeof value === 'boolean'
-            ) {
-              returnValue[key] = value
-            } else if (value instanceof Date) {
-              // Convert dates to ISO strings for serialization
-              returnValue[key] = value.toISOString()
-            } else if (
-              value &&
-              typeof value === 'object' &&
-              value.constructor &&
-              value.constructor.name === 'NativeImage'
-            ) {
-              // Handle nativeImage objects by converting to data URL
-              try {
-                returnValue[key] = {
-                  type: 'NativeImage',
-                  dataURL: (value as Electron.NativeImage).toDataURL(),
-                  size: (value as Electron.NativeImage).getSize(),
-                  isEmpty: (value as Electron.NativeImage).isEmpty(),
-                }
-              } catch (imageError) {
-                returnValue[key] = {
-                  type: 'NativeImage',
-                  error: 'Failed to serialize image',
-                }
-              }
-            } else if (
-              (Array.isArray(value) && key !== 'submenu') ||
-              typeof value === 'object'
-            ) {
-              returnValue[key] = JSON.parse(JSON.stringify(value))
+  return retry(
+    () =>
+      electronApp.evaluate(
+        ({ Menu }, { menuId }) => {
+          // we need this function to be in scope/context for the electronApp.evaluate
+          function cleanMenuItem(
+            menuItem: Electron.MenuItem,
+            visited = new WeakSet()
+          ): MenuItemPartial {
+            // Check for circular references
+            if (visited.has(menuItem)) {
+              return { id: menuItem.id, label: '[Circular Reference]' }
             }
-            // Skip functions and other non-serializable types
-          } catch (error) {
-            // Skip properties that can't be accessed or serialized
+            visited.add(menuItem)
+
+            const returnValue = {} as Record<string, SerializableValue>
+
+            Object.entries(menuItem).forEach(([k, v]) => {
+              const key = k as keyof Electron.MenuItem
+              const value = v as Electron.MenuItem[keyof Electron.MenuItem]
+              try {
+                if (value === null || value === undefined) {
+                  returnValue[key] = value
+                } else if (
+                  typeof value === 'string' ||
+                  typeof value === 'number' ||
+                  typeof value === 'boolean'
+                ) {
+                  returnValue[key] = value
+                } else if (value instanceof Date) {
+                  // Convert dates to ISO strings for serialization
+                  returnValue[key] = value.toISOString()
+                } else if (
+                  value &&
+                  typeof value === 'object' &&
+                  value.constructor &&
+                  value.constructor.name === 'NativeImage'
+                ) {
+                  // Handle nativeImage objects by converting to data URL
+                  try {
+                    returnValue[key] = {
+                      type: 'NativeImage',
+                      dataURL: (value as Electron.NativeImage).toDataURL(),
+                      size: (value as Electron.NativeImage).getSize(),
+                      isEmpty: (value as Electron.NativeImage).isEmpty(),
+                    }
+                  } catch (imageError) {
+                    returnValue[key] = {
+                      type: 'NativeImage',
+                      error: 'Failed to serialize image',
+                    }
+                  }
+                } else if (
+                  (Array.isArray(value) && key !== 'submenu') ||
+                  typeof value === 'object'
+                ) {
+                  returnValue[key] = structuredClone(value)
+                }
+                // Skip functions and other non-serializable types
+              } catch (error) {
+                // Skip properties that can't be accessed or serialized
+              }
+            })
+
+            if (menuItem.type === 'submenu' && menuItem.submenu) {
+              returnValue['submenu'] = menuItem.submenu.items.map((item) =>
+                cleanMenuItem(item, visited)
+              )
+            }
+
+            return returnValue as MenuItemPartial
           }
-        })
 
-        if (menuItem.type === 'submenu' && menuItem.submenu) {
-          returnValue['submenu'] = menuItem.submenu.items.map((item) =>
-            cleanMenuItem(item, visited)
-          )
-        }
-
-        return returnValue as MenuItemPartial
-      }
-
-      const menu = Menu.getApplicationMenu()
-      if (!menu) {
-        throw new Error('No application menu found')
-      }
-      const menuItem = menu.getMenuItemById(menuId)
-      if (menuItem) {
-        const visited = new WeakSet<Electron.MenuItem>()
-        return cleanMenuItem(menuItem, visited)
-      } else {
-        throw new Error(`Menu item with id ${menuId} not found`)
-      }
-    },
-    { menuId }
+          const menu = Menu.getApplicationMenu()
+          if (!menu) {
+            throw new Error('No application menu found')
+          }
+          const menuItem = menu.getMenuItemById(menuId)
+          if (menuItem) {
+            const visited = new WeakSet<Electron.MenuItem>()
+            return cleanMenuItem(menuItem, visited)
+          } else {
+            throw new Error(`Menu item with id ${menuId} not found`)
+          }
+        },
+        { menuId }
+      ),
+    options
   )
 }
 
@@ -304,87 +321,91 @@ export function getMenuItemById(
  * @fulfil {MenuItemPartial[]} an array of MenuItem-like objects
  */
 export function getApplicationMenu(
-  electronApp: ElectronApplication
+  electronApp: ElectronApplication,
+  options: Partial<RetryOptions> = {}
 ): Promise<MenuItemPartial[]> {
-  const promise = electronApp.evaluate(({ Menu }) => {
-    // we need this function to be in scope/context for the electronApp.evaluate
-    function cleanMenuItem(
-      menuItem: Electron.MenuItem,
-      visited = new WeakSet()
-    ): MenuItemPartial {
-      // Check for circular references
-      if (visited.has(menuItem)) {
-        return { id: menuItem.id, label: '[Circular Reference]' }
-      }
-      visited.add(menuItem)
-
-      const returnValue = {} as Record<string, SerializableValue>
-
-      Object.entries(menuItem).forEach(([k, v]) => {
-        const key = k as keyof Electron.MenuItem
-        const value = v as Electron.MenuItem[keyof Electron.MenuItem]
-        try {
-          if (value === null || value === undefined) {
-            returnValue[key] = value
-          } else if (
-            typeof value === 'string' ||
-            typeof value === 'number' ||
-            typeof value === 'boolean'
-          ) {
-            returnValue[key] = value
-          } else if (value instanceof Date) {
-            // Convert dates to ISO strings for serialization
-            returnValue[key] = value.toISOString()
-          } else if (
-            value &&
-            typeof value === 'object' &&
-            value.constructor &&
-            value.constructor.name === 'NativeImage'
-          ) {
-            // Handle nativeImage objects by converting to data URL
-            try {
-              returnValue[key] = {
-                type: 'NativeImage',
-                dataURL: (value as Electron.NativeImage).toDataURL(),
-                size: (value as Electron.NativeImage).getSize(),
-                isEmpty: (value as Electron.NativeImage).isEmpty(),
-              }
-            } catch (imageError) {
-              returnValue[key] = {
-                type: 'NativeImage',
-                error: 'Failed to serialize image',
-              }
-            }
-          } else if (
-            (Array.isArray(value) && key !== 'submenu') ||
-            typeof value === 'object'
-          ) {
-            returnValue[key] = JSON.parse(JSON.stringify(value))
+  return retry(
+    () =>
+      electronApp.evaluate(({ Menu }) => {
+        // we need this function to be in scope/context for the electronApp.evaluate
+        function cleanMenuItem(
+          menuItem: Electron.MenuItem,
+          visited = new WeakSet()
+        ): MenuItemPartial {
+          // Check for circular references
+          if (visited.has(menuItem)) {
+            return { id: menuItem.id, label: '[Circular Reference]' }
           }
-          // Skip functions and other non-serializable types
-        } catch (error) {
-          // Skip properties that can't be accessed or serialized
+          visited.add(menuItem)
+
+          const returnValue = {} as Record<string, SerializableValue>
+
+          Object.entries(menuItem).forEach(([k, v]) => {
+            const key = k as keyof Electron.MenuItem
+            const value = v as Electron.MenuItem[keyof Electron.MenuItem]
+            try {
+              if (value === null || value === undefined) {
+                returnValue[key] = value
+              } else if (
+                typeof value === 'string' ||
+                typeof value === 'number' ||
+                typeof value === 'boolean'
+              ) {
+                returnValue[key] = value
+              } else if (value instanceof Date) {
+                // Convert dates to ISO strings for serialization
+                returnValue[key] = value.toISOString()
+              } else if (
+                value &&
+                typeof value === 'object' &&
+                value.constructor &&
+                value.constructor.name === 'NativeImage'
+              ) {
+                // Handle nativeImage objects by converting to data URL
+                try {
+                  returnValue[key] = {
+                    type: 'NativeImage',
+                    dataURL: (value as Electron.NativeImage).toDataURL(),
+                    size: (value as Electron.NativeImage).getSize(),
+                    isEmpty: (value as Electron.NativeImage).isEmpty(),
+                  }
+                } catch (imageError) {
+                  returnValue[key] = {
+                    type: 'NativeImage',
+                    error: 'Failed to serialize image',
+                  }
+                }
+              } else if (
+                (Array.isArray(value) && key !== 'submenu') ||
+                typeof value === 'object'
+              ) {
+                returnValue[key] = structuredClone(value)
+              }
+              // Skip functions and other non-serializable types
+            } catch (error) {
+              // Skip properties that can't be accessed or serialized
+            }
+          })
+
+          if (menuItem.type === 'submenu' && menuItem.submenu) {
+            returnValue['submenu'] = menuItem.submenu.items.map((item) =>
+              cleanMenuItem(item, visited)
+            )
+          }
+
+          return returnValue as MenuItemPartial
         }
-      })
 
-      if (menuItem.type === 'submenu' && menuItem.submenu) {
-        returnValue['submenu'] = menuItem.submenu.items.map((item) =>
-          cleanMenuItem(item, visited)
-        )
-      }
+        const menu = Menu.getApplicationMenu()
+        if (!menu) {
+          throw new Error('No application menu found')
+        }
+        const cleanItems = menu.items.map((item) => cleanMenuItem(item))
 
-      return returnValue as MenuItemPartial
-    }
-
-    const menu = Menu.getApplicationMenu()
-    if (!menu) {
-      throw new Error('No application menu found')
-    }
-    const cleanItems = menu.items.map((item) => cleanMenuItem(item))
-
-    return cleanItems
-  })
-  return promise
+        return cleanItems
+      }),
+    options
+  )
 }
 
 /**
