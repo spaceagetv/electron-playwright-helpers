@@ -1,3 +1,15 @@
+# [1.9.0-beta.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.9.0-beta.1...v1.9.0-beta.2) (2025-12-13)
+
+
+### Bug Fixes
+
+* upgrade jsdoc-to-markdown for Node.js 22+ compatibility ([d48995e](https://github.com/spaceagetv/electron-playwright-helpers/commit/d48995e904d98a702e7a42fbfbe735457dc123ac))
+
+
+### Features
+
+* add dialog stubbing matchers for conditional return values ([a17d6f5](https://github.com/spaceagetv/electron-playwright-helpers/commit/a17d6f5db6f609bd149947e0e97e74f1ebb8d3d8))
+
 # [1.9.0-beta.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.2...v1.9.0-beta.1) (2025-08-15)
 
 

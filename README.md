@@ -81,9 +81,23 @@ Please use [Conventional Commit](https://www.conventionalcommits.org/) messages 
 
 ## API
 
+## Constants
+
+<dl>
+<dt><a href="#dialogMatcherDefaults">dialogMatcherDefaults</a></dt>
+<dd><p>Union type of all dialog matcher stubs.</p></dd>
+</dl>
+
 ## Functions
 
 <dl>
+<dt><a href="#toSerializableMatcher">toSerializableMatcher()</a></dt>
+<dd><p>Convert a string or RegExp to a serializable StringMatcher.
+RegExp objects cannot be transferred via Playwright's evaluate(),
+so we serialize them as {source, flags}.</p></dd>
+<dt><a href="#matchesPattern">matchesPattern()</a></dt>
+<dd><p>Check if a value matches a StringMatcher.
+Used inside app.evaluate() where the matcher is already serialized.</p></dd>
 <dt><a href="#findLatestBuild">findLatestBuild(buildDirectory)</a> ⇒ <code>string</code></dt>
 <dd><p>Parses the <code>out</code> directory to find the latest build of your Electron project.
 Use <code>npm run package</code> (or similar) to build your app prior to testing.</p>
@@ -154,6 +168,18 @@ to test your application's behavior when the user selects a file, or cancels the
 for all dialog methods. This is useful if you want to ensure that dialogs are not displayed
 during your tests. However, you may want to use <code>stubDialog</code> or <code>stubMultipleDialogs</code> to
 control the return value of specific dialog methods (e.g. <code>showOpenDialog</code>) during your tests.</p></dd>
+<dt><a href="#stubDialogMatchers">stubDialogMatchers(app, stubs, options)</a> ⇒</dt>
+<dd><p>Stub dialog methods with matchers that check dialog options before returning values.
+This allows you to set up multiple different return values based on the dialog's
+title, message, buttons, or other options.</p>
+<p>Matchers are checked in order - the first matching stub wins.
+If no stub matches, either an error is thrown (if throwOnUnmatched is true)
+or the default value is returned.</p></dd>
+<dt><a href="#clearDialogMatchers">clearDialogMatchers(app)</a> ⇒</dt>
+<dd><p>Clear all dialog matcher stubs and restore original dialog methods.
+Note: This requires the app to have stored the original methods,
+which is not done by default. You may need to restart the app
+to fully restore dialog functionality.</p></dd>
 <dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an ipcMain message from the main process.
 This will trigger all ipcMain listeners for the message.</p>
@@ -254,6 +280,27 @@ JSON string.</p></dd>
 <dd><p>Format of the data returned from <code>parseElectronApp()</code></p></dd>
 </dl>
 
+<a name="dialogMatcherDefaults"></a>
+
+## dialogMatcherDefaults
+<p>Union type of all dialog matcher stubs.</p>
+
+**Kind**: global constant  
+<a name="toSerializableMatcher"></a>
+
+## toSerializableMatcher()
+<p>Convert a string or RegExp to a serializable StringMatcher.
+RegExp objects cannot be transferred via Playwright's evaluate(),
+so we serialize them as {source, flags}.</p>
+
+**Kind**: global function  
+<a name="matchesPattern"></a>
+
+## matchesPattern()
+<p>Check if a value matches a StringMatcher.
+Used inside app.evaluate() where the matcher is already serialized.</p>
+
+**Kind**: global function  
 <a name="findLatestBuild"></a>
 
 ## findLatestBuild(buildDirectory) ⇒ <code>string</code>
@@ -509,6 +556,68 @@ control the return value of specific dialog methods (e.g. <code>showOpenDialog</
 | Param | Type | Description |
 | --- | --- | --- |
 | app | <code>ElectronApplication</code> | <p>The Playwright ElectronApplication instance.</p> |
+
+<a name="stubDialogMatchers"></a>
+
+## stubDialogMatchers(app, stubs, options) ⇒
+<p>Stub dialog methods with matchers that check dialog options before returning values.
+This allows you to set up multiple different return values based on the dialog's
+title, message, buttons, or other options.</p>
+<p>Matchers are checked in order - the first matching stub wins.
+If no stub matches, either an error is thrown (if throwOnUnmatched is true)
+or the default value is returned.</p>
+
+**Kind**: global function  
+**Returns**: <p>A promise that resolves when the stubs are applied.</p>  
+**Category**: Dialog  
+
+| Param | Description |
+| --- | --- |
+| app | <p>The Playwright ElectronApplication instance.</p> |
+| stubs | <p>Array of dialog matcher stubs to apply.</p> |
+| options | <p>Optional configuration.</p> |
+
+**Example**  
+```ts
+// Set up multiple dialog stubs at the start of your test
+await stubDialogMatchers(app, [
+  {
+    method: 'showMessageBox',
+    matcher: { title: /delete/i, buttons: /yes/i },
+    value: { response: 1 }, // Click "Yes" for delete dialogs
+  },
+  {
+    method: 'showMessageBox',
+    matcher: { title: /save/i },
+    value: { response: 0 }, // Click "Save" for save dialogs
+  },
+  {
+    method: 'showOpenDialog',
+    matcher: { title: 'Select Image' },
+    value: { filePaths: ['/path/to/image.png'], canceled: false },
+  },
+  {
+    method: 'showOpenDialog',
+    matcher: {}, // Match all other open dialogs
+    value: { canceled: true },
+  },
+])
+```
+<a name="clearDialogMatchers"></a>
+
+## clearDialogMatchers(app) ⇒
+<p>Clear all dialog matcher stubs and restore original dialog methods.
+Note: This requires the app to have stored the original methods,
+which is not done by default. You may need to restart the app
+to fully restore dialog functionality.</p>
+
+**Kind**: global function  
+**Returns**: <p>A promise that resolves when the stubs are cleared.</p>  
+**Category**: Dialog  
+
+| Param | Description |
+| --- | --- |
+| app | <p>The Playwright ElectronApplication instance.</p> |
 
 <a name="ipcMainEmit"></a>
 
