@@ -73,116 +73,6 @@ Yes, please! Pull requests are always welcome. Feel free to add or suggest new f
 
 Please use [Conventional Commit](https://www.conventionalcommits.org/) messages for your commits. This project uses [semantic-release](https://github.com/semantic-release/semantic-release) to automatically publish new versions to NPM. The commit messages are used to determine the version number and changelog. We're also using Prettier as our code format and ESlint to enforce formatting, so please make sure your code is formatted before submitting a PR.
 
-## Migrating from v1.x to v2.0
-
-Version 2.0 introduces significant improvements to handle flakiness issues that appeared with Electron 27+ and Playwright. Starting with Electron 27, Playwright's `evaluate()` calls became unreliable, often throwing errors like "context or browser has been closed", "Promise was collected", or "Execution context was destroyed" seemingly at random.
-
-### What's New in v2.0
-
-#### Built-in Retry Logic
-
-All helper functions now automatically retry operations that fail due to Playwright context issues. This happens transparently - your existing code will work without changes, but will be more reliable.
-
-#### New Utility Functions
-
-- **`retry(fn, options)`** - Wrap any Playwright call to automatically retry on context errors
-- **`retryUntilTruthy(fn, options)`** - Like Playwright's `page.waitForFunction()` but with automatic retry on errors
-- **`setRetryOptions(options)`** - Configure default retry behavior globally
-- **`getRetryOptions()`** - Get current retry configuration
-- **`resetRetryOptions()`** - Reset retry options to defaults
-
-#### Conditional Dialog Stubbing (New!)
-
-- **`stubDialogMatchers(app, stubs, options)`** - Stub dialogs with conditional matching based on dialog options
-- **`clearDialogMatchers(app)`** - Clear dialog matcher stubs
-
-### Breaking Changes
-
-#### 1. Node.js 18+ Required
-
-Version 2.0 requires Node.js 18 or later due to modern JavaScript features like `structuredClone()`.
-
-#### 2. IPC Helper Function Signatures
-
-IPC helpers now accept an optional `RetryOptions` object as the last argument:
-
-```typescript
-// v1.x
-await ipcRendererSend(page, 'my-channel', arg1, arg2)
-
-// v2.0 - still works exactly the same
-await ipcRendererSend(page, 'my-channel', arg1, arg2)
-
-// v2.0 - with retry options
-await ipcRendererSend(page, 'my-channel', arg1, arg2, { timeout: 10000 })
-```
-
-This applies to: `ipcRendererSend`, `ipcRendererInvoke`, `ipcRendererEmit`, `ipcRendererCallFirstListener`, `ipcMainEmit`, `ipcMainCallFirstListener`, `ipcMainInvokeHandler`
-
-#### 3. Menu Helper Function Signatures
-
-Menu helpers now accept an optional `RetryOptions` object:
-
-```typescript
-// v1.x
-await clickMenuItemById(electronApp, 'my-menu-item')
-
-// v2.0 - still works exactly the same
-await clickMenuItemById(electronApp, 'my-menu-item')
-
-// v2.0 - with retry options
-await clickMenuItemById(electronApp, 'my-menu-item', { timeout: 10000 })
-```
-
-### Migration Steps
-
-For most projects, upgrading is straightforward:
-
-1. **Update Node.js** to version 18 or later
-2. **Update the package**: `npm install electron-playwright-helpers@latest`
-3. **Test your suite** - existing code should work without changes
-
-### Customizing Retry Behavior
-
-If you need to adjust retry behavior globally:
-
-```typescript
-import { setRetryOptions, resetRetryOptions } from 'electron-playwright-helpers'
-
-// Increase timeout for slow CI environments
-setRetryOptions({
-  timeout: 10000,  // 10 seconds (default: 5000)
-  poll: 500,       // poll every 500ms (default: 200)
-})
-
-// Reset to defaults
-resetRetryOptions()
-```
-
-Or disable retries for specific calls:
-
-```typescript
-await ipcRendererSend(page, 'channel', arg, { disable: true })
-```
-
-### Using the New Retry Functions
-
-If you have custom Playwright `evaluate()` calls that aren't using our helpers, wrap them with `retry()`:
-
-```typescript
-import { retry, retryUntilTruthy } from 'electron-playwright-helpers'
-
-// Wrap evaluate calls to handle context errors
-const result = await retry(() =>
-  electronApp.evaluate(({ app }) => app.getName())
-)
-
-// Wait for a condition with automatic error recovery
-await retryUntilTruthy(() =>
-  page.evaluate(() => document.body.classList.contains('ready'))
-)
-```
-
 ## Additional Resources
 
 * [Electron Playwright Example](https://github.com/spaceagetv/electron-playwright-example) - an example of how to use this library
@@ -191,9 +81,23 @@ await retryUntilTruthy(() =>
 
 ## API
 
+## Constants
+
+<dl>
+<dt><a href="#dialogMatcherDefaults">dialogMatcherDefaults</a></dt>
+<dd><p>Union type of all dialog matcher stubs.</p></dd>
+</dl>
+
 ## Functions
 
 <dl>
+<dt><a href="#toSerializableMatcher">toSerializableMatcher()</a></dt>
+<dd><p>Convert a string or RegExp to a serializable StringMatcher.
+RegExp objects cannot be transferred via Playwright's evaluate(),
+so we serialize them as {source, flags}.</p></dd>
+<dt><a href="#matchesPattern">matchesPattern()</a></dt>
+<dd><p>Check if a value matches a StringMatcher.
+Used inside app.evaluate() where the matcher is already serialized.</p></dd>
 <dt><a href="#findLatestBuild">findLatestBuild(buildDirectory)</a> ⇒ <code>string</code></dt>
 <dd><p>Parses the <code>out</code> directory to find the latest build of your Electron project.
 Use <code>npm run package</code> (or similar) to build your app prior to testing.</p>
@@ -264,6 +168,18 @@ to test your application's behavior when the user selects a file, or cancels the
 for all dialog methods. This is useful if you want to ensure that dialogs are not displayed
 during your tests. However, you may want to use <code>stubDialog</code> or <code>stubMultipleDialogs</code> to
 control the return value of specific dialog methods (e.g. <code>showOpenDialog</code>) during your tests.</p></dd>
+<dt><a href="#stubDialogMatchers">stubDialogMatchers(app, stubs, options)</a> ⇒</dt>
+<dd><p>Stub dialog methods with matchers that check dialog options before returning values.
+This allows you to set up multiple different return values based on the dialog's
+title, message, buttons, or other options.</p>
+<p>Matchers are checked in order - the first matching stub wins.
+If no stub matches, either an error is thrown (if throwOnUnmatched is true)
+or the default value is returned.</p></dd>
+<dt><a href="#clearDialogMatchers">clearDialogMatchers(app)</a> ⇒</dt>
+<dd><p>Clear all dialog matcher stubs and restore original dialog methods.
+Note: This requires the app to have stored the original methods,
+which is not done by default. You may need to restart the app
+to fully restore dialog functionality.</p></dd>
 <dt><a href="#ipcMainEmit">ipcMainEmit(electronApp, message, ...args, retryOptions)</a> ⇒ <code>Promise.&lt;boolean&gt;</code></dt>
 <dd><p>Emit an ipcMain message from the main process.
 This will trigger all ipcMain listeners for the message.</p>
@@ -364,6 +280,27 @@ JSON string.</p></dd>
 <dd><p>Format of the data returned from <code>parseElectronApp()</code></p></dd>
 </dl>
 
+<a name="dialogMatcherDefaults"></a>
+
+## dialogMatcherDefaults
+<p>Union type of all dialog matcher stubs.</p>
+
+**Kind**: global constant  
+<a name="toSerializableMatcher"></a>
+
+## toSerializableMatcher()
+<p>Convert a string or RegExp to a serializable StringMatcher.
+RegExp objects cannot be transferred via Playwright's evaluate(),
+so we serialize them as {source, flags}.</p>
+
+**Kind**: global function  
+<a name="matchesPattern"></a>
+
+## matchesPattern()
+<p>Check if a value matches a StringMatcher.
+Used inside app.evaluate() where the matcher is already serialized.</p>
+
+**Kind**: global function  
 <a name="findLatestBuild"></a>
 
 ## findLatestBuild(buildDirectory) ⇒ <code>string</code>
@@ -619,6 +556,68 @@ control the return value of specific dialog methods (e.g. <code>showOpenDialog</
 | Param | Type | Description |
 | --- | --- | --- |
 | app | <code>ElectronApplication</code> | <p>The Playwright ElectronApplication instance.</p> |
+
+<a name="stubDialogMatchers"></a>
+
+## stubDialogMatchers(app, stubs, options) ⇒
+<p>Stub dialog methods with matchers that check dialog options before returning values.
+This allows you to set up multiple different return values based on the dialog's
+title, message, buttons, or other options.</p>
+<p>Matchers are checked in order - the first matching stub wins.
+If no stub matches, either an error is thrown (if throwOnUnmatched is true)
+or the default value is returned.</p>
+
+**Kind**: global function  
+**Returns**: <p>A promise that resolves when the stubs are applied.</p>  
+**Category**: Dialog  
+
+| Param | Description |
+| --- | --- |
+| app | <p>The Playwright ElectronApplication instance.</p> |
+| stubs | <p>Array of dialog matcher stubs to apply.</p> |
+| options | <p>Optional configuration.</p> |
+
+**Example**  
+```ts
+// Set up multiple dialog stubs at the start of your test
+await stubDialogMatchers(app, [
+  {
+    method: 'showMessageBox',
+    matcher: { title: /delete/i, buttons: /yes/i },
+    value: { response: 1 }, // Click "Yes" for delete dialogs
+  },
+  {
+    method: 'showMessageBox',
+    matcher: { title: /save/i },
+    value: { response: 0 }, // Click "Save" for save dialogs
+  },
+  {
+    method: 'showOpenDialog',
+    matcher: { title: 'Select Image' },
+    value: { filePaths: ['/path/to/image.png'], canceled: false },
+  },
+  {
+    method: 'showOpenDialog',
+    matcher: {}, // Match all other open dialogs
+    value: { canceled: true },
+  },
+])
+```
+<a name="clearDialogMatchers"></a>
+
+## clearDialogMatchers(app) ⇒
+<p>Clear all dialog matcher stubs and restore original dialog methods.
+Note: This requires the app to have stored the original methods,
+which is not done by default. You may need to restart the app
+to fully restore dialog functionality.</p>
+
+**Kind**: global function  
+**Returns**: <p>A promise that resolves when the stubs are cleared.</p>  
+**Category**: Dialog  
+
+| Param | Description |
+| --- | --- |
+| app | <p>The Playwright ElectronApplication instance.</p> |
 
 <a name="ipcMainEmit"></a>
 

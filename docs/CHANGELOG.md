@@ -1,3 +1,46 @@
+# [2.0.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.2...v2.0.0) (2025-12-13)
+
+
+### Bug Fixes
+
+* central retry() with timeout ([105c1c1](https://github.com/spaceagetv/electron-playwright-helpers/commit/105c1c1bfaf25f908200135eee131d569367e955))
+* cleanup merge ([08f78c3](https://github.com/spaceagetv/electron-playwright-helpers/commit/08f78c3fb89046088def0c02d72ffae0a60da1a5))
+* disable option for retry ([3f7f9be](https://github.com/spaceagetv/electron-playwright-helpers/commit/3f7f9beca162265953d3dbb7507276f5056c3805))
+* disable retry on menuItemClick ƒs ([14a410e](https://github.com/spaceagetv/electron-playwright-helpers/commit/14a410ea0cf2a33bc251de5f8e2d555ba9670930))
+* don’t throw context error when retry is disabled ([1fc1789](https://github.com/spaceagetv/electron-playwright-helpers/commit/1fc1789a9024833c80c209243e3b08d8cd53c0c8))
+* improve error handling for ipc helpers ([3102d34](https://github.com/spaceagetv/electron-playwright-helpers/commit/3102d3448ed479036d9b68d4db8e9cbf6d408f07))
+* include stack trace in retry() timeout error ([2f7fb3b](https://github.com/spaceagetv/electron-playwright-helpers/commit/2f7fb3b4fcf49aed71d9446e77e87c33cbb93c60))
+* increase default retry count and expand error matching criteria ([c686f81](https://github.com/spaceagetv/electron-playwright-helpers/commit/c686f8110f1ddd6772e7567cf7d44c86a7035974))
+* more retries, better errors ([6965e08](https://github.com/spaceagetv/electron-playwright-helpers/commit/6965e08dbd4e359963a1c57fe28822cc14fbc5b3))
+* replace 'rm -rf' with 'rimraf' ([225016a](https://github.com/spaceagetv/electron-playwright-helpers/commit/225016a9ee4c7f3ee5ae5f4a8f6d194358d56bd3))
+* retry() reject with proper Error ([4243488](https://github.com/spaceagetv/electron-playwright-helpers/commit/4243488d783496ba432bf91f8ddfb611385157c3))
+* tsc —project for older TS ([a81968c](https://github.com/spaceagetv/electron-playwright-helpers/commit/a81968cd0a60df70390020bdc7afa3be1a541c06))
+* tweaks ([23edf67](https://github.com/spaceagetv/electron-playwright-helpers/commit/23edf678aa72496a572ef48b3e627f2b0a68b46a))
+* typescript type ([8bfdcfa](https://github.com/spaceagetv/electron-playwright-helpers/commit/8bfdcfa3d33f12cf05f6d765390ff6ef89d9bf02))
+* update build script to use specific tsconfig and add new tsconfig.build.json ([86be85b](https://github.com/spaceagetv/electron-playwright-helpers/commit/86be85bb6f95cfeb7f14ba594357b1d01efd3797))
+* update jsdoc-to-markdown to 9.x for Node.js 24 compatibility ([43c4be0](https://github.com/spaceagetv/electron-playwright-helpers/commit/43c4be02b5f0a54a09fc1cda13337d753ba4c82b))
+* update Node.js versions in CI workflow to include 20 ([19fb0fa](https://github.com/spaceagetv/electron-playwright-helpers/commit/19fb0fadba9ad3bd4aff1d47d748815dbe768ed8))
+* update retry options and improve tests for retryUntilTruthy ([2f024d1](https://github.com/spaceagetv/electron-playwright-helpers/commit/2f024d185c93b504163200b30be1be73ffe4f3bf))
+* update TypeScript target to ES2019 in tsconfig.json ([e3eb8d6](https://github.com/spaceagetv/electron-playwright-helpers/commit/e3eb8d6fc41c61d0ef8a0771bc84f211fd9686a6))
+* Use retry everywhere ([6839258](https://github.com/spaceagetv/electron-playwright-helpers/commit/68392582a5c4c4f803a63312faf816a6e58b82fb))
+* use structuredClone ([4cad27b](https://github.com/spaceagetv/electron-playwright-helpers/commit/4cad27b36f1e4290a73290f69245033994225e32))
+
+
+### Features
+
+* add dialog stubbing matchers for conditional return values ([a17d6f5](https://github.com/spaceagetv/electron-playwright-helpers/commit/a17d6f5db6f609bd149947e0e97e74f1ebb8d3d8))
+* add retry options management functions and update error matching logic ([ed8a92c](https://github.com/spaceagetv/electron-playwright-helpers/commit/ed8a92c6f913f83cc7a20c3133c90a69ab14bfc7))
+* add v2.0 migration guide ([71f4bd5](https://github.com/spaceagetv/electron-playwright-helpers/commit/71f4bd56a07b46223e2b0701732f56e5d2b24709))
+* browserWindowWithRetry() ([2ae2083](https://github.com/spaceagetv/electron-playwright-helpers/commit/2ae20832821171008ec5df5b6536b46d0f7ef9b1))
+* evaluateWithRetry handle general errors ([f1e6c35](https://github.com/spaceagetv/electron-playwright-helpers/commit/f1e6c3562b6f083f387f3c5162f81baba2e30cea))
+* evaluateWithRetry() ([938ab35](https://github.com/spaceagetv/electron-playwright-helpers/commit/938ab356f79b1d68de9db769bc36ef79e9bb2c89))
+* retryUntilTruthy() ([704e330](https://github.com/spaceagetv/electron-playwright-helpers/commit/704e330df839b2d01b14cd65000de966ca6994b9))
+
+
+### BREAKING CHANGES
+
+* Node.js 18+ is now required. IPC helper functions (ipcRendererSend, ipcRendererInvoke, etc.) and menu helper functions (clickMenuItemById, clickMenuItem, etc.) now accept an optional RetryOptions parameter. While existing code continues to work without modification, the underlying behavior has changed to automatically retry operations on Playwright context errors.
+
 # [1.9.0-beta.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.2...v1.9.0-beta.1) (2025-08-15)
 
 
