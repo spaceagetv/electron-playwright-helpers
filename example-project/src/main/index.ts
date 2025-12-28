@@ -46,8 +46,8 @@ const createWindow = (): void => {
     show: false,
   })
 
-  // and load the index.html of the app.
-  mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY)
+  // and load the index.html of the app with a unique window parameter.
+  mainWindow.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}?window=${count}`)
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()

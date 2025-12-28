@@ -18,6 +18,9 @@ import {
   getApplicationMenu,
   getMenuItemAttribute,
   getMenuItemById,
+  getWindowByMatcher,
+  getWindowByTitle,
+  getWindowByUrl,
   ipcMainCallFirstListener,
   ipcMainEmit,
   ipcMainInvokeHandler,
@@ -32,6 +35,9 @@ import {
   stubDialog,
   stubDialogMatchers,
   waitForMenuItemStatus,
+  waitForWindowByMatcher,
+  waitForWindowByTitle,
+  waitForWindowByUrl,
 } from '../../src' // <-- replace with 'electron-playwright-helpers'
 
 import { Page, _electron as electron } from '../../node_modules/playwright-core' // <-- replace with 'playwright-core'
@@ -843,5 +849,142 @@ test.describe('Dialog Matchers', () => {
 
     const result = await ipcMainInvokeHandler(app, 'show-select-image-dialog')
     expect(result.filePaths).toEqual(['/selected-via-button-label.png'])
+  })
+})
+
+test.describe('Window Helpers', () => {
+  test('getWindowByTitle finds a window by exact title substring', async () => {
+    const app = getApp()
+    const window = await getWindowByTitle(app, 'Window 1')
+    expect(window).toBeTruthy()
+    if (!window) return
+    expect(await window.title()).toBe('Window 1')
+  })
+
+  test('getWindowByTitle finds a window by regex pattern', async () => {
+    const app = getApp()
+    const window = await getWindowByTitle(app, /Window \d+/)
+    expect(window).toBeTruthy()
+    if (!window) return
+    expect(await window.title()).toMatch(/Window \d+/)
+  })
+
+  test('getWindowByTitle returns undefined for non-matching pattern', async () => {
+    const app = getApp()
+    const window = await getWindowByTitle(app, 'Non-existent Window')
+    expect(window).toBeUndefined()
+  })
+
+  test('getWindowByTitle with all: true returns all matching windows', async () => {
+    const app = getApp()
+    const windows = await getWindowByTitle(app, /Window \d+/, { all: true })
+    expect(Array.isArray(windows)).toBe(true)
+    expect(windows.length).toBeGreaterThan(1)
+    for (const window of windows) {
+      expect(await window.title()).toMatch(/Window \d+/)
+    }
+  })
+
+  test('getWindowByUrl finds a window by URL substring', async () => {
+    const app = getApp()
+    // All windows load index.html
+    const window = await getWindowByUrl(app, 'index.html')
+    expect(window).toBeTruthy()
+  })
+
+  test('getWindowByUrl finds a window by regex pattern', async () => {
+    const app = getApp()
+    const window = await getWindowByUrl(app, /index\.html/)
+    expect(window).toBeTruthy()
+  })
+
+  test('getWindowByUrl with all: true returns all matching windows', async () => {
+    const app = getApp()
+    const windows = await getWindowByUrl(app, /index\.html/, { all: true })
+    expect(Array.isArray(windows)).toBe(true)
+    expect(windows.length).toBeGreaterThan(1)
+  })
+
+  test('getWindowByMatcher finds a window with custom matcher', async () => {
+    const app = getApp()
+    const window = await getWindowByMatcher(app, async (page) => {
+      const title = await page.title()
+      return title === 'Window 1'
+    })
+    expect(window).toBeTruthy()
+    if (!window) return
+    expect(await window.title()).toBe('Window 1')
+  })
+
+  test('getWindowByMatcher with all: true returns all matching windows', async () => {
+    const app = getApp()
+    const windows = await getWindowByMatcher(
+      app,
+      async (page) => {
+        const title = await page.title()
+        return title.startsWith('Window')
+      },
+      { all: true }
+    )
+    expect(Array.isArray(windows)).toBe(true)
+    expect(windows.length).toBeGreaterThan(1)
+  })
+
+  test('waitForWindowByTitle waits for a new window to appear', async () => {
+    const app = getApp()
+    const currentCount = app.windows().length
+
+    // Start waiting for the window before triggering its creation
+    const [newWindow] = await Promise.all([
+      waitForWindowByTitle(app, `Window ${currentCount + 1}`, { timeout: 5000 }),
+      clickMenuItemById(app, 'new-window'),
+    ])
+
+    expect(newWindow).toBeTruthy()
+    expect(await newWindow.title()).toBe(`Window ${currentCount + 1}`)
+  })
+
+  test('waitForWindowByUrl waits for a new window with unique URL', async () => {
+    const app = getApp()
+    const currentCount = app.windows().length
+
+    // Each window has a unique URL like index.html?window=N
+    // Wait for the next window number
+    const [newWindow] = await Promise.all([
+      waitForWindowByUrl(app, `window=${currentCount + 1}`, { timeout: 5000 }),
+      clickMenuItemById(app, 'new-window'),
+    ])
+
+    expect(newWindow).toBeTruthy()
+    expect(newWindow.url()).toContain(`window=${currentCount + 1}`)
+  })
+
+  test('waitForWindowByMatcher waits for a window matching custom criteria', async () => {
+    const app = getApp()
+    const currentCount = app.windows().length
+    const expectedTitle = `Window ${currentCount + 1}`
+
+    // Start waiting for the window before triggering its creation
+    const [newWindow] = await Promise.all([
+      waitForWindowByMatcher(
+        app,
+        async (page) => {
+          const title = await page.title()
+          return title === expectedTitle
+        },
+        { timeout: 5000 }
+      ),
+      clickMenuItemById(app, 'new-window'),
+    ])
+
+    expect(newWindow).toBeTruthy()
+    expect(await newWindow.title()).toBe(expectedTitle)
+  })
+
+  test('waitForWindowByTitle times out when no matching window appears', async () => {
+    const app = getApp()
+    await expect(
+      waitForWindowByTitle(app, 'This Window Will Never Exist', { timeout: 500 })
+    ).rejects.toThrow(/timeout/i)
   })
 })
