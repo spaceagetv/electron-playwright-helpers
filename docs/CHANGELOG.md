@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.0.1...v2.1.0) (2025-12-28)
+
+
+### Features
+
+* new functions to find/track Electron windows ([#79](https://github.com/spaceagetv/electron-playwright-helpers/issues/79)) ([2a2ebcb](https://github.com/spaceagetv/electron-playwright-helpers/commit/2a2ebcb672164c457ad4b494ae12f5dcef4cfbaf))
+
 ## [2.0.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.0.0...v2.0.1) (2025-12-13)
 
 # [2.0.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v1.8.2...v2.0.0) (2025-12-13)

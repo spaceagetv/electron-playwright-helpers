@@ -255,6 +255,10 @@ it throws the error.</p></dd>
 <p>This offers similar functionality to Playwright's <a href="https://playwright.dev/docs/api/class-page#page-wait-for-function"><code>page.waitForFunction()</code></a>
 method – but with more flexibility and control over the retry attempts. It also defaults to ignoring common errors due to
 the way that Playwright handles browser contexts.</p></dd>
+<dt><a href="#matchesPattern">matchesPattern()</a></dt>
+<dd><p>Helper to match a string against a pattern (string or RegExp).
+For strings, performs a substring match (includes).
+For RegExp, tests the pattern against the value.</p></dd>
 <dt><a href="#stubDialog">stubDialog(app, method, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Stub a single dialog method. This is a convenience function that calls <code>stubMultipleDialogs</code>
 for a single method.</p>
@@ -382,6 +386,28 @@ to a string in a meaningful way. It checks if the error is an object with a
 <code>toString</code> method and uses that method if available. If the error is a string,
 it returns the string directly. For other types, it converts the error to a
 JSON string.</p></dd>
+<dt><a href="#getWindowByUrl">getWindowByUrl(electronApp, pattern, options)</a> ⇒</dt>
+<dd><p>Get all windows whose URL matches the given pattern.</p></dd>
+<dt><a href="#getWindowByTitle">getWindowByTitle(electronApp, pattern, options)</a> ⇒</dt>
+<dd><p>Get all windows whose title matches the given pattern.</p></dd>
+<dt><a href="#getWindowByMatcher">getWindowByMatcher(electronApp, matcher, options)</a> ⇒</dt>
+<dd><p>Get all windows that match the provided matcher function.</p></dd>
+<dt><a href="#waitForWindowByUrl">waitForWindowByUrl(electronApp, pattern, options)</a> ⇒</dt>
+<dd><p>Wait for a window whose URL matches the given pattern.</p>
+<p>This function checks existing windows first, then listens for new windows.
+It uses polling to handle windows that may have their URL change after opening.</p></dd>
+<dt><a href="#waitForWindowByTitle">waitForWindowByTitle(electronApp, pattern, options)</a> ⇒</dt>
+<dd><p>Wait for a window whose title matches the given pattern.</p>
+<p>This function checks existing windows first, then listens for new windows.
+It uses polling to handle windows that may have their title change after opening.</p></dd>
+<dt><a href="#waitForWindowByMatcher">waitForWindowByMatcher(electronApp, matcher, options)</a> ⇒</dt>
+<dd><p>Wait for a window that matches the provided matcher function.</p>
+<p>This function:</p>
+<ol>
+<li>Checks existing windows first</li>
+<li>Listens for new window events</li>
+<li>Polls existing windows periodically (to catch URL/title changes)</li>
+</ol></dd>
 </dl>
 
 ## Typedefs
@@ -552,6 +578,14 @@ test('my test', async () => {
   )
 })
 ```
+<a name="matchesPattern"></a>
+
+## matchesPattern()
+<p>Helper to match a string against a pattern (string or RegExp).
+For strings, performs a substring match (includes).
+For RegExp, tests the pattern against the value.</p>
+
+**Kind**: global function  
 <a name="ElectronAppInfo"></a>
 
 ## ElectronAppInfo
@@ -1116,3 +1150,148 @@ JSON string.</p>
 | --- | --- |
 | err | <p>The unknown error to be converted to a string.</p> |
 
+<a name="getWindowByUrl"></a>
+
+## getWindowByUrl(electronApp, pattern, options) ⇒
+<p>Get all windows whose URL matches the given pattern.</p>
+
+**Kind**: global function  
+**Returns**: <p>An array of matching Pages</p>  
+**Category**: Window Helpers  
+
+| Param | Description |
+| --- | --- |
+| electronApp | <p>The Playwright ElectronApplication</p> |
+| pattern | <p>A string (substring match) or RegExp to match against the URL</p> |
+| options | <p>Options with <code>all: true</code> to return all matches</p> |
+
+**Example**  
+```ts
+const allSettingsWindows = await getWindowByUrl(app, '/settings', { all: true })
+```
+<a name="getWindowByTitle"></a>
+
+## getWindowByTitle(electronApp, pattern, options) ⇒
+<p>Get all windows whose title matches the given pattern.</p>
+
+**Kind**: global function  
+**Returns**: <p>An array of matching Pages</p>  
+**Category**: Window Helpers  
+
+| Param | Description |
+| --- | --- |
+| electronApp | <p>The Playwright ElectronApplication</p> |
+| pattern | <p>A string (substring match) or RegExp to match against the title</p> |
+| options | <p>Options with <code>all: true</code> to return all matches</p> |
+
+**Example**  
+```ts
+const allNumberedWindows = await getWindowByTitle(app, /Window \d+/, { all: true })
+```
+<a name="getWindowByMatcher"></a>
+
+## getWindowByMatcher(electronApp, matcher, options) ⇒
+<p>Get all windows that match the provided matcher function.</p>
+
+**Kind**: global function  
+**Returns**: <p>An array of matching Pages</p>  
+**Category**: Window Helpers  
+
+| Param | Description |
+| --- | --- |
+| electronApp | <p>The Playwright ElectronApplication</p> |
+| matcher | <p>A function that receives a Page and returns true if it matches</p> |
+| options | <p>Options with <code>all: true</code> to return all matches</p> |
+
+**Example**  
+```ts
+const allLargeWindows = await getWindowByMatcher(app, async (page) => {
+  const size = await page.viewportSize()
+  return size && size.width > 1000
+}, { all: true })
+```
+<a name="waitForWindowByUrl"></a>
+
+## waitForWindowByUrl(electronApp, pattern, options) ⇒
+<p>Wait for a window whose URL matches the given pattern.</p>
+<p>This function checks existing windows first, then listens for new windows.
+It uses polling to handle windows that may have their URL change after opening.</p>
+
+**Kind**: global function  
+**Returns**: <p>The matching Page</p>  
+**Category**: Window Helpers  
+**Throws**:
+
+- <p>Error if timeout is reached before a matching window is found</p>
+
+
+| Param | Description |
+| --- | --- |
+| electronApp | <p>The Playwright ElectronApplication</p> |
+| pattern | <p>A string (substring match) or RegExp to match against the URL</p> |
+| options | <p>Optional timeout and interval settings</p> |
+
+**Example**  
+```ts
+// Click something that opens a new window, then wait for it
+await page.click('#open-settings')
+const settingsWindow = await waitForWindowByUrl(app, '/settings', { timeout: 5000 })
+```
+<a name="waitForWindowByTitle"></a>
+
+## waitForWindowByTitle(electronApp, pattern, options) ⇒
+<p>Wait for a window whose title matches the given pattern.</p>
+<p>This function checks existing windows first, then listens for new windows.
+It uses polling to handle windows that may have their title change after opening.</p>
+
+**Kind**: global function  
+**Returns**: <p>The matching Page</p>  
+**Category**: Window Helpers  
+**Throws**:
+
+- <p>Error if timeout is reached before a matching window is found</p>
+
+
+| Param | Description |
+| --- | --- |
+| electronApp | <p>The Playwright ElectronApplication</p> |
+| pattern | <p>A string (substring match) or RegExp to match against the title</p> |
+| options | <p>Optional timeout and interval settings</p> |
+
+**Example**  
+```ts
+// Wait for a window with a specific title to appear
+const prefsWindow = await waitForWindowByTitle(app, 'Preferences', { timeout: 5000 })
+```
+<a name="waitForWindowByMatcher"></a>
+
+## waitForWindowByMatcher(electronApp, matcher, options) ⇒
+<p>Wait for a window that matches the provided matcher function.</p>
+<p>This function:</p>
+<ol>
+<li>Checks existing windows first</li>
+<li>Listens for new window events</li>
+<li>Polls existing windows periodically (to catch URL/title changes)</li>
+</ol>
+
+**Kind**: global function  
+**Returns**: <p>The matching Page</p>  
+**Category**: Window Helpers  
+**Throws**:
+
+- <p>Error if timeout is reached before a matching window is found</p>
+
+
+| Param | Description |
+| --- | --- |
+| electronApp | <p>The Playwright ElectronApplication</p> |
+| matcher | <p>A function that receives a Page and returns true if it matches</p> |
+| options | <p>Optional timeout and interval settings</p> |
+
+**Example**  
+```ts
+const window = await waitForWindowByMatcher(app, async (page) => {
+  const title = await page.title()
+  return title.startsWith('Document:')
+}, { timeout: 10000 })
+```
