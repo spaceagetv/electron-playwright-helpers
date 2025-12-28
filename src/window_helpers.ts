@@ -373,43 +373,53 @@ export async function waitForWindowByMatcher(
     }
   }
 
+  // Track the polling interval so we can clean it up
+  let pollIntervalId: ReturnType<typeof setInterval> | undefined
+
   // Race between:
   // 1. waitForEvent('window') with predicate for new windows
   // 2. Polling existing windows for changes (URL/title may change after load)
-  return Promise.race([
-    // Wait for new window that matches
-    electronApp.waitForEvent('window', {
-      timeout,
-      predicate: matcher,
-    }),
-    // Poll existing windows
-    new Promise<Page>((resolve, reject) => {
-      const startTime = Date.now()
-      const pollInterval = setInterval(async () => {
-        try {
-          if (Date.now() - startTime > timeout) {
-            clearInterval(pollInterval)
-            reject(
-              new Error(
-                `Timeout waiting for window matching criteria after ${timeout}ms`
+  try {
+    return await Promise.race([
+      // Wait for new window that matches
+      electronApp.waitForEvent('window', {
+        timeout,
+        predicate: matcher,
+      }),
+      // Poll existing windows
+      new Promise<Page>((resolve, reject) => {
+        const startTime = Date.now()
+        pollIntervalId = setInterval(async () => {
+          try {
+            if (Date.now() - startTime > timeout) {
+              clearInterval(pollIntervalId)
+              reject(
+                new Error(
+                  `Timeout waiting for window matching criteria after ${timeout}ms`
+                )
               )
-            )
-            return
-          }
-
-          const windows = electronApp.windows()
-          for (const page of windows) {
-            if (await matcher(page)) {
-              clearInterval(pollInterval)
-              resolve(page)
               return
             }
+
+            const windows = electronApp.windows()
+            for (const page of windows) {
+              if (await matcher(page)) {
+                clearInterval(pollIntervalId)
+                resolve(page)
+                return
+              }
+            }
+          } catch (error) {
+            clearInterval(pollIntervalId)
+            reject(error)
           }
-        } catch (error) {
-          clearInterval(pollInterval)
-          reject(error)
-        }
-      }, interval)
-    }),
-  ])
+        }, interval)
+      }),
+    ])
+  } finally {
+    // Clean up the polling interval when the race completes
+    if (pollIntervalId !== undefined) {
+      clearInterval(pollIntervalId)
+    }
+  }
 }
