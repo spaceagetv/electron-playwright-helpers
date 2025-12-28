@@ -944,12 +944,19 @@ test.describe('Window Helpers', () => {
     expect(await newWindow.title()).toBe(`Window ${currentCount + 1}`)
   })
 
-  test('waitForWindowByUrl returns immediately when a matching window exists', async () => {
+  test('waitForWindowByUrl waits for a new window with unique URL', async () => {
     const app = getApp()
-    // All windows use index.html, so waitForWindowByUrl should return immediately
-    const window = await waitForWindowByUrl(app, 'index.html', { timeout: 1000 })
-    expect(window).toBeTruthy()
-    expect(window.url()).toContain('index.html')
+    const currentCount = app.windows().length
+
+    // Each window has a unique URL like index.html?window=N
+    // Wait for the next window number
+    const [newWindow] = await Promise.all([
+      waitForWindowByUrl(app, `window=${currentCount + 1}`, { timeout: 5000 }),
+      clickMenuItemById(app, 'new-window'),
+    ])
+
+    expect(newWindow).toBeTruthy()
+    expect(newWindow.url()).toContain(`window=${currentCount + 1}`)
   })
 
   test('waitForWindowByMatcher waits for a window matching custom criteria', async () => {
