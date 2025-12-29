@@ -51,7 +51,7 @@ function matchesPattern(value: string, pattern: string | RegExp): boolean {
 export async function getWindowByUrl(
   electronApp: ElectronApplication,
   pattern: string | RegExp,
-  options?: Partial<RetryOptions>
+  options?: Partial<RetryOptions>,
 ): Promise<Page | undefined>
 
 /**
@@ -72,13 +72,13 @@ export async function getWindowByUrl(
 export async function getWindowByUrl(
   electronApp: ElectronApplication,
   pattern: string | RegExp,
-  options: Partial<RetryOptions> & { all: true }
+  options: Partial<RetryOptions> & { all: true },
 ): Promise<Page[]>
 
 export async function getWindowByUrl(
   electronApp: ElectronApplication,
   pattern: string | RegExp,
-  options?: Partial<RetryOptions> & { all?: boolean }
+  options?: Partial<RetryOptions> & { all?: boolean },
 ): Promise<Page | Page[] | undefined> {
   return getWindowByMatcher(
     electronApp,
@@ -93,7 +93,7 @@ export async function getWindowByUrl(
       }
       return matchesPattern(page.url(), pattern)
     },
-    options as Partial<RetryOptions> & { all?: boolean }
+    options as Partial<RetryOptions> & { all?: boolean },
   )
 }
 
@@ -120,7 +120,7 @@ export async function getWindowByUrl(
 export async function getWindowByTitle(
   electronApp: ElectronApplication,
   pattern: string | RegExp,
-  options?: Partial<RetryOptions>
+  options?: Partial<RetryOptions>,
 ): Promise<Page | undefined>
 
 /**
@@ -141,13 +141,13 @@ export async function getWindowByTitle(
 export async function getWindowByTitle(
   electronApp: ElectronApplication,
   pattern: string | RegExp,
-  options: Partial<RetryOptions> & { all: true }
+  options: Partial<RetryOptions> & { all: true },
 ): Promise<Page[]>
 
 export async function getWindowByTitle(
   electronApp: ElectronApplication,
   pattern: string | RegExp,
-  options?: Partial<RetryOptions> & { all?: boolean }
+  options?: Partial<RetryOptions> & { all?: boolean },
 ): Promise<Page | Page[] | undefined> {
   return getWindowByMatcher(
     electronApp,
@@ -155,7 +155,7 @@ export async function getWindowByTitle(
       const title = await page.title()
       return matchesPattern(title, pattern)
     },
-    options as Partial<RetryOptions> & { all?: boolean }
+    options as Partial<RetryOptions> & { all?: boolean },
   )
 }
 
@@ -184,7 +184,7 @@ export async function getWindowByTitle(
 export async function getWindowByMatcher(
   electronApp: ElectronApplication,
   matcher: WindowMatcher,
-  options?: Partial<RetryOptions>
+  options?: Partial<RetryOptions>,
 ): Promise<Page | undefined>
 
 /**
@@ -208,13 +208,13 @@ export async function getWindowByMatcher(
 export async function getWindowByMatcher(
   electronApp: ElectronApplication,
   matcher: WindowMatcher,
-  options: Partial<RetryOptions> & { all: true }
+  options: Partial<RetryOptions> & { all: true },
 ): Promise<Page[]>
 
 export async function getWindowByMatcher(
   electronApp: ElectronApplication,
   matcher: WindowMatcher,
-  options?: Partial<RetryOptions> & { all?: boolean }
+  options?: Partial<RetryOptions> & { all?: boolean },
 ): Promise<Page | Page[] | undefined> {
   const { all, ...retryOpts } = options || {}
 
@@ -271,7 +271,7 @@ export async function getWindowByMatcher(
 export async function waitForWindowByUrl(
   electronApp: ElectronApplication,
   pattern: string | RegExp,
-  options?: WaitForWindowOptions
+  options?: WaitForWindowOptions,
 ): Promise<Page> {
   return waitForWindowByMatcher(
     electronApp,
@@ -286,7 +286,7 @@ export async function waitForWindowByUrl(
       }
       return matchesPattern(page.url(), pattern)
     },
-    options
+    options,
   )
 }
 
@@ -317,7 +317,7 @@ export async function waitForWindowByUrl(
 export async function waitForWindowByTitle(
   electronApp: ElectronApplication,
   pattern: string | RegExp,
-  options?: WaitForWindowOptions
+  options?: WaitForWindowOptions,
 ): Promise<Page> {
   return waitForWindowByMatcher(
     electronApp,
@@ -325,7 +325,7 @@ export async function waitForWindowByTitle(
       const title = await page.title()
       return matchesPattern(title, pattern)
     },
-    options
+    options,
   )
 }
 
@@ -360,7 +360,7 @@ export async function waitForWindowByTitle(
 export async function waitForWindowByMatcher(
   electronApp: ElectronApplication,
   matcher: WindowMatcher,
-  options?: WaitForWindowOptions
+  options?: WaitForWindowOptions,
 ): Promise<Page> {
   const timeout = options?.timeout ?? 10000
   const interval = options?.interval ?? 200
@@ -395,8 +395,8 @@ export async function waitForWindowByMatcher(
               clearInterval(pollIntervalId)
               reject(
                 new Error(
-                  `Timeout waiting for window matching criteria after ${timeout}ms`
-                )
+                  `Timeout waiting for window matching criteria after ${timeout}ms`,
+                ),
               )
               return
             }

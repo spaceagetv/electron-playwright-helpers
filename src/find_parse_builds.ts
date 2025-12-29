@@ -245,12 +245,12 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
     if (asar) {
       const asarPath = path.join(resourcesDir, 'app.asar')
       packageJson = JSON.parse(
-        ASAR.extractFile(asarPath, 'package.json').toString('utf8')
+        ASAR.extractFile(asarPath, 'package.json').toString('utf8'),
       )
       main = path.join(asarPath, packageJson.main)
     } else {
       packageJson = JSON.parse(
-        fs.readFileSync(path.join(resourcesDir, 'app', 'package.json'), 'utf8')
+        fs.readFileSync(path.join(resourcesDir, 'app', 'package.json'), 'utf8'),
       )
       main = path.join(resourcesDir, 'app', packageJson.main)
     }
@@ -282,12 +282,12 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
     if (asar) {
       const asarPath = path.join(resourcesDir, 'app.asar')
       packageJson = JSON.parse(
-        ASAR.extractFile(asarPath, 'package.json').toString('utf8')
+        ASAR.extractFile(asarPath, 'package.json').toString('utf8'),
       )
       main = path.join(asarPath, packageJson.main)
     } else {
       packageJson = JSON.parse(
-        fs.readFileSync(path.join(resourcesDir, 'app', 'package.json'), 'utf8')
+        fs.readFileSync(path.join(resourcesDir, 'app', 'package.json'), 'utf8'),
       )
       main = path.join(resourcesDir, 'app', packageJson.main)
     }
@@ -352,12 +352,12 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
     })
     if (exeCandidates.length > 1) {
       console.warn(
-        `Found ${exeCandidates.length} executable files in ${buildDir}. Will use the first: ${exeCandidates[0]}. If this is not the correct executable, please file an issue at https://github.com/spaceagetv/electron-playwright-helpers/issues`
+        `Found ${exeCandidates.length} executable files in ${buildDir}. Will use the first: ${exeCandidates[0]}. If this is not the correct executable, please file an issue at https://github.com/spaceagetv/electron-playwright-helpers/issues`,
       )
     }
     if (exeCandidates.length < 1) {
       throw new Error(
-        `Could not find executable file in ${buildDir}. Please check your build directory. If file exists, please make sure it is executable. If file is executable, please file an issue at https://github.com/spaceagetv/electron-playwright-helpers/issues`
+        `Could not find executable file in ${buildDir}. Please check your build directory. If file exists, please make sure it is executable. If file is executable, please file an issue at https://github.com/spaceagetv/electron-playwright-helpers/issues`,
       )
     }
     executable = path.join(buildDir, exeCandidates[0])
@@ -368,7 +368,7 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
     if (asar) {
       const asarPath = path.join(resourcesDir, 'app.asar')
       packageJson = JSON.parse(
-        ASAR.extractFile(asarPath, 'package.json').toString('utf8')
+        ASAR.extractFile(asarPath, 'package.json').toString('utf8'),
       )
       main = path.join(asarPath, packageJson.main)
     } else {
@@ -376,13 +376,13 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
         packageJson = JSON.parse(
           fs.readFileSync(
             path.join(resourcesDir, 'app', 'package.json'),
-            'utf8'
-          )
+            'utf8',
+          ),
         )
         main = path.join(resourcesDir, 'app', packageJson.main)
       } catch (err) {
         throw new Error(
-          `Could not find package.json in ${resourcesDir}. Apparently we don't quite know how Electron works on Linux yet. Please submit a bug report or pull request!`
+          `Could not find package.json in ${resourcesDir}. Apparently we don't quite know how Electron works on Linux yet. Please submit a bug report or pull request!`,
         )
       }
     }

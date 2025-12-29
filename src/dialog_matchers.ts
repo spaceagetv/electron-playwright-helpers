@@ -15,7 +15,7 @@ export type StringMatcher =
  * so we serialize them as {source, flags}.
  */
 export function toSerializableMatcher(
-  pattern: string | RegExp | undefined
+  pattern: string | RegExp | undefined,
 ): StringMatcher {
   if (pattern === undefined) return undefined
   if (typeof pattern === 'string') return pattern
@@ -28,7 +28,7 @@ export function toSerializableMatcher(
  */
 export function matchesPattern(
   value: string | undefined,
-  pattern: StringMatcher
+  pattern: StringMatcher,
 ): boolean {
   if (pattern === undefined) return true
   if (value === undefined) return false
@@ -356,7 +356,7 @@ const dialogMatcherDefaults: DialogMatcherDefaults = {
 // ============================================================================
 
 function serializeMessageBoxMatcher(
-  matcher: MessageBoxMatcher
+  matcher: MessageBoxMatcher,
 ): SerializedMessageBoxMatcher {
   return {
     type: toSerializableMatcher(matcher.type),
@@ -369,7 +369,7 @@ function serializeMessageBoxMatcher(
 }
 
 function serializeOpenDialogMatcher(
-  matcher: OpenDialogMatcher
+  matcher: OpenDialogMatcher,
 ): SerializedOpenDialogMatcher {
   return {
     title: toSerializableMatcher(matcher.title),
@@ -380,7 +380,7 @@ function serializeOpenDialogMatcher(
 }
 
 function serializeSaveDialogMatcher(
-  matcher: SaveDialogMatcher
+  matcher: SaveDialogMatcher,
 ): SerializedSaveDialogMatcher {
   return {
     title: toSerializableMatcher(matcher.title),
@@ -392,7 +392,7 @@ function serializeSaveDialogMatcher(
 }
 
 function serializeErrorBoxMatcher(
-  matcher: ErrorBoxMatcher
+  matcher: ErrorBoxMatcher,
 ): SerializedErrorBoxMatcher {
   return {
     title: toSerializableMatcher(matcher.title),
@@ -401,7 +401,7 @@ function serializeErrorBoxMatcher(
 }
 
 function serializeCertificateTrustDialogMatcher(
-  matcher: CertificateTrustDialogMatcher
+  matcher: CertificateTrustDialogMatcher,
 ): SerializedCertificateTrustDialogMatcher {
   return {
     message: toSerializableMatcher(matcher.message),
@@ -409,7 +409,7 @@ function serializeCertificateTrustDialogMatcher(
 }
 
 function serializeMatcherStub(
-  stub: DialogMatcherStub
+  stub: DialogMatcherStub,
 ): SerializedDialogMatcherStub {
   switch (stub.method) {
     case 'showMessageBox':
@@ -530,7 +530,7 @@ export type StubDialogMatchersOptions = {
 export function stubDialogMatchers(
   app: ElectronApplication,
   stubs: DialogMatcherStub[],
-  options: StubDialogMatchersOptions = {}
+  options: StubDialogMatchersOptions = {},
 ): Promise<void> {
   const { throwOnUnmatched = false } = options
 
@@ -553,7 +553,7 @@ export function stubDialogMatchers(
       // Helper to check if a value matches a pattern (runs inside Electron)
       const matchesPattern = (
         value: string | undefined,
-        pattern: { source: string; flags: string } | string | undefined
+        pattern: { source: string; flags: string } | string | undefined,
       ): boolean => {
         if (pattern === undefined) return true
         if (value === undefined) return false
@@ -572,7 +572,7 @@ export function stubDialogMatchers(
           detail?: { source: string; flags: string } | string
           checkboxLabel?: { source: string; flags: string } | string
           buttons?: { source: string; flags: string } | string
-        }
+        },
       ): boolean => {
         if (!options) return true
         if (!matchesPattern(options.type, matcher.type)) return false
@@ -584,7 +584,7 @@ export function stubDialogMatchers(
         if (matcher.buttons !== undefined && options.buttons) {
           // Check if any button matches
           const buttonMatches = options.buttons.some((btn) =>
-            matchesPattern(btn, matcher.buttons)
+            matchesPattern(btn, matcher.buttons),
           )
           if (!buttonMatches) return false
         }
@@ -599,7 +599,7 @@ export function stubDialogMatchers(
           defaultPath?: { source: string; flags: string } | string
           buttonLabel?: { source: string; flags: string } | string
           message?: { source: string; flags: string } | string
-        }
+        },
       ): boolean => {
         if (!options) return true
         if (!matchesPattern(options.title, matcher.title)) return false
@@ -620,7 +620,7 @@ export function stubDialogMatchers(
           buttonLabel?: { source: string; flags: string } | string
           message?: { source: string; flags: string } | string
           nameFieldLabel?: { source: string; flags: string } | string
-        }
+        },
       ): boolean => {
         if (!options) return true
         if (!matchesPattern(options.title, matcher.title)) return false
@@ -652,7 +652,7 @@ export function stubDialogMatchers(
             | Electron.BrowserWindow
             | Electron.MessageBoxOptions
             | undefined,
-          maybeOptions?: Electron.MessageBoxOptions
+          maybeOptions?: Electron.MessageBoxOptions,
         ) => {
           // Handle optional BrowserWindow first argument
           const options =
@@ -671,8 +671,8 @@ export function stubDialogMatchers(
           if (throwOnUnmatched) {
             throw new Error(
               `No matching stub for showMessageBox with options: ${JSON.stringify(
-                options
-              )}`
+                options,
+              )}`,
             )
           }
           return defaults.showMessageBox
@@ -697,7 +697,7 @@ export function stubDialogMatchers(
             | Electron.BrowserWindow
             | Electron.MessageBoxOptions
             | undefined,
-          maybeOptions?: Electron.MessageBoxOptions
+          maybeOptions?: Electron.MessageBoxOptions,
         ) => {
           const options =
             maybeOptions ||
@@ -715,8 +715,8 @@ export function stubDialogMatchers(
           if (throwOnUnmatched) {
             throw new Error(
               `No matching stub for showMessageBoxSync with options: ${JSON.stringify(
-                options
-              )}`
+                options,
+              )}`,
             )
           }
           return defaults.showMessageBoxSync
@@ -743,7 +743,7 @@ export function stubDialogMatchers(
             | Electron.BrowserWindow
             | Electron.OpenDialogOptions
             | undefined,
-          maybeOptions?: Electron.OpenDialogOptions
+          maybeOptions?: Electron.OpenDialogOptions,
         ) => {
           const options =
             maybeOptions ||
@@ -761,8 +761,8 @@ export function stubDialogMatchers(
           if (throwOnUnmatched) {
             throw new Error(
               `No matching stub for showOpenDialog with options: ${JSON.stringify(
-                options
-              )}`
+                options,
+              )}`,
             )
           }
           return defaults.showOpenDialog
@@ -785,7 +785,7 @@ export function stubDialogMatchers(
             | Electron.BrowserWindow
             | Electron.OpenDialogOptions
             | undefined,
-          maybeOptions?: Electron.OpenDialogOptions
+          maybeOptions?: Electron.OpenDialogOptions,
         ) => {
           const options =
             maybeOptions ||
@@ -803,8 +803,8 @@ export function stubDialogMatchers(
           if (throwOnUnmatched) {
             throw new Error(
               `No matching stub for showOpenDialogSync with options: ${JSON.stringify(
-                options
-              )}`
+                options,
+              )}`,
             )
           }
           return defaults.showOpenDialogSync
@@ -828,7 +828,7 @@ export function stubDialogMatchers(
             | Electron.BrowserWindow
             | Electron.SaveDialogOptions
             | undefined,
-          maybeOptions?: Electron.SaveDialogOptions
+          maybeOptions?: Electron.SaveDialogOptions,
         ) => {
           const options =
             maybeOptions ||
@@ -846,8 +846,8 @@ export function stubDialogMatchers(
           if (throwOnUnmatched) {
             throw new Error(
               `No matching stub for showSaveDialog with options: ${JSON.stringify(
-                options
-              )}`
+                options,
+              )}`,
             )
           }
           return defaults.showSaveDialog
@@ -871,7 +871,7 @@ export function stubDialogMatchers(
             | Electron.BrowserWindow
             | Electron.SaveDialogOptions
             | undefined,
-          maybeOptions?: Electron.SaveDialogOptions
+          maybeOptions?: Electron.SaveDialogOptions,
         ) => {
           const options =
             maybeOptions ||
@@ -889,8 +889,8 @@ export function stubDialogMatchers(
           if (throwOnUnmatched) {
             throw new Error(
               `No matching stub for showSaveDialogSync with options: ${JSON.stringify(
-                options
-              )}`
+                options,
+              )}`,
             )
           }
           return defaults.showSaveDialogSync
@@ -917,7 +917,7 @@ export function stubDialogMatchers(
           }
           if (throwOnUnmatched) {
             throw new Error(
-              `No matching stub for showErrorBox with title: ${title}, content: ${content}`
+              `No matching stub for showErrorBox with title: ${title}, content: ${content}`,
             )
           }
         }
@@ -936,7 +936,7 @@ export function stubDialogMatchers(
             | Electron.BrowserWindow
             | Electron.CertificateTrustDialogOptions
             | undefined,
-          maybeOptions?: Electron.CertificateTrustDialogOptions
+          maybeOptions?: Electron.CertificateTrustDialogOptions,
         ) => {
           const options =
             maybeOptions ||
@@ -954,14 +954,14 @@ export function stubDialogMatchers(
           if (throwOnUnmatched) {
             throw new Error(
               `No matching stub for showCertificateTrustDialog with options: ${JSON.stringify(
-                options
-              )}`
+                options,
+              )}`,
             )
           }
         }
       }
     },
-    { stubsGrouped, throwOnUnmatched, defaults }
+    { stubsGrouped, throwOnUnmatched, defaults },
   )
 }
 
@@ -983,32 +983,32 @@ export function clearDialogMatchers(app: ElectronApplication): Promise<void> {
   return app.evaluate(({ dialog }) => {
     const notRestored = (method: string) => () => {
       throw new Error(
-        `dialog.${method} was stubbed and cannot be restored. Restart the app to restore dialog functionality.`
+        `dialog.${method} was stubbed and cannot be restored. Restart the app to restore dialog functionality.`,
       )
     }
     dialog.showMessageBox = notRestored(
-      'showMessageBox'
+      'showMessageBox',
     ) as typeof dialog.showMessageBox
     dialog.showMessageBoxSync = notRestored(
-      'showMessageBoxSync'
+      'showMessageBoxSync',
     ) as typeof dialog.showMessageBoxSync
     dialog.showOpenDialog = notRestored(
-      'showOpenDialog'
+      'showOpenDialog',
     ) as typeof dialog.showOpenDialog
     dialog.showOpenDialogSync = notRestored(
-      'showOpenDialogSync'
+      'showOpenDialogSync',
     ) as typeof dialog.showOpenDialogSync
     dialog.showSaveDialog = notRestored(
-      'showSaveDialog'
+      'showSaveDialog',
     ) as typeof dialog.showSaveDialog
     dialog.showSaveDialogSync = notRestored(
-      'showSaveDialogSync'
+      'showSaveDialogSync',
     ) as typeof dialog.showSaveDialogSync
     dialog.showErrorBox = notRestored(
-      'showErrorBox'
+      'showErrorBox',
     ) as typeof dialog.showErrorBox
     dialog.showCertificateTrustDialog = notRestored(
-      'showCertificateTrustDialog'
+      'showCertificateTrustDialog',
     ) as typeof dialog.showCertificateTrustDialog
   })
 }

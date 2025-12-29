@@ -30,16 +30,16 @@ export function ipcRendererSend(
         ({ channel, args }) => {
           if (!require) {
             throw new Error(
-              `Cannot access require() in renderer process. Is nodeIntegration: true?`
+              `Cannot access require() in renderer process. Is nodeIntegration: true?`,
             )
           }
           // eslint-disable-next-line @typescript-eslint/no-var-requires
           const { ipcRenderer } = require('electron')
           return ipcRenderer.send(channel, ...args)
         },
-        { channel, args }
+        { channel, args },
       ),
-    retryOptions
+    retryOptions,
   )
 }
 
@@ -72,16 +72,16 @@ export function ipcRendererInvoke(
         async ({ message, args }) => {
           if (!require) {
             throw new Error(
-              `Cannot access require() in renderer process. Is nodeIntegration: true?`
+              `Cannot access require() in renderer process. Is nodeIntegration: true?`,
             )
           }
           // eslint-disable-next-line @typescript-eslint/no-var-requires
           const { ipcRenderer } = require('electron')
           return await ipcRenderer.invoke(message, ...args)
         },
-        { message, args }
+        { message, args },
       ),
-    retryOptions
+    retryOptions,
   )
 }
 
@@ -117,7 +117,7 @@ export function ipcRendererCallFirstListener(
         async ({ message, args }) => {
           if (!require) {
             throw new Error(
-              `Cannot access require() in renderer process. Is nodeIntegration: true?`
+              `Cannot access require() in renderer process. Is nodeIntegration: true?`,
             )
           }
           // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -131,9 +131,9 @@ export function ipcRendererCallFirstListener(
             throw new Error(`No ipcRenderer listeners for '${message}'`)
           }
         },
-        { message, args }
+        { message, args },
       ),
-    retryOptions
+    retryOptions,
   )
 }
 
@@ -170,7 +170,7 @@ export function ipcRendererEmit(
         ({ message, args }) => {
           if (!require) {
             throw new Error(
-              `Cannot access require() in renderer process. Is nodeIntegration: true?`
+              `Cannot access require() in renderer process. Is nodeIntegration: true?`,
             )
           }
           // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -182,9 +182,9 @@ export function ipcRendererEmit(
           const event = {} as Electron.IpcRendererEvent
           return ipcRenderer.emit(message, event, ...args)
         },
-        { message, args }
+        { message, args },
       ),
-    retryOptions
+    retryOptions,
   )
 }
 
@@ -225,9 +225,9 @@ export function ipcMainEmit(
             throw new Error(`No ipcMain listeners for '${message}'`)
           }
         },
-        { message, args }
+        { message, args },
       ),
-    retryOptions
+    retryOptions,
   )
 }
 
@@ -270,18 +270,17 @@ export async function ipcMainCallFirstListener(
             throw new Error(`No listeners for message ${message}`)
           }
         },
-        { message, args }
+        { message, args },
       ),
-    retryOptions
+    retryOptions,
   )
 }
 
-type IpcMainInvokeEventWithReply =
-  | Electron.IpcMainInvokeEvent & {
-      // electron <= 24
-      _reply(value: unknown): void
-      _throw(error: Error | string): void
-    }
+type IpcMainInvokeEventWithReply = Electron.IpcMainInvokeEvent & {
+  // electron <= 24
+  _reply(value: unknown): void
+  _throw(error: Error | string): void
+}
 
 /** Expose type for private _invokeHandlers Map */
 type IpcMainWithHandlers = Electron.IpcMain & {
@@ -340,8 +339,8 @@ export async function ipcMainInvokeHandler(
           // otherwise return the value from the handler
           return (await e24reply) ?? e25reply
         },
-        { message, args }
+        { message, args },
       ),
-    retryOptions
+    retryOptions,
   )
 }

@@ -30,14 +30,14 @@ export type HelperFunctionName = keyof AllPromiseHelpersWithoutTimeout
 export async function addTimeoutToPromise<T>(
   promise: Promise<T>,
   timeoutMs = 5000,
-  timeoutMessage?: string
+  timeoutMessage?: string,
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       reject(
         timeoutMessage
           ? new Error(timeoutMessage)
-          : new Error(`timeout after ${timeoutMs}ms`)
+          : new Error(`timeout after ${timeoutMs}ms`),
       )
     }, timeoutMs)
     promise
@@ -73,7 +73,7 @@ export function addTimeout<T extends HelperFunctionName>(
     // @ts-ignore
     helpers[functionName](...args),
     timeoutMs,
-    timeoutMessage
+    timeoutMessage,
   ) as ReturnType<AllPromiseHelpers[T]>
 }
 
@@ -131,7 +131,7 @@ export type RetryOptions = {
  */
 export async function retry<T>(
   fn: () => Promise<T> | T,
-  options: Partial<RetryOptions> = {}
+  options: Partial<RetryOptions> = {},
 ): Promise<T> {
   const { poll, timeout, errorMatch } = {
     ...getRetryOptions(),
@@ -168,7 +168,7 @@ export async function retry<T>(
         (errorMatch instanceof RegExp && !errorMatch.test(errString)) ||
         (Array.isArray(errorMatch) &&
           !errorMatch.some((match) =>
-            errString.toLowerCase().includes(match.toLowerCase())
+            errString.toLowerCase().includes(match.toLowerCase()),
           ))
       ) {
         // it's not a matching error, throw immediately
@@ -313,7 +313,7 @@ export type RetryUntilTruthyOptions = {
  */
 export async function retryUntilTruthy<T>(
   fn: () => Promise<T> | T,
-  options: Partial<RetryUntilTruthyOptions> = {}
+  options: Partial<RetryUntilTruthyOptions> = {},
 ): Promise<T> {
   const {
     timeout = 5000,
