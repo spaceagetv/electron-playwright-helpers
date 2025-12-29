@@ -649,6 +649,7 @@ export function stubDialogMatchers(
         }>
         dialog.showMessageBox = async (
           windowOrOptions?:
+            | Electron.BaseWindow
             | Electron.BrowserWindow
             | Electron.MessageBoxOptions
             | undefined,
@@ -694,17 +695,18 @@ export function stubDialogMatchers(
         }>
         dialog.showMessageBoxSync = (
           windowOrOptions?:
+            | Electron.BaseWindow
             | Electron.BrowserWindow
-            | Electron.MessageBoxOptions
+            | Electron.MessageBoxSyncOptions
             | undefined,
-          maybeOptions?: Electron.MessageBoxOptions,
+          maybeOptions?: Electron.MessageBoxSyncOptions,
         ) => {
           const options =
             maybeOptions ||
             (windowOrOptions &&
             !('webContents' in windowOrOptions) &&
             !('id' in windowOrOptions)
-              ? (windowOrOptions as Electron.MessageBoxOptions)
+              ? (windowOrOptions as Electron.MessageBoxSyncOptions)
               : undefined)
 
           for (const stub of stubs) {
@@ -825,11 +827,12 @@ export function stubDialogMatchers(
         }>
         dialog.showSaveDialog = async (
           windowOrOptions?:
+            | Electron.BaseWindow
             | Electron.BrowserWindow
             | Electron.SaveDialogOptions
             | undefined,
           maybeOptions?: Electron.SaveDialogOptions,
-        ) => {
+        ): Promise<Electron.SaveDialogReturnValue> => {
           const options =
             maybeOptions ||
             (windowOrOptions &&
@@ -840,7 +843,7 @@ export function stubDialogMatchers(
 
           for (const stub of stubs) {
             if (matchesSaveDialog(options, stub.matcher)) {
-              return stub.value
+              return stub.value as Electron.SaveDialogReturnValue
             }
           }
           if (throwOnUnmatched) {
@@ -850,7 +853,7 @@ export function stubDialogMatchers(
               )}`,
             )
           }
-          return defaults.showSaveDialog
+          return defaults.showSaveDialog as Electron.SaveDialogReturnValue
         }
       }
 
@@ -933,11 +936,12 @@ export function stubDialogMatchers(
         }>
         dialog.showCertificateTrustDialog = async (
           windowOrOptions?:
+            | Electron.BaseWindow
             | Electron.BrowserWindow
             | Electron.CertificateTrustDialogOptions
             | undefined,
           maybeOptions?: Electron.CertificateTrustDialogOptions,
-        ) => {
+        ): Promise<void> => {
           const options =
             maybeOptions ||
             (windowOrOptions &&
