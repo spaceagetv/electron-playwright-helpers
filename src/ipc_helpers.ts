@@ -1,5 +1,6 @@
 import { ElectronApplication, Page } from 'playwright-core'
-import { isRetryOptions, retry, RetryOptions } from './utilities'
+import { errToString, isRetryOptions, retry, RetryOptions } from './utilities'
+import { errorHelp, explainError } from './error_help'
 
 /**
  * Send an `ipcRenderer.send()` (to main process) from a given window.
@@ -301,6 +302,8 @@ type IpcMainWithHandlers = Electron.IpcMain & {
  * @param retryOptions {RetryOptions} optional - options for retrying upon error
  * @returns {Promise<unknown>}
  * @fulfil {unknown} resolves with the result of the function called in main process
+ * @throws {Error} if no handler is registered for the channel, with an
+ *   explanation of the usual causes appended
  */
 export async function ipcMainInvokeHandler(
   electronApp: ElectronApplication,
@@ -342,5 +345,13 @@ export async function ipcMainInvokeHandler(
         { message, args },
       ),
     retryOptions,
-  )
+  ).catch((err: unknown) => {
+    // the throw above happens inside the evaluate() callback, which cannot see
+    // anything in this module, so the explanation is attached here instead
+    const errString = errToString(err)
+    if (errString.includes('No ipcMain handler registered')) {
+      throw explainError(err, errorHelp.ipcMainInvokeHandler, errString)
+    }
+    throw err
+  })
 }

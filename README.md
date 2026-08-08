@@ -902,6 +902,11 @@ this to retrieve test data from the main process.</p>
 
 **Kind**: global function  
 **Category**: IPCMain  
+**Throws**:
+
+- <code>Error</code> <p>if no handler is registered for the channel, with an
+explanation of the usual causes appended</p>
+
 **Fulfil**: <code>unknown</code> resolves with the result of the function called in main process  
 
 | Param | Type | Description |
