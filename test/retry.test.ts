@@ -1,8 +1,5 @@
-import chai, { expect } from 'chai'
-import chaiAsPromised from 'chai-as-promised'
+import assert from 'node:assert/strict'
 import { retry, resetRetryOptions, setRetryOptions } from '../src/utilities'
-
-chai.use(chaiAsPromised)
 
 // Playwright >= 1.62 rewrites CDP's "Promise was collected" into this
 const GC_ERROR = 'Resulting promise was garbage collected.'
@@ -24,9 +21,11 @@ describe('retry', () => {
 
       // deterministic, not flaky - every attempt fails identically, and the
       // callback body already ran, so retrying would re-fire its side effects
-      await expect(retry(fn, { poll: 2 })).to.be.rejectedWith(GC_ERROR)
+      await assert.rejects(retry(fn, { poll: 2 }), {
+        message: /Resulting promise was garbage collected\./,
+      })
 
-      expect(counter).to.equal(1)
+      assert.strictEqual(counter, 1)
     })
 
     it('should NOT retry the raw CDP "Promise was collected" wording', async () => {
@@ -36,11 +35,11 @@ describe('retry', () => {
         throw new Error('Promise was collected')
       }
 
-      await expect(retry(fn, { poll: 2 })).to.be.rejectedWith(
-        'Promise was collected'
-      )
+      await assert.rejects(retry(fn, { poll: 2 }), {
+        message: /Promise was collected/,
+      })
 
-      expect(counter).to.equal(1)
+      assert.strictEqual(counter, 1)
     })
 
     it('should explain what a garbage-collected promise actually means', async () => {
@@ -48,9 +47,9 @@ describe('retry', () => {
         throw new Error(GC_ERROR)
       }
 
-      await expect(retry(fn, { poll: 2 })).to.be.rejectedWith(
-        /V8 collected the promise Playwright was awaiting/
-      )
+      await assert.rejects(retry(fn, { poll: 2 }), {
+        message: /V8 collected the promise Playwright was awaiting/,
+      })
     })
 
     it('should put the explanation in the stack, not just the message', async () => {
@@ -64,7 +63,7 @@ describe('retry', () => {
 
       const err = await retry(fn, { poll: 2 }).catch((e: Error) => e)
 
-      expect(err.stack).to.include('V8 collected the promise')
+      assert.match(err.stack, /V8 collected the promise/)
     })
 
     it('should not repeat the explanation when retry() calls nest', async () => {
@@ -75,13 +74,13 @@ describe('retry', () => {
           async () => {
             throw new Error(GC_ERROR)
           },
-          { poll: 2 }
+          { poll: 2 },
         )
 
       const err = await retry(inner, { poll: 2 }).catch((e: Error) => e)
 
       const occurrences = err.message.split('V8 collected the promise')
-      expect(occurrences).to.have.lengthOf(2) // i.e. the phrase appears once
+      assert.strictEqual(occurrences.length, 2) // i.e. the phrase appears once
     })
 
     it('should not claim an unrelated "garbage collected" message is ours', async () => {
@@ -94,8 +93,11 @@ describe('retry', () => {
 
       const err = await retry(fn, { poll: 2 }).catch((e: Error) => e)
 
-      expect(err.message).to.equal('cache was not garbage collected after 3s')
-      expect(counter).to.equal(1)
+      assert.strictEqual(
+        err.message,
+        'cache was not garbage collected after 3s',
+      )
+      assert.strictEqual(counter, 1)
     })
 
     it('should retry a garbage-collected promise error if asked to', async () => {
@@ -109,9 +111,13 @@ describe('retry', () => {
       }
 
       // the documented escape hatch
-      await expect(
-        retry(fn, { poll: 2, errorMatch: 'promise was garbage collected' })
-      ).to.eventually.equal(3)
+      assert.strictEqual(
+        await retry(fn, {
+          poll: 2,
+          errorMatch: 'promise was garbage collected',
+        }),
+        3,
+      )
     })
 
     it('should not explain an error the caller opted into retrying', async () => {
@@ -126,8 +132,8 @@ describe('retry', () => {
       }).catch((e: Error) => e)
 
       // the caller's matcher wins, so this times out as a normal retry
-      expect(err.message).to.include('Timeout')
-      expect(err.message).to.not.include('V8 collected the promise')
+      assert.match(err.message, /Timeout/)
+      assert.doesNotMatch(err.message, /V8 collected the promise/)
     })
 
     it('should retry a closed context error', async () => {
@@ -140,7 +146,7 @@ describe('retry', () => {
         return counter
       }
 
-      await expect(retry(fn, { poll: 2 })).to.eventually.equal(3)
+      assert.strictEqual(await retry(fn, { poll: 2 }), 3)
     })
   })
 
@@ -154,7 +160,7 @@ describe('retry', () => {
 
       await retry(fn, { disable: true })
 
-      expect(counter).to.equal(1)
+      assert.strictEqual(counter, 1)
     })
 
     it('should swallow a teardown error - the action already happened', async () => {
@@ -162,7 +168,7 @@ describe('retry', () => {
         throw new Error(TEARDOWN_ERROR)
       }
 
-      await expect(retry(fn, { disable: true })).to.eventually.equal(undefined)
+      assert.strictEqual(await retry(fn, { disable: true }), undefined)
     })
 
     it('should throw a garbage-collected promise error rather than report success', async () => {
@@ -170,7 +176,9 @@ describe('retry', () => {
         throw new Error(GC_ERROR)
       }
 
-      await expect(retry(fn, { disable: true })).to.be.rejectedWith(GC_ERROR)
+      await assert.rejects(retry(fn, { disable: true }), {
+        message: /Resulting promise was garbage collected\./,
+      })
     })
 
     it('should throw a non-matching error', async () => {
@@ -178,9 +186,9 @@ describe('retry', () => {
         throw new Error('Menu item with id nope not found')
       }
 
-      await expect(retry(fn, { disable: true })).to.be.rejectedWith(
-        'Menu item with id nope not found'
-      )
+      await assert.rejects(retry(fn, { disable: true }), {
+        message: /Menu item with id nope not found/,
+      })
     })
 
     it('should be honored when set globally via setRetryOptions()', async () => {
@@ -193,7 +201,7 @@ describe('retry', () => {
 
       await retry(fn)
 
-      expect(counter).to.equal(1)
+      assert.strictEqual(counter, 1)
     })
   })
 
@@ -207,21 +215,22 @@ describe('retry', () => {
       return counter
     }
 
-    await expect(
-      retry(fn, {
+    assert.strictEqual(
+      await retry(fn, {
         poll: 'raf',
         errorMatch: 'Counter too low',
-      })
-    ).to.eventually.equal(3)
+      }),
+      3,
+    )
   })
 
   it('should reject if the function never succeeds', async () => {
     const fn = async () => {
       throw new Error('Always fails')
     }
-    await expect(retry(fn, { poll: 10, timeout: 20 })).to.be.rejectedWith(
-      'Always fails'
-    )
+    await assert.rejects(retry(fn, { poll: 10, timeout: 20 }), {
+      message: /Always fails/,
+    })
   })
 
   it('should reject if the function throws an unexpected error', async () => {
@@ -231,11 +240,11 @@ describe('retry', () => {
       throw new Error('Unexpected error')
     }
 
-    await expect(retry(fn, { timeout: 10 })).to.be.rejectedWith(
-      'Unexpected error'
-    )
+    await assert.rejects(retry(fn, { timeout: 10 }), {
+      message: /Unexpected error/,
+    })
 
-    expect(counter).to.equal(1)
+    assert.strictEqual(counter, 1)
   })
 
   it('should retry the specified number of times', async () => {
@@ -245,22 +254,23 @@ describe('retry', () => {
       throw new Error('Always fails')
     }
 
-    await expect(
+    await assert.rejects(
       retry(fn, {
         timeout: 20,
         poll: 2,
         errorMatch: 'Always fails',
-      })
-    ).to.be.rejectedWith('Always fails')
+      }),
+      { message: /Always fails/ },
+    )
 
-    expect(counter).to.be.greaterThan(1)
+    assert.ok(counter > 1, `expected more than one attempt, got ${counter}`)
   })
 
   it('should succeed immediately if the function succeeds on the first try', async () => {
     const fn = async () => {
       return 'success'
     }
-    await expect(retry(fn)).to.eventually.equal('success')
+    assert.strictEqual(await retry(fn), 'success')
   })
 
   it('should succeed immediately if the function succeeds on the first try with a non-zero interval', async () => {
@@ -269,21 +279,22 @@ describe('retry', () => {
       counter++
       return 'success'
     }
-    await expect(retry(fn)).to.eventually.equal('success')
-    expect(counter).to.equal(1)
+    assert.strictEqual(await retry(fn), 'success')
+    assert.strictEqual(counter, 1)
   })
 
   it('should timeout if the function never succeeds', async () => {
     const fn = async () => {
       throw new Error('Always fails')
     }
-    await expect(
+    await assert.rejects(
       retry(fn, {
         poll: 100,
         timeout: 50,
         errorMatch: 'Always fails',
-      })
-    ).to.be.rejectedWith('Timeout')
+      }),
+      { message: /Timeout/ },
+    )
   })
 
   it('should retry if the error message matches a regular expression', async () => {
@@ -296,12 +307,13 @@ describe('retry', () => {
       return counter
     }
 
-    await expect(
-      retry(fn, {
+    assert.strictEqual(
+      await retry(fn, {
         poll: 'raf',
         errorMatch: /counter too low/,
-      })
-    ).to.eventually.equal(5)
+      }),
+      5,
+    )
   })
 
   it('should not leave lastIndex set on a global RegExp it was given', async () => {
@@ -310,12 +322,12 @@ describe('retry', () => {
       throw new Error('flaky thing happened')
     }
 
-    await expect(
-      retry(fn, { poll: 2, timeout: 10, errorMatch })
-    ).to.be.rejectedWith('flaky thing happened')
+    await assert.rejects(retry(fn, { poll: 2, timeout: 10, errorMatch }), {
+      message: /flaky thing happened/,
+    })
 
     // the caller's RegExp is theirs - matching must not move its cursor
-    expect(errorMatch.lastIndex).to.equal(0)
+    assert.strictEqual(errorMatch.lastIndex, 0)
   })
 
   it('should keep a sticky RegExp sticky', async () => {
@@ -327,11 +339,11 @@ describe('retry', () => {
 
     // /y anchors at lastIndex, which is 0 here, so this must NOT match a
     // message that says "flaky" further along - and a non-match throws at once
-    await expect(
-      retry(fn, { poll: 2, errorMatch: /flaky/y })
-    ).to.be.rejectedWith('flaky thing happened')
+    await assert.rejects(retry(fn, { poll: 2, errorMatch: /flaky/y }), {
+      message: /flaky thing happened/,
+    })
 
-    expect(counter).to.equal(1)
+    assert.strictEqual(counter, 1)
   })
 
   it('should fall back to the default errorMatch when given undefined', async () => {
@@ -344,9 +356,7 @@ describe('retry', () => {
       return counter
     }
 
-    await expect(
-      retry(fn, { poll: 2, errorMatch: undefined })
-    ).to.eventually.equal(3)
+    assert.strictEqual(await retry(fn, { poll: 2, errorMatch: undefined }), 3)
   })
 
   it('should keep matching a global RegExp across retries', async () => {
@@ -360,9 +370,7 @@ describe('retry', () => {
     }
 
     // a /g RegExp carries lastIndex between test() calls
-    await expect(
-      retry(fn, { poll: 2, errorMatch: /flaky/g })
-    ).to.eventually.equal(4)
+    assert.strictEqual(await retry(fn, { poll: 2, errorMatch: /flaky/g }), 4)
   })
 
   it('should reject if the error message does not match a regular expression', async () => {
@@ -370,13 +378,14 @@ describe('retry', () => {
       throw new Error('Something else')
     }
 
-    await expect(
+    await assert.rejects(
       retry(fn, {
         timeout: 10,
         poll: 0,
         errorMatch: /counter too low/,
-      })
-    ).to.be.rejectedWith('Something else')
+      }),
+      { message: /Something else/ },
+    )
   })
 
   it('should reject if the error message does not include a string', async () => {
@@ -386,15 +395,16 @@ describe('retry', () => {
       throw new Error('B')
     }
 
-    await expect(
+    await assert.rejects(
       retry(fn, {
         timeout: 10,
         poll: 2,
         errorMatch: 'A',
-      })
-    ).to.be.rejectedWith('B')
+      }),
+      { message: /B/ },
+    )
 
-    expect(counter).to.equal(1)
+    assert.strictEqual(counter, 1)
   })
 
   it('rejects properly for function that returns nested promises', async () => {
@@ -404,10 +414,10 @@ describe('retry', () => {
       return await Promise.reject(new Error('fail'))
     }
 
-    await expect(
-      retry(fn, { timeout: 1000, errorMatch: 'fail' })
-    ).to.be.rejectedWith('fail')
+    await assert.rejects(retry(fn, { timeout: 1000, errorMatch: 'fail' }), {
+      message: /fail/,
+    })
 
-    expect(counter).to.equal(5)
+    assert.strictEqual(counter, 5)
   })
 })

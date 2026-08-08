@@ -1,4 +1,4 @@
-import { expect } from 'chai'
+import assert from 'node:assert/strict'
 import {
   addTimeoutToPromise,
   errToString,
@@ -11,15 +11,13 @@ describe('Utilities', () => {
   describe('addTimeoutToPromise', () => {
     it('should resolve the promise before timeout', async () => {
       const result = await addTimeoutToPromise(Promise.resolve('success'), 1000)
-      expect(result).to.equal('success')
+      assert.strictEqual(result, 'success')
     })
 
     it('should reject the promise after timeout', async () => {
-      try {
-        await addTimeoutToPromise(new Promise(() => null), 100)
-      } catch (error) {
-        expect(error.message).to.equal('timeout after 100ms')
-      }
+      await assert.rejects(addTimeoutToPromise(new Promise(() => null), 100), {
+        message: 'timeout after 100ms',
+      })
     })
   })
 
@@ -52,7 +50,7 @@ describe('Utilities', () => {
   describe('setRetryOptions', () => {
     it('should set the retry options', () => {
       const options = setRetryOptions({ timeout: 10 })
-      expect(options.timeout).to.equal(10)
+      assert.strictEqual(options.timeout, 10)
     })
   })
 
@@ -60,7 +58,7 @@ describe('Utilities', () => {
     it('should get the current retry options', () => {
       resetRetryOptions()
       const options = getRetryOptions()
-      expect(options.timeout).to.equal(5000)
+      assert.strictEqual(options.timeout, 5000)
     })
   })
 
@@ -69,7 +67,7 @@ describe('Utilities', () => {
       setRetryOptions({ poll: 10 })
       resetRetryOptions()
       const options = getRetryOptions()
-      expect(options.poll).to.equal(200)
+      assert.strictEqual(options.poll, 200)
     })
   })
 
@@ -77,33 +75,33 @@ describe('Utilities', () => {
     it('should convert an Error object to a string', () => {
       const error = new Error('test error')
       const result = errToString(error)
-      expect(result).to.equal('Error: test error')
+      assert.strictEqual(result, 'Error: test error')
     })
 
     it('should convert a TypeError to a string', () => {
       const error = new TypeError('test error')
       const result = errToString(error)
-      expect(result).to.equal('TypeError: test error')
+      assert.strictEqual(result, 'TypeError: test error')
     })
 
     it('should return the string directly if the error is a string', () => {
       const error = 'test error'
       const result = errToString(error)
-      expect(result).to.equal('test error')
+      assert.strictEqual(result, 'test error')
     })
 
     it('should convert other types to a JSON string', () => {
       const error = { message: 'test error' }
       const result = errToString(error)
-      expect(result).to.equal('{"message":"test error"}')
+      assert.strictEqual(result, '{"message":"test error"}')
     })
 
     it('should still return a string for values JSON.stringify() skips', () => {
       // JSON.stringify() returns undefined for these, and callers go on to
       // call String methods on the result
-      expect(errToString(undefined)).to.be.a('string')
-      expect(errToString(() => 'nope')).to.be.a('string')
-      expect(errToString(Symbol('nope'))).to.be.a('string')
+      assert.strictEqual(typeof errToString(undefined), 'string')
+      assert.strictEqual(typeof errToString(() => 'nope'), 'string')
+      assert.strictEqual(typeof errToString(Symbol('nope')), 'string')
     })
   })
 })
