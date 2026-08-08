@@ -5,7 +5,35 @@ on: [pull_request]
 env:
   GITHUB_PR_NUMBER: ${{github.event.pull_request.number}}
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  lint_and_unit:
+    name: Lint, type-check, and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            example-project/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run type-check
+      - name: Unit tests
+        run: npm run test:unit
+
   tests_e2e:
     name: Run end-to-end tests
     runs-on: ${{ matrix.os }}
@@ -14,18 +42,24 @@ jobs:
       matrix:
         # Playwright >= 1.62 requires Node 20+. The library itself still supports
         # Node 18 - only the test toolchain needs a newer runtime.
-        node_version: [20, 22]
-        os: [ubuntu-latest, windows-latest]
+        node_version: [20, 22, 24]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
             commandPrefix: 'xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24 +extension GLX +render -noreset" --'
           - os: windows-latest
             commandPrefix: ''
+          - os: macos-latest
+            commandPrefix: ''
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node_version }}
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            example-project/package-lock.json
       - name: Install system dependencies (Ubuntu)
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
         run: |
@@ -43,11 +77,5 @@ jobs:
             libasound2-dev
       - name: Install dependencies
         run: npm ci && cd example-project && npm ci
-      - name: Lint
-        if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        run: npm run lint
       - name: e2e tests
-        run: ${{ matrix.commandPrefix }} npm test
-
-
-
+        run: ${{ matrix.commandPrefix }} npm run test:e2e
