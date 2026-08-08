@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.2.4...v2.3.0) (2026-08-08)
+
+
+### Features
+
+* explain more errors, with the fix to make, not just the symptom ([cd6f20a](https://github.com/spaceagetv/electron-playwright-helpers/commit/cd6f20a9b5fdb790162ce3b66f76fe3db974c933))
+
 ## [2.2.4](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.2.3...v2.2.4) (2026-08-08)
 
 ## [2.2.3](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.2.2...v2.2.3) (2026-08-08)
