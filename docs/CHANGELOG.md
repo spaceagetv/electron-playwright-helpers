@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.2.0...v2.2.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* give electronWaitForFunction a real timeout instead of looping forever ([f40fd8f](https://github.com/spaceagetv/electron-playwright-helpers/commit/f40fd8f4032fdbf697e21f71afef5122202d9b11))
+
 # [2.2.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.1.2...v2.2.0) (2026-08-08)
 
 
