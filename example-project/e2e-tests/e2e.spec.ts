@@ -536,7 +536,11 @@ test.describe('retryUntilTruthy()', () => {
 })
 
 test('stress test: run electronApp.evaluate()', async () => {
-  test.setTimeout(60000)
+  // 10k round trips is fast on Node 22 (~10s) but takes ~70s on Node 20, where the
+  // Playwright test runner adds several ms of per-API-call overhead. The same calls
+  // cost 0.45ms each on Node 20 outside the runner, so this is runner overhead
+  // rather than CDP throughput. Budgeted for the slow case.
+  test.setTimeout(180000)
   const app = getApp()
   const iterations = 10000
   const startTime = Date.now()

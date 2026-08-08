@@ -215,6 +215,22 @@ describe('retry', () => {
     ).to.eventually.equal(5)
   })
 
+  it('should keep matching a global RegExp across retries', async () => {
+    let counter = 0
+    const fn = async () => {
+      counter++
+      if (counter < 4) {
+        throw new Error('flaky thing happened')
+      }
+      return counter
+    }
+
+    // a /g RegExp carries lastIndex between test() calls
+    await expect(
+      retry(fn, { poll: 2, errorMatch: /flaky/g })
+    ).to.eventually.equal(4)
+  })
+
   it('should reject if the error message does not match a regular expression', async () => {
     const fn = async () => {
       throw new Error('Something else')

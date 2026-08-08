@@ -332,9 +332,10 @@ It simply emits an event in the renderer process.</p>
 <dd><p>Execute the <code>.click()</code> method on the element with the given id.
 <strong>NOTE:</strong> All menu testing functions will only work with items in the
 <a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p>
-<p>A click is not idempotent, so this call is never retried (<code>disable: true</code>). If the click
-tears down the execution context - by quitting the app or closing the window, for example -
-the resulting error is swallowed, since the click did happen. Any other error is thrown.</p></dd>
+<p>A click is not idempotent, so this call is not retried by default (<code>disable: true</code>). If the
+click tears down the execution context - by quitting the app or closing the window, for
+example - the resulting error is swallowed, since the click did happen. Any other error is
+thrown. Passing <code>{ disable: false }</code> re-enables retries, at the risk of clicking twice.</p></dd>
 <dt><a href="#clickMenuItem">clickMenuItem(electronApp, property, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Click the first matching menu item by any of its properties. This is
 useful for menu items that don't have an id. HOWEVER, this is not as fast
@@ -911,9 +912,10 @@ It simply emits an event in the renderer process.</p>
 <p>Execute the <code>.click()</code> method on the element with the given id.
 <strong>NOTE:</strong> All menu testing functions will only work with items in the
 <a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p>
-<p>A click is not idempotent, so this call is never retried (<code>disable: true</code>). If the click
-tears down the execution context - by quitting the app or closing the window, for example -
-the resulting error is swallowed, since the click did happen. Any other error is thrown.</p>
+<p>A click is not idempotent, so this call is not retried by default (<code>disable: true</code>). If the
+click tears down the execution context - by quitting the app or closing the window, for
+example - the resulting error is swallowed, since the click did happen. Any other error is
+thrown. Passing <code>{ disable: false }</code> re-enables retries, at the risk of clicking twice.</p>
 
 **Kind**: global function  
 **Category**: Menu  
@@ -1081,7 +1083,8 @@ for no apparent reason.
 This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p>
 
 **Kind**: global function  
-**Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.</p>  
+**Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.
+With <code>disable: true</code> it can also resolve <code>undefined</code>, when a teardown error is swallowed.</p>  
 **Category**: Utilities  
 
 | Param | Type | Default | Description |

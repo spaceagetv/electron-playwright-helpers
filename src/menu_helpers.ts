@@ -7,9 +7,10 @@ import { RetryOptions, retry } from './utilities'
  * **NOTE:** All menu testing functions will only work with items in the
  * [application menu](https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu).
  *
- * A click is not idempotent, so this call is never retried (`disable: true`). If the click
- * tears down the execution context - by quitting the app or closing the window, for example -
- * the resulting error is swallowed, since the click did happen. Any other error is thrown.
+ * A click is not idempotent, so this call is not retried by default (`disable: true`). If the
+ * click tears down the execution context - by quitting the app or closing the window, for
+ * example - the resulting error is swallowed, since the click did happen. Any other error is
+ * thrown. Passing `{ disable: false }` re-enables retries, at the risk of clicking twice.
  *
  * @category Menu
  *

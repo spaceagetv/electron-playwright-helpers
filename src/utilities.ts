@@ -139,6 +139,9 @@ function errorMatches(
   match: string | string[] | RegExp
 ): boolean {
   if (match instanceof RegExp) {
+    // `test()` is stateful for /g and /y patterns - without this reset, a matcher
+    // would match on one retry and miss on the next
+    match.lastIndex = 0
     return match.test(errString)
   }
   const matchers = Array.isArray(match) ? match : [match]
@@ -186,11 +189,20 @@ function errorMatches(
  * @param {string|string[]|RegExp} [options.errorMatch=['context or browser has been closed', 'Execution context was destroyed', "reading 'getOwnerBrowserWindow'", 'Promise was collected', 'garbage collected']] String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.
  * @param {boolean} [options.disable=false] If true, only call the function once. See {@link RetryOptions.disable}.
  * @returns {Promise<T>} A promise that resolves with the result of the function or rejects with an error or timeout message.
+ *   With `disable: true` it can also resolve `undefined`, when a teardown error is swallowed.
  */
 export async function retry<T>(
   fn: () => Promise<T> | T,
+  options: Partial<RetryOptions> & { disable: true }
+): Promise<T | undefined>
+export async function retry<T>(
+  fn: () => Promise<T> | T,
+  options?: Partial<RetryOptions>
+): Promise<T>
+export async function retry<T>(
+  fn: () => Promise<T> | T,
   options: Partial<RetryOptions> = {}
-): Promise<T> {
+): Promise<T | undefined> {
   const { poll, timeout, errorMatch, disable } = {
     ...getRetryOptions(),
     ...options,
