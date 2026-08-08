@@ -43,8 +43,7 @@
       "@semantic-release/npm",
       {
         "npmPublish": true,
-        "tarballDir": "dist",
-        "distTag": "beta"
+        "tarballDir": "dist"
       }
     ],
     "@semantic-release/github",
