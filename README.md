@@ -76,7 +76,7 @@ Please use [Conventional Commit](https://www.conventionalcommits.org/) messages 
 
 ## Migrating from v1.x to v2.0
 
-Version 2.0 introduces significant improvements to handle flakiness issues that appeared with Electron 27+ and Playwright. Starting with Electron 27, Playwright's `evaluate()` calls became unreliable, often throwing errors like "context or browser has been closed", "Promise was collected", or "Execution context was destroyed" seemingly at random.
+Version 2.0 introduces significant improvements to handle flakiness issues that appeared with Electron 27+ and Playwright. Starting with Electron 27, Playwright's `evaluate()` calls became unreliable, often throwing errors like "context or browser has been closed" or "Execution context was destroyed" seemingly at random.
 
 ### What's New in v2.0
 
@@ -165,6 +165,69 @@ Or disable retries for specific calls:
 ```typescript
 await ipcRendererSend(page, 'channel', arg, { disable: true })
 ```
+
+### "Resulting promise was garbage collected." is not retried by default
+
+Playwright awaits your promise through the debugger protocol, and V8's inspector tracks it with a *weak* handle. If nothing in the target process references that promise, it gets collected before it can settle and the reply comes back as this error.
+
+Two quite different things produce it, and they want opposite responses.
+
+**Case 1 — your `evaluate()` callback returned a dangling promise.**
+
+```typescript
+// this promise is unreachable the moment evaluate() returns - it can never settle
+await electronApp.evaluate(() => new Promise(() => {}))
+```
+
+* **It is deterministic, not intermittent.** The same call fails the same way every time, so retrying only burns the timeout and buries the real cause under a "Timeout after 5000ms" message.
+* **Your callback body already ran.** Its side effects happened; only the reply was lost. That makes an automatic retry actively unsafe for anything non-idempotent.
+
+The fix is in the callback: return a value, or return a promise that something retains - one backed by an Electron API call, a timer, or an event listener. Promises from real Electron APIs are held by the native side; those were unaffected across 300 iterations with garbage collection forced at the await point.
+
+**Case 2 — a raw Playwright channel call lost an internal promise mid-flight.**
+
+```typescript
+// no callback of yours involved - the promise that got collected is Playwright's
+const win = await electronApp.browserWindow(page)
+const title = await win.getProperty('title')
+```
+
+Here you wrote no callback, so there is nothing to fix in your code. This one really is transient, and retrying is the right response.
+
+**The message is identical in both cases**, so this library cannot tell them apart. It does not retry by default, because silently repeating a side effect is the worse of the two failures. If you are in case 2, opt in - ideally scoped to the specific reads that need it rather than set globally, so that case 1 keeps failing loudly:
+
+```typescript
+import { retry, getRetryOptions } from 'electron-playwright-helpers'
+
+/** only ever wrap idempotent reads in this - a retried action can fire twice */
+function retryThroughGC<T>(fn: () => Promise<T>) {
+  const { errorMatch } = getRetryOptions()
+  const existing = Array.isArray(errorMatch) ? errorMatch : [errorMatch]
+  return retry(fn, { errorMatch: [...existing, 'promise was garbage collected'] })
+}
+
+const win = await retryThroughGC(() => electronApp.browserWindow(page))
+```
+
+To turn the old retry-anyway behavior back on everywhere instead, note that **`errorMatch` replaces the default list rather than extending it**, so repeat the defaults you still want:
+
+```typescript
+import { retry, setRetryOptions } from 'electron-playwright-helpers'
+
+const errorMatch = [
+  'context or browser has been closed',
+  'Execution context was destroyed',
+  "reading 'getOwnerBrowserWindow'",
+  'promise was garbage collected',
+]
+
+// per call...
+await retry(() => electronApp.evaluate(myFn), { errorMatch })
+// ...or globally
+setRetryOptions({ errorMatch })
+```
+
+Note that on **Playwright < 1.62** you will never see this error by name. Those versions have no branch for the underlying protocol message, so it falls through to the generic "Execution context was destroyed" and is retried as if it were a teardown error.
 
 ### Using the New Retry Functions
 
@@ -369,9 +432,15 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 <dt><a href="#retry">retry(fn, [options])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Retries a function until it returns without throwing an error.</p>
 <p>Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
-It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Resulting promise was garbage collected.&quot;
-for no apparent reason.
-This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p></dd>
+It will throw errors like &quot;context or browser has been closed&quot; or &quot;Execution context was destroyed&quot; when the
+execution context a call was dispatched into goes away underneath it. Playwright has no recovery for this on the
+Electron main process - it resolves a single <code>require('electron')</code> handle when the app launches and never
+re-acquires it - so retrying is the only option available from the outside.
+This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p>
+<p>Note that &quot;Resulting promise was garbage collected.&quot; is deliberately <em>not</em> retried. Despite appearances it is not a
+flake: it means the evaluate callback returned a promise nothing in the target process references, so V8 collected
+it before it settled. Every attempt fails identically, and the callback body has already run. <code>retry()</code> throws that
+one immediately, with an explanation attached.</p></dd>
 <dt><a href="#setRetryOptions">setRetryOptions(options)</a> ⇒</dt>
 <dd><p>Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
 You can reset the defaults at any time by calling resetRetryOptions().</p></dd>
@@ -385,7 +454,7 @@ You can reset the defaults at any time by calling resetRetryOptions().</p></dd>
 <li>poll: 200</li>
 <li>timeout: 5000</li>
 <li>errorMatch: ['context or browser has been closed', 'Execution context was destroyed',
-&quot;reading 'getOwnerBrowserWindow'&quot;, 'Promise was collected', 'garbage collected']</li>
+&quot;reading 'getOwnerBrowserWindow'&quot;]</li>
 </ul></dd>
 <dt><a href="#errToString">errToString(err)</a> ⇒</dt>
 <dd><p>Converts an unknown error to a string representation.</p>
@@ -1078,9 +1147,15 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 ## retry(fn, [options]) ⇒ <code>Promise.&lt;T&gt;</code>
 <p>Retries a function until it returns without throwing an error.</p>
 <p>Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
-It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Resulting promise was garbage collected.&quot;
-for no apparent reason.
+It will throw errors like &quot;context or browser has been closed&quot; or &quot;Execution context was destroyed&quot; when the
+execution context a call was dispatched into goes away underneath it. Playwright has no recovery for this on the
+Electron main process - it resolves a single <code>require('electron')</code> handle when the app launches and never
+re-acquires it - so retrying is the only option available from the outside.
 This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p>
+<p>Note that &quot;Resulting promise was garbage collected.&quot; is deliberately <em>not</em> retried. Despite appearances it is not a
+flake: it means the evaluate callback returned a promise nothing in the target process references, so V8 collected
+it before it settled. Every attempt fails identically, and the callback body has already run. <code>retry()</code> throws that
+one immediately, with an explanation attached.</p>
 
 **Kind**: global function  
 **Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.
@@ -1093,7 +1168,7 @@ With <code>disable: true</code> it can also resolve <code>undefined</code>, when
 | [options] | <code>RetryOptions</code> | <code>{}</code> | <p>The options for retrying the function.</p> |
 | [options.timeout] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
 | [options.poll] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
-| [options.errorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> | <code>&quot;[&#x27;context or browser has been closed&#x27;, &#x27;Execution context was destroyed&#x27;, \&quot;reading &#x27;getOwnerBrowserWindow&#x27;\&quot;, &#x27;Promise was collected&#x27;, &#x27;garbage collected&#x27;]&quot;</code> | <p>String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.</p> |
+| [options.errorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> | <code>&quot;[&#x27;context or browser has been closed&#x27;, &#x27;Execution context was destroyed&#x27;, \&quot;reading &#x27;getOwnerBrowserWindow&#x27;\&quot;]&quot;</code> | <p>String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.</p> |
 | [options.disable] | <code>boolean</code> | <code>false</code> | <p>If true, only call the function once. See [RetryOptions.disable](RetryOptions.disable).</p> |
 
 **Example**  
@@ -1145,7 +1220,7 @@ You can reset the defaults at any time by calling resetRetryOptions().</p>
 <li>poll: 200</li>
 <li>timeout: 5000</li>
 <li>errorMatch: ['context or browser has been closed', 'Execution context was destroyed',
-&quot;reading 'getOwnerBrowserWindow'&quot;, 'Promise was collected', 'garbage collected']</li>
+&quot;reading 'getOwnerBrowserWindow'&quot;]</li>
 </ul>
 
 **Kind**: global function  

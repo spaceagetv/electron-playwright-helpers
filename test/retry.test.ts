@@ -15,7 +15,90 @@ describe('retry', () => {
   })
 
   describe('default errorMatch', () => {
-    it('should retry a garbage-collected promise error', async () => {
+    it('should NOT retry a garbage-collected promise error', async () => {
+      let counter = 0
+      const fn = async () => {
+        counter++
+        throw new Error(GC_ERROR)
+      }
+
+      // deterministic, not flaky - every attempt fails identically, and the
+      // callback body already ran, so retrying would re-fire its side effects
+      await expect(retry(fn, { poll: 2 })).to.be.rejectedWith(GC_ERROR)
+
+      expect(counter).to.equal(1)
+    })
+
+    it('should NOT retry the raw CDP "Promise was collected" wording', async () => {
+      let counter = 0
+      const fn = async () => {
+        counter++
+        throw new Error('Promise was collected')
+      }
+
+      await expect(retry(fn, { poll: 2 })).to.be.rejectedWith(
+        'Promise was collected'
+      )
+
+      expect(counter).to.equal(1)
+    })
+
+    it('should explain what a garbage-collected promise actually means', async () => {
+      const fn = async () => {
+        throw new Error(GC_ERROR)
+      }
+
+      await expect(retry(fn, { poll: 2 })).to.be.rejectedWith(
+        /V8 collected the promise Playwright was awaiting/
+      )
+    })
+
+    it('should put the explanation in the stack, not just the message', async () => {
+      const fn = async () => {
+        const err = new Error(GC_ERROR)
+        // whatever reported this first would have rendered .stack by now, and
+        // V8 caches it - the explanation has to survive that
+        void err.stack
+        throw err
+      }
+
+      const err = await retry(fn, { poll: 2 }).catch((e: Error) => e)
+
+      expect(err.stack).to.include('V8 collected the promise')
+    })
+
+    it('should not repeat the explanation when retry() calls nest', async () => {
+      // helpers call retry() internally, so retry(() => helper()) is a normal
+      // composition and must not stack up the same paragraph twice
+      const inner = () =>
+        retry(
+          async () => {
+            throw new Error(GC_ERROR)
+          },
+          { poll: 2 }
+        )
+
+      const err = await retry(inner, { poll: 2 }).catch((e: Error) => e)
+
+      const occurrences = err.message.split('V8 collected the promise')
+      expect(occurrences).to.have.lengthOf(2) // i.e. the phrase appears once
+    })
+
+    it('should not claim an unrelated "garbage collected" message is ours', async () => {
+      let counter = 0
+      const fn = async () => {
+        counter++
+        // someone else's assertion, not a collected evaluate promise
+        throw new Error('cache was not garbage collected after 3s')
+      }
+
+      const err = await retry(fn, { poll: 2 }).catch((e: Error) => e)
+
+      expect(err.message).to.equal('cache was not garbage collected after 3s')
+      expect(counter).to.equal(1)
+    })
+
+    it('should retry a garbage-collected promise error if asked to', async () => {
       let counter = 0
       const fn = async () => {
         counter++
@@ -25,20 +108,26 @@ describe('retry', () => {
         return counter
       }
 
-      await expect(retry(fn, { poll: 2 })).to.eventually.equal(3)
+      // the documented escape hatch
+      await expect(
+        retry(fn, { poll: 2, errorMatch: 'promise was garbage collected' })
+      ).to.eventually.equal(3)
     })
 
-    it('should retry a "Promise was collected" error (Playwright < 1.62)', async () => {
-      let counter = 0
+    it('should not explain an error the caller opted into retrying', async () => {
       const fn = async () => {
-        counter++
-        if (counter < 3) {
-          throw new Error('Promise was collected')
-        }
-        return counter
+        throw new Error(GC_ERROR)
       }
 
-      await expect(retry(fn, { poll: 2 })).to.eventually.equal(3)
+      const err = await retry(fn, {
+        poll: 2,
+        timeout: 10,
+        errorMatch: 'promise was garbage collected',
+      }).catch((e: Error) => e)
+
+      // the caller's matcher wins, so this times out as a normal retry
+      expect(err.message).to.include('Timeout')
+      expect(err.message).to.not.include('V8 collected the promise')
     })
 
     it('should retry a closed context error', async () => {
@@ -250,7 +339,7 @@ describe('retry', () => {
     const fn = async () => {
       counter++
       if (counter < 3) {
-        throw new Error(GC_ERROR)
+        throw new Error(TEARDOWN_ERROR)
       }
       return counter
     }
