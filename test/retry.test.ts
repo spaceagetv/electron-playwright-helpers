@@ -191,6 +191,41 @@ describe('retry', () => {
       })
     })
 
+    it('should throw a matching error that is not a teardown error', async () => {
+      let counter = 0
+      const fn = async () => {
+        counter++
+        throw new Error('flaky thing happened')
+      }
+
+      // the error matches, so it isn't "your code is broken", but it also isn't
+      // teardown - the context is still there, so nothing tells us whether the
+      // action fired. Reporting success here would pass a test that never ran.
+      await assert.rejects(
+        retry(fn, { disable: true, errorMatch: 'flaky thing' }),
+        { message: /flaky thing happened/ },
+      )
+
+      assert.strictEqual(counter, 1)
+    })
+
+    it('should throw a garbage-collected promise error the caller opted into retrying', async () => {
+      const fn = async () => {
+        throw new Error(GC_ERROR)
+      }
+
+      // opting into retrying GC errors takes them past the explain-and-throw
+      // path, but disable: true means there is no retry left to make - and the
+      // callback body already ran, so success is exactly what we can't claim
+      await assert.rejects(
+        retry(fn, {
+          disable: true,
+          errorMatch: 'promise was garbage collected',
+        }),
+        { message: /Resulting promise was garbage collected\./ },
+      )
+    })
+
     it('should be honored when set globally via setRetryOptions()', async () => {
       setRetryOptions({ disable: true })
       let counter = 0
