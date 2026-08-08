@@ -250,7 +250,7 @@ it throws the error.</p></dd>
 <dd><p>Type guard to check if a SerializedNativeImage is a success case</p></dd>
 <dt><a href="#isSerializedNativeImageError">isSerializedNativeImageError()</a></dt>
 <dd><p>Type guard to check if a SerializedNativeImage is an error case</p></dd>
-<dt><a href="#retryUntilTruthy">retryUntilTruthy(fn, [timeoutMs], [intervalMs])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
+<dt><a href="#retryUntilTruthy">retryUntilTruthy(fn)</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Retries a given function until it returns a truthy value or the timeout is reached.</p>
 <p>This offers similar functionality to Playwright's <a href="https://playwright.dev/docs/api/class-page#page-wait-for-function"><code>page.waitForFunction()</code></a>
 method – but with more flexibility and control over the retry attempts. It also defaults to ignoring common errors due to
@@ -331,13 +331,19 @@ It simply emits an event in the renderer process.</p>
 <dt><a href="#clickMenuItemById">clickMenuItemById(electronApp, id)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Execute the <code>.click()</code> method on the element with the given id.
 <strong>NOTE:</strong> All menu testing functions will only work with items in the
-<a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p></dd>
+<a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p>
+<p>A click is not idempotent, so this call is not retried by default (<code>disable: true</code>). If the
+click tears down the execution context - by quitting the app or closing the window, for
+example - the resulting error is swallowed, since the click did happen. Any other error is
+thrown. Passing <code>{ disable: false }</code> re-enables retries, at the risk of clicking twice.</p></dd>
 <dt><a href="#clickMenuItem">clickMenuItem(electronApp, property, value)</a> ⇒ <code>Promise.&lt;void&gt;</code></dt>
 <dd><p>Click the first matching menu item by any of its properties. This is
 useful for menu items that don't have an id. HOWEVER, this is not as fast
 or reliable as using <code>clickMenuItemById()</code> if the menu item has an id.</p>
 <p><strong>NOTE:</strong> All menu testing functions will only work with items in the
-<a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p></dd>
+<a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p>
+<p>As with <code>clickMenuItemById()</code>, the click itself is never retried. See that function
+for how errors thrown by the click are handled.</p></dd>
 <dt><a href="#getMenuItemAttribute">getMenuItemAttribute(electronApp, menuId, attribute)</a> ⇒ <code>Promise.&lt;string&gt;</code></dt>
 <dd><p>Get a given attribute the MenuItem with the given id.</p></dd>
 <dt><a href="#getMenuItemById">getMenuItemById(electronApp, menuId)</a> ⇒ <code>Promise.&lt;MenuItemPartial&gt;</code></dt>
@@ -363,7 +369,8 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p></dd>
 <dt><a href="#retry">retry(fn, [options])</a> ⇒ <code>Promise.&lt;T&gt;</code></dt>
 <dd><p>Retries a function until it returns without throwing an error.</p>
 <p>Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
-It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Promise was collected&quot; for no apparent reason.
+It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Resulting promise was garbage collected.&quot;
+for no apparent reason.
 This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p></dd>
 <dt><a href="#setRetryOptions">setRetryOptions(options)</a> ⇒</dt>
 <dd><p>Sets the default retry() options. These options will be used for all subsequent calls to retry() unless overridden.
@@ -374,10 +381,11 @@ You can reset the defaults at any time by calling resetRetryOptions().</p></dd>
 <dd><p>Resets the retry options to their default values.</p>
 <p>The default values are:</p>
 <ul>
-<li>retries: 20</li>
-<li>intervalMs: 200</li>
-<li>timeoutMs: 5000</li>
-<li>errorMatch: 'context or browser has been closed'</li>
+<li>disable: false</li>
+<li>poll: 200</li>
+<li>timeout: 5000</li>
+<li>errorMatch: ['context or browser has been closed', 'Execution context was destroyed',
+&quot;reading 'getOwnerBrowserWindow'&quot;, 'Promise was collected', 'garbage collected']</li>
 </ul></dd>
 <dt><a href="#errToString">errToString(err)</a> ⇒</dt>
 <dd><p>Converts an unknown error to a string representation.</p>
@@ -540,7 +548,7 @@ it throws the error.</p>
 **Kind**: global function  
 <a name="retryUntilTruthy"></a>
 
-## retryUntilTruthy(fn, [timeoutMs], [intervalMs]) ⇒ <code>Promise.&lt;T&gt;</code>
+## retryUntilTruthy(fn) ⇒ <code>Promise.&lt;T&gt;</code>
 <p>Retries a given function until it returns a truthy value or the timeout is reached.</p>
 <p>This offers similar functionality to Playwright's <a href="https://playwright.dev/docs/api/class-page#page-wait-for-function"><code>page.waitForFunction()</code></a>
 method – but with more flexibility and control over the retry attempts. It also defaults to ignoring common errors due to
@@ -560,8 +568,8 @@ the way that Playwright handles browser contexts.</p>
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | fn | <code>function</code> |  | <p>The function to retry. It can return a promise or a value. It should NOT return void/undefined.</p> |
-| [timeoutMs] | <code>number</code> | <code>5000</code> | <p>The maximum time in milliseconds to keep retrying the function. Defaults to 5000ms.</p> |
-| [intervalMs] | <code>number</code> | <code>100</code> | <p>The delay between each retry attempt in milliseconds. Defaults to 100ms.</p> |
+| [options.timeout] | <code>number</code> | <code>5000</code> | <p>The maximum time in milliseconds to keep retrying the function. Defaults to 5000ms.</p> |
+| [options.poll] | <code>number</code> | <code>100</code> | <p>The delay between each retry attempt in milliseconds. Defaults to 100ms.</p> |
 | [options.retryTimeout] | <code>number</code> | <code>5000</code> | <p>The maximum time in milliseconds to wait for an individual try to return a result. Defaults to 5000ms.</p> |
 | [options.retryPoll] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds. Defaults to 200ms.</p> |
 | [options.retryErrorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> |  | <p>The error message or pattern to match against. Errors that don't match will throw immediately.</p> |
@@ -904,6 +912,10 @@ It simply emits an event in the renderer process.</p>
 <p>Execute the <code>.click()</code> method on the element with the given id.
 <strong>NOTE:</strong> All menu testing functions will only work with items in the
 <a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p>
+<p>A click is not idempotent, so this call is not retried by default (<code>disable: true</code>). If the
+click tears down the execution context - by quitting the app or closing the window, for
+example - the resulting error is swallowed, since the click did happen. Any other error is
+thrown. Passing <code>{ disable: false }</code> re-enables retries, at the risk of clicking twice.</p>
 
 **Kind**: global function  
 **Category**: Menu  
@@ -922,6 +934,8 @@ useful for menu items that don't have an id. HOWEVER, this is not as fast
 or reliable as using <code>clickMenuItemById()</code> if the menu item has an id.</p>
 <p><strong>NOTE:</strong> All menu testing functions will only work with items in the
 <a href="https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu">application menu</a>.</p>
+<p>As with <code>clickMenuItemById()</code>, the click itself is never retried. See that function
+for how errors thrown by the click are handled.</p>
 
 **Kind**: global function  
 **Category**: Menu  
@@ -1064,11 +1078,13 @@ For example, wait for a MenuItem to be enabled... or be visible.. etc</p>
 ## retry(fn, [options]) ⇒ <code>Promise.&lt;T&gt;</code>
 <p>Retries a function until it returns without throwing an error.</p>
 <p>Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
-It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Promise was collected&quot; for no apparent reason.
+It will often throw errors like &quot;context or browser has been closed&quot; or &quot;Resulting promise was garbage collected.&quot;
+for no apparent reason.
 This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.</p>
 
 **Kind**: global function  
-**Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.</p>  
+**Returns**: <code>Promise.&lt;T&gt;</code> - <p>A promise that resolves with the result of the function or rejects with an error or timeout message.
+With <code>disable: true</code> it can also resolve <code>undefined</code>, when a teardown error is swallowed.</p>  
 **Category**: Utilities  
 
 | Param | Type | Default | Description |
@@ -1077,7 +1093,8 @@ This function retries a given function until it returns without throwing one of 
 | [options] | <code>RetryOptions</code> | <code>{}</code> | <p>The options for retrying the function.</p> |
 | [options.timeout] | <code>number</code> | <code>5000</code> | <p>The maximum time to wait before giving up in milliseconds.</p> |
 | [options.poll] | <code>number</code> | <code>200</code> | <p>The delay between each retry attempt in milliseconds.</p> |
-| [options.errorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> | <code>&quot;[&#x27;context or browser has been closed&#x27;, &#x27;Promise was collected&#x27;, &#x27;Execution context was destroyed&#x27;]&quot;</code> | <p>String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.</p> |
+| [options.errorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> | <code>&quot;[&#x27;context or browser has been closed&#x27;, &#x27;Execution context was destroyed&#x27;, \&quot;reading &#x27;getOwnerBrowserWindow&#x27;\&quot;, &#x27;Promise was collected&#x27;, &#x27;garbage collected&#x27;]&quot;</code> | <p>String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.</p> |
+| [options.disable] | <code>boolean</code> | <code>false</code> | <p>If true, only call the function once. See [RetryOptions.disable](RetryOptions.disable).</p> |
 
 **Example**  
 You can simply wrap your Playwright calls in this function to make them more reliable:
@@ -1124,10 +1141,11 @@ You can reset the defaults at any time by calling resetRetryOptions().</p>
 <p>Resets the retry options to their default values.</p>
 <p>The default values are:</p>
 <ul>
-<li>retries: 20</li>
-<li>intervalMs: 200</li>
-<li>timeoutMs: 5000</li>
-<li>errorMatch: 'context or browser has been closed'</li>
+<li>disable: false</li>
+<li>poll: 200</li>
+<li>timeout: 5000</li>
+<li>errorMatch: ['context or browser has been closed', 'Execution context was destroyed',
+&quot;reading 'getOwnerBrowserWindow'&quot;, 'Promise was collected', 'garbage collected']</li>
 </ul>
 
 **Kind**: global function  

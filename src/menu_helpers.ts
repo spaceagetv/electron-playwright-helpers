@@ -7,6 +7,11 @@ import { RetryOptions, retry } from './utilities'
  * **NOTE:** All menu testing functions will only work with items in the
  * [application menu](https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu).
  *
+ * A click is not idempotent, so this call is not retried by default (`disable: true`). If the
+ * click tears down the execution context - by quitting the app or closing the window, for
+ * example - the resulting error is swallowed, since the click did happen. Any other error is
+ * thrown. Passing `{ disable: false }` re-enables retries, at the risk of clicking twice.
+ *
  * @category Menu
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
@@ -45,6 +50,9 @@ export function clickMenuItemById(
  *  **NOTE:** All menu testing functions will only work with items in the
  * [application menu](https://www.electronjs.org/docs/latest/api/menu#menusetapplicationmenumenu).
  *
+ * As with `clickMenuItemById()`, the click itself is never retried. See that function
+ * for how errors thrown by the click are handled.
+ *
  * @category Menu
  *
  * @param electronApp {ElectronApplication} - the Electron application object (from Playwright)
@@ -66,36 +74,41 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
   if (menuItem.commandId === undefined) {
     throw new Error(`Menu item with ${property} = ${value} has no commandId`)
   }
-  return await electronApp.evaluate(async ({ Menu }, commandId) => {
-    const menu = Menu.getApplicationMenu()
-    if (!menu) {
-      throw new Error('No application menu found')
-    }
-    // recurse through the menu to find menu item with matching commandId
-    function findMenuItem(
-      menu: Electron.Menu,
-      commandId: number
-    ): Electron.MenuItem | undefined {
-      for (const item of menu.items) {
-        if (item.type === 'submenu' && item.submenu) {
-          const found = findMenuItem(item.submenu, commandId)
-          if (found) {
-            return found
-          }
-        } else if (item.commandId === commandId) {
-          return item
+  return await retry(
+    () =>
+      electronApp.evaluate(async ({ Menu }, commandId) => {
+        const menu = Menu.getApplicationMenu()
+        if (!menu) {
+          throw new Error('No application menu found')
         }
-      }
-    }
-    const mI = findMenuItem(menu, commandId)
-    if (!mI) {
-      throw new Error(`Menu item with commandId ${commandId} not found`)
-    }
-    if (!mI.click) {
-      throw new Error(`Menu item has no click method`)
-    }
-    await mI.click()
-  }, menuItem.commandId)
+        // recurse through the menu to find menu item with matching commandId
+        function findMenuItem(
+          menu: Electron.Menu,
+          commandId: number
+        ): Electron.MenuItem | undefined {
+          for (const item of menu.items) {
+            if (item.type === 'submenu' && item.submenu) {
+              const found = findMenuItem(item.submenu, commandId)
+              if (found) {
+                return found
+              }
+            } else if (item.commandId === commandId) {
+              return item
+            }
+          }
+        }
+        const mI = findMenuItem(menu, commandId)
+        if (!mI) {
+          throw new Error(`Menu item with commandId ${commandId} not found`)
+        }
+        if (!mI.click) {
+          throw new Error(`Menu item has no click method`)
+        }
+        await mI.click()
+      }, menuItem.commandId),
+    // a click is not idempotent - same policy as clickMenuItemById()
+    { disable: true, ...options }
+  )
 }
 
 /**

@@ -12,7 +12,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node_version: [18, 20, 22]
+        # Playwright >= 1.62 requires Node 20+. The library itself still supports
+        # Node 18 - only the test toolchain needs a newer runtime.
+        node_version: [20, 22]
         os: [ubuntu-latest, windows-latest]
         include:
           - os: ubuntu-latest
