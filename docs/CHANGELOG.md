@@ -1,3 +1,11 @@
+## [2.1.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.1.0...v2.1.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* address review feedback and unblock CI on Node 20 ([985faf9](https://github.com/spaceagetv/electron-playwright-helpers/commit/985faf93a70a047691dba6aefc6615e11225f2ea))
+* retry Playwright 1.62+ "garbage collected" promise errors ([70addd7](https://github.com/spaceagetv/electron-playwright-helpers/commit/70addd7d31e10e0a19559ee5df98e7f2c4330f4e))
+
 # [2.1.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.0.1...v2.1.0) (2025-12-28)
 
 
