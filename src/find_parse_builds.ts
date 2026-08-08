@@ -406,6 +406,9 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
           `Could not read package.json in ${resourcesDir}: ${
             err instanceof Error ? err.message : String(err)
           }. If that file exists and is valid, we may not handle this Electron layout on Linux yet - please submit a bug report or pull request!`,
+          // the message already quotes err.message, but only the cause carries
+          // the original stack and, for an fs error, its `code` and `path`
+          { cause: err },
         )
       }
     }

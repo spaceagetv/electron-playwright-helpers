@@ -5,6 +5,12 @@ import tseslint from 'typescript-eslint'
 
 export default defineConfig([
   {
+    // `npm run lint` passes `src` explicitly, so this only matters to someone
+    // who runs `eslint .` by hand - which otherwise reports errors in compiled
+    // output they cannot fix in a source file.
+    ignores: ['dist/**', 'example-project/**'],
+  },
+  {
     // same scope the old `eslint src/**/*.ts` script had
     files: ['src/**/*.ts'],
     extends: [
@@ -31,11 +37,6 @@ export default defineConfig([
         'error',
         { caughtErrors: 'all', caughtErrorsIgnorePattern: '^_' },
       ],
-      // New in eslint:recommended as of ESLint 10. It fires once, at
-      // find_parse_builds.ts:383, which rethrows without `{ cause: err }`.
-      // The proper fix needs `lib: ES2022` for `ErrorOptions`, and tsconfig
-      // still targets ES2019 - so this stays off until the target moves.
-      'preserve-caught-error': 0,
     },
   },
 ])
