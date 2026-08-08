@@ -1,10 +1,113 @@
 import chai, { expect } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import { retry } from '../src/utilities'
+import { retry, resetRetryOptions, setRetryOptions } from '../src/utilities'
 
 chai.use(chaiAsPromised)
 
+// Playwright >= 1.62 rewrites CDP's "Promise was collected" into this
+const GC_ERROR = 'Resulting promise was garbage collected.'
+// what Playwright throws when the context goes away
+const TEARDOWN_ERROR = 'Target page, context or browser has been closed'
+
 describe('retry', () => {
+  afterEach(() => {
+    resetRetryOptions()
+  })
+
+  describe('default errorMatch', () => {
+    it('should retry a garbage-collected promise error', async () => {
+      let counter = 0
+      const fn = async () => {
+        counter++
+        if (counter < 3) {
+          throw new Error(GC_ERROR)
+        }
+        return counter
+      }
+
+      await expect(retry(fn, { poll: 2 })).to.eventually.equal(3)
+    })
+
+    it('should retry a "Promise was collected" error (Playwright < 1.62)', async () => {
+      let counter = 0
+      const fn = async () => {
+        counter++
+        if (counter < 3) {
+          throw new Error('Promise was collected')
+        }
+        return counter
+      }
+
+      await expect(retry(fn, { poll: 2 })).to.eventually.equal(3)
+    })
+
+    it('should retry a closed context error', async () => {
+      let counter = 0
+      const fn = async () => {
+        counter++
+        if (counter < 3) {
+          throw new Error(TEARDOWN_ERROR)
+        }
+        return counter
+      }
+
+      await expect(retry(fn, { poll: 2 })).to.eventually.equal(3)
+    })
+  })
+
+  describe('disable', () => {
+    it('should only call the function once', async () => {
+      let counter = 0
+      const fn = async () => {
+        counter++
+        throw new Error(TEARDOWN_ERROR)
+      }
+
+      await retry(fn, { disable: true })
+
+      expect(counter).to.equal(1)
+    })
+
+    it('should swallow a teardown error - the action already happened', async () => {
+      const fn = async () => {
+        throw new Error(TEARDOWN_ERROR)
+      }
+
+      await expect(retry(fn, { disable: true })).to.eventually.equal(undefined)
+    })
+
+    it('should throw a garbage-collected promise error rather than report success', async () => {
+      const fn = async () => {
+        throw new Error(GC_ERROR)
+      }
+
+      await expect(retry(fn, { disable: true })).to.be.rejectedWith(GC_ERROR)
+    })
+
+    it('should throw a non-matching error', async () => {
+      const fn = async () => {
+        throw new Error('Menu item with id nope not found')
+      }
+
+      await expect(retry(fn, { disable: true })).to.be.rejectedWith(
+        'Menu item with id nope not found'
+      )
+    })
+
+    it('should be honored when set globally via setRetryOptions()', async () => {
+      setRetryOptions({ disable: true })
+      let counter = 0
+      const fn = async () => {
+        counter++
+        throw new Error(TEARDOWN_ERROR)
+      }
+
+      await retry(fn)
+
+      expect(counter).to.equal(1)
+    })
+  })
+
   it('should retry a function until it succeeds', async () => {
     let counter = 0
     const fn = async () => {
