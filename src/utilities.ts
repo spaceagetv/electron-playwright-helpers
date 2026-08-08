@@ -96,6 +96,10 @@ export type RetryOptions = {
    * a *teardown* error (see `teardownErrorMatch`) is swallowed, because it means the
    * action fired and then took its own execution context down with it - for example a
    * menu item which quits the app or closes the window it was called on.
+   *
+   * Note that `retry()` only widens its return type to `Promise<T | undefined>` when
+   * `disable: true` is passed directly to the call. Setting it globally through
+   * `setRetryOptions()` has the same runtime effect, but the types cannot see it.
    */
   disable: boolean
 }
@@ -139,10 +143,12 @@ function errorMatches(
   match: string | string[] | RegExp
 ): boolean {
   if (match instanceof RegExp) {
-    // `test()` is stateful for /g and /y patterns - without this reset, a matcher
-    // would match on one retry and miss on the next
-    match.lastIndex = 0
-    return match.test(errString)
+    // `test()` advances lastIndex on /g and /y patterns, so the same matcher would
+    // miss on the next retry. Test against a copy without those flags rather than
+    // resetting lastIndex, which would leave the caller's RegExp altered.
+    return new RegExp(match.source, match.flags.replace(/[gy]/g, '')).test(
+      errString
+    )
   }
   const matchers = Array.isArray(match) ? match : [match]
   return matchers.some(
@@ -203,7 +209,15 @@ export async function retry<T>(
   fn: () => Promise<T> | T,
   options: Partial<RetryOptions> = {}
 ): Promise<T | undefined> {
-  const { poll, timeout, errorMatch, disable } = {
+  // the destructuring defaults matter: an explicit `undefined` in `options` (or in a
+  // previous setRetryOptions() call) overwrites the merged value, and falling back to
+  // the built-in default beats treating "no matcher" as either match-all or match-none
+  const {
+    poll = retryDefaults.poll,
+    timeout = retryDefaults.timeout,
+    errorMatch = retryDefaults.errorMatch,
+    disable = retryDefaults.disable,
+  } = {
     ...getRetryOptions(),
     ...options,
   }
