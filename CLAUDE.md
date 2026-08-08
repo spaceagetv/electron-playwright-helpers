@@ -18,7 +18,7 @@ npm ci && cd example-project && npm ci
 | --- | --- |
 | Build (compile + regenerate README) | `npm run make` |
 | Compile only | `npm run make:compile` |
-| Unit tests (mocha + chai, no Electron) | `npm run test:unit` |
+| Unit tests (mocha + `node:assert/strict`, no Electron) | `npm run test:unit` |
 | Single unit test | `npx mocha --require ts-node/register --timeout 5000 './test/**/*.ts' --exit --grep "retry"` |
 | E2E tests (packages the app first via `pree2e`) | `npm run test:e2e` |
 | Single e2e test | `cd example-project && npx playwright test -g "test name"` |
@@ -85,7 +85,7 @@ IPC helpers take `...args: (unknown | RetryOptions)[]` and sniff the last argume
 
 ## Tests
 
-- `test/*.ts` — unit tests (mocha + chai, config in `.mocharc.json`). They cover `retry`, `retryUntilTruthy`, and utilities; no Electron involved.
+- `test/*.ts` — unit tests (mocha + `node:assert/strict`, config in `.mocharc.json`). They cover `retry`, `retryUntilTruthy`, and utilities; no Electron involved. There is no assertion library: `assert.rejects(promise, { message: /.../ })` is how "rejects with this message" is spelled, and the RegExp form is deliberate — it keeps the substring semantics `chai-as-promised`'s `rejectedWith()` had.
 - `example-project/e2e-tests/*.spec.ts` — Playwright tests that import **`../../src`, not `dist`** (with `// <-- replace with 'electron-playwright-helpers'` comments, since these files double as user-facing examples). Editing `src/` changes e2e behavior without a rebuild. `example-project/e2e-tests/app-manager.ts` shares the launched `ElectronApplication` across spec files.
 - `example-project/playwright.config.ts` uses `workers: 1`; the root `playwright.config.ts` points at the same testDir for running e2e from the repo root or VS Code (`.vscode/launch.json` has an "E2E Tests" config).
 

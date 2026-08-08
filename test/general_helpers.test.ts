@@ -1,9 +1,6 @@
-import chai, { expect } from 'chai'
-import chaiAsPromised from 'chai-as-promised'
+import assert from 'node:assert/strict'
 import type { ElectronApplication } from 'playwright-core'
 import { electronWaitForFunction } from '../src/general_helpers'
-
-chai.use(chaiAsPromised)
 
 /** the only thing electronWaitForFunction() touches is evaluate() */
 function fakeApp(evaluate: () => Promise<unknown>): ElectronApplication {
@@ -20,7 +17,7 @@ describe('electronWaitForFunction', () => {
       poll: 2,
     })
 
-    expect(calls).to.equal(3)
+    assert.strictEqual(calls, 3)
   })
 
   it('should give up rather than polling forever', async () => {
@@ -28,12 +25,13 @@ describe('electronWaitForFunction', () => {
     // own test timeout killed the run, with no indication of what was stuck
     const app = fakeApp(async () => false)
 
-    await expect(
+    await assert.rejects(
       electronWaitForFunction(app, () => false, undefined, {
         timeout: 50,
         poll: 2,
-      })
-    ).to.be.rejectedWith('Timeout')
+      }),
+      { message: /Timeout/ },
+    )
   })
 
   it('should still honor errorMatch, which used to reach retry() directly', async () => {
@@ -52,7 +50,7 @@ describe('electronWaitForFunction', () => {
       errorMatch: 'flaky thing happened',
     })
 
-    expect(calls).to.equal(3)
+    assert.strictEqual(calls, 3)
   })
 
   it('should throw an unmatched error instead of swallowing it', async () => {
@@ -60,8 +58,9 @@ describe('electronWaitForFunction', () => {
       throw new Error('No application menu found')
     })
 
-    await expect(
-      electronWaitForFunction(app, () => true, undefined, { timeout: 50 })
-    ).to.be.rejectedWith('No application menu found')
+    await assert.rejects(
+      electronWaitForFunction(app, () => true, undefined, { timeout: 50 }),
+      { message: /No application menu found/ },
+    )
   })
 })
