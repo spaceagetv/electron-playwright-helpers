@@ -346,6 +346,38 @@ test('find a menu item by role using `findMenuItem()`', async () => {
   expect(menuItem.label).toBe('Zoom In')
 })
 
+test('a missing menu item explains how to find the right id', async () => {
+  const electronApp = getApp()
+  // the throw happens inside the evaluate() callback, in the Electron process.
+  // What this checks is that the explanation survives the trip back out.
+  await expect(
+    clickMenuItemById(electronApp, 'no-such-menu-item')
+  ).rejects.toThrow(/getApplicationMenu\(electronApp\) returns the entire menu/)
+})
+
+test('a missing menu item attribute explains serializationErrors', async () => {
+  const electronApp = getApp()
+  await expect(
+    // A misspelled attribute is the realistic way to reach this branch. Most
+    // properties Electron leaves unset come back as null rather than undefined
+    // - `accelerator` on this same item does - so they resolve instead of
+    // throwing. TypeScript would normally catch the typo; the cast is what a
+    // plain-JS caller gets for free.
+    getMenuItemAttribute(
+      electronApp,
+      'checkbox',
+      'acclerator' as keyof Electron.MenuItem
+    )
+  ).rejects.toThrow(/serializationErrors/)
+})
+
+test('an unmatched property explains how matching actually works', async () => {
+  const electronApp = getApp()
+  await expect(
+    clickMenuItem(electronApp, 'label', 'No Such Label')
+  ).rejects.toThrow(/Matching is a strict === against a serialized copy/)
+})
+
 test('select the checkbox menuItem and watch its status change', async () => {
   const electronApp = getApp()
   const checkboxBefore = await getMenuItemById(electronApp, 'checkbox')
