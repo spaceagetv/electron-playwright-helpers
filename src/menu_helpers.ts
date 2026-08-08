@@ -210,6 +210,12 @@ export type MenuItemPartial = {
       : SerializableValue
 } & {
   submenu?: MenuItemPartial[]
+  /**
+   * Present only when one or more properties could not be serialized.
+   * Maps the property name to the reason it was dropped. The `menu` and
+   * `submenu` back-references are never cloneable and are not reported.
+   */
+  serializationErrors?: Record<string, string>
 }
 
 /**
@@ -244,6 +250,7 @@ export function getMenuItemById(
             visited.add(menuItem)
 
             const returnValue = {} as Record<string, SerializableValue>
+            const serializationErrors: Record<string, string> = {}
 
             Object.entries(menuItem).forEach(([k, v]) => {
               const key = k as keyof Electron.MenuItem
@@ -277,7 +284,11 @@ export function getMenuItemById(
                   } catch (imageError) {
                     returnValue[key] = {
                       type: 'NativeImage',
-                      error: 'Failed to serialize image',
+                      error: `Failed to serialize image: ${
+                        imageError instanceof Error
+                          ? imageError.message
+                          : String(imageError)
+                      }`,
                     }
                   }
                 } else if (
@@ -288,9 +299,20 @@ export function getMenuItemById(
                 }
                 // Skip functions and other non-serializable types
               } catch (error) {
-                // Skip properties that can't be accessed or serialized
+                // Skip properties that can't be accessed or serialized, but
+                // record why. `menu` (parent back-reference) and `submenu`
+                // (rebuilt below) are never cloneable, so they're not noise
+                // worth reporting - anything else is a real dropped property.
+                if (key !== 'menu' && key !== 'submenu') {
+                  serializationErrors[key] =
+                    error instanceof Error ? error.message : String(error)
+                }
               }
             })
+
+            if (Object.keys(serializationErrors).length > 0) {
+              returnValue['serializationErrors'] = serializationErrors
+            }
 
             if (menuItem.type === 'submenu' && menuItem.submenu) {
               returnValue['submenu'] = menuItem.submenu.items.map((item) =>
@@ -351,6 +373,7 @@ export function getApplicationMenu(
           visited.add(menuItem)
 
           const returnValue = {} as Record<string, SerializableValue>
+          const serializationErrors: Record<string, string> = {}
 
           Object.entries(menuItem).forEach(([k, v]) => {
             const key = k as keyof Electron.MenuItem
@@ -384,7 +407,11 @@ export function getApplicationMenu(
                 } catch (imageError) {
                   returnValue[key] = {
                     type: 'NativeImage',
-                    error: 'Failed to serialize image',
+                    error: `Failed to serialize image: ${
+                      imageError instanceof Error
+                        ? imageError.message
+                        : String(imageError)
+                    }`,
                   }
                 }
               } else if (
@@ -395,9 +422,20 @@ export function getApplicationMenu(
               }
               // Skip functions and other non-serializable types
             } catch (error) {
-              // Skip properties that can't be accessed or serialized
+              // Skip properties that can't be accessed or serialized, but
+              // record why. `menu` (parent back-reference) and `submenu`
+              // (rebuilt below) are never cloneable, so they're not noise
+              // worth reporting - anything else is a real dropped property.
+              if (key !== 'menu' && key !== 'submenu') {
+                serializationErrors[key] =
+                  error instanceof Error ? error.message : String(error)
+              }
             }
           })
+
+          if (Object.keys(serializationErrors).length > 0) {
+            returnValue['serializationErrors'] = serializationErrors
+          }
 
           if (menuItem.type === 'submenu' && menuItem.submenu) {
             returnValue['submenu'] = menuItem.submenu.items.map((item) =>

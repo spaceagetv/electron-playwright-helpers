@@ -22,9 +22,15 @@ export default defineConfig([
       '@typescript-eslint/no-use-before-define': 0,
       '@typescript-eslint/no-empty-object-type': 0,
       '@typescript-eslint/no-inferrable-types': 0,
-      // ESLint 9 flipped the `caughtErrors` default to 'all'; keep the old
-      // behaviour so unused `catch (err)` bindings stay legal
-      '@typescript-eslint/no-unused-vars': ['error', { caughtErrors: 'none' }],
+      // Silently discarding a caught error is nearly always a bug here (the
+      // menu serialization catches were exactly that), so unused catch
+      // bindings are an error. Where discarding really is correct - e.g. the
+      // `fs.accessSync` executable probe in find_parse_builds.ts, where a
+      // failed check just means "not executable" - name the binding `_err`.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { caughtErrors: 'all', caughtErrorsIgnorePattern: '^_' },
+      ],
       // New in eslint:recommended as of ESLint 10. It fires once, at
       // find_parse_builds.ts:383, which rethrows without `{ cause: err }`.
       // The proper fix needs `lib: ES2022` for `ErrorOptions`, and tsconfig
