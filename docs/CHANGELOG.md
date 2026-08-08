@@ -1,3 +1,10 @@
+## [2.2.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.2.1...v2.2.2) (2026-08-08)
+
+
+### Bug Fixes
+
+* report the real cause when a Linux build's package.json can't be read ([4a0c48b](https://github.com/spaceagetv/electron-playwright-helpers/commit/4a0c48b7d0ae38dc41df2abe69edffc3187ca10a))
+
 ## [2.2.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.2.0...v2.2.1) (2026-08-08)
 
 
