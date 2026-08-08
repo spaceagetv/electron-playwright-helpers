@@ -76,30 +76,30 @@
     }
   },
   "devDependencies": {
-    "@electron-forge/cli": "^6.1.1",
-    "@electron-forge/maker-deb": "^6.1.1",
-    "@electron-forge/maker-rpm": "^6.1.1",
-    "@electron-forge/maker-squirrel": "^6.1.1",
-    "@electron-forge/maker-zip": "^6.1.1",
-    "@electron-forge/plugin-webpack": "^6.1.1",
-    "@electron/asar": "^3.2.4",
+    "@electron-forge/cli": "^6.4.2",
+    "@electron-forge/maker-deb": "^6.4.2",
+    "@electron-forge/maker-rpm": "^6.4.2",
+    "@electron-forge/maker-squirrel": "^6.4.2",
+    "@electron-forge/maker-zip": "^6.4.2",
+    "@electron-forge/plugin-webpack": "^6.4.2",
+    "@electron/asar": "^3.4.1",
     "@playwright/test": "^1.62.1",
-    "@typescript-eslint/eslint-plugin": "^5.59.8",
-    "@typescript-eslint/parser": "^5.59.8",
-    "@vercel/webpack-asset-relocator-loader": "1.7.3",
-    "css-loader": "^6.8.1",
-    "electron": "^35.7.5",
-    "eslint": "^8.41.0",
-    "eslint-plugin-import": "^2.27.5",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "@vercel/webpack-asset-relocator-loader": "1.10.0",
+    "css-loader": "^6.11.0",
+    "electron": "^43.3.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.32.0",
     "fork-ts-checker-webpack-plugin": "^8.0.0",
-    "jimp": "^0.22.8",
-    "node-loader": "^2.0.0",
+    "jimp": "^0.22.12",
+    "node-loader": "^2.1.0",
     "playwright-core": "^1.62.1",
-    "style-loader": "^3.3.3",
-    "ts-loader": "^9.4.3",
-    "typescript": "^5.0.4"
+    "style-loader": "^3.3.4",
+    "ts-loader": "^9.6.2",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.0"
+    "electron-squirrel-startup": "^1.0.1"
   }
 }
