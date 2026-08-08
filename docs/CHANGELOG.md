@@ -1,3 +1,9 @@
+## [3.1.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v3.1.0...v3.1.1) (2026-08-08)
+
+### Code Refactoring
+
+* keep the original error as `cause`, now that ES2022 allows it ([536d081](https://github.com/spaceagetv/electron-playwright-helpers/commit/536d081ecfa8d8c94d4a111696f0e642f00fc130)), closes [#123](https://github.com/spaceagetv/electron-playwright-helpers/issues/123)
+
 ## [3.1.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v3.0.0...v3.1.0) (2026-08-08)
 
 ### Features
