@@ -346,7 +346,8 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
       try {
         fs.accessSync(filePath, fs.constants.X_OK)
         return true
-      } catch (err) {
+      } catch (_err) {
+        // a failed access check just means "not executable" - nothing to report
         return false
       }
     })
