@@ -10,7 +10,7 @@
   "repository": "https://github.com/spaceagetv/electron-playwright-helpers",
   "homepage": "https://github.com/spaceagetv/electron-playwright-helpers#readme",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "make": "npm run make:compile && npm run make:doc",
@@ -61,7 +61,7 @@
     "typescript-eslint": "^8.66.0"
   },
   "dependencies": {
-    "@electron/asar": "^3.4.1"
+    "@electron/asar": "^4.2.1"
   },
   "prettier": {
     "singleQuote": true,
