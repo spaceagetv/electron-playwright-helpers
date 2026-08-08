@@ -215,6 +215,51 @@ describe('retry', () => {
     ).to.eventually.equal(5)
   })
 
+  it('should not leave lastIndex set on a global RegExp it was given', async () => {
+    const errorMatch = /flaky/g
+    const fn = async () => {
+      throw new Error('flaky thing happened')
+    }
+
+    await expect(
+      retry(fn, { poll: 2, timeout: 10, errorMatch })
+    ).to.be.rejectedWith('flaky thing happened')
+
+    // the caller's RegExp is theirs - matching must not move its cursor
+    expect(errorMatch.lastIndex).to.equal(0)
+  })
+
+  it('should keep a sticky RegExp sticky', async () => {
+    let counter = 0
+    const fn = async () => {
+      counter++
+      throw new Error('flaky thing happened')
+    }
+
+    // /y anchors at lastIndex, which is 0 here, so this must NOT match a
+    // message that says "flaky" further along - and a non-match throws at once
+    await expect(
+      retry(fn, { poll: 2, errorMatch: /flaky/y })
+    ).to.be.rejectedWith('flaky thing happened')
+
+    expect(counter).to.equal(1)
+  })
+
+  it('should fall back to the default errorMatch when given undefined', async () => {
+    let counter = 0
+    const fn = async () => {
+      counter++
+      if (counter < 3) {
+        throw new Error(GC_ERROR)
+      }
+      return counter
+    }
+
+    await expect(
+      retry(fn, { poll: 2, errorMatch: undefined })
+    ).to.eventually.equal(3)
+  })
+
   it('should keep matching a global RegExp across retries', async () => {
     let counter = 0
     const fn = async () => {
