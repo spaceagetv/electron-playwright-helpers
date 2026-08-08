@@ -381,8 +381,15 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
         )
         main = path.join(resourcesDir, 'app', packageJson.main)
       } catch (err) {
+        // This wraps both the read and the JSON.parse, so the cause may be a
+        // missing file, a permissions problem, or malformed JSON. Report which
+        // one it actually was - claiming "not found" for a file that is sitting
+        // right there sends people looking in the wrong place, and invites bug
+        // reports for what is really a broken build.
         throw new Error(
-          `Could not find package.json in ${resourcesDir}. Apparently we don't quite know how Electron works on Linux yet. Please submit a bug report or pull request!`
+          `Could not read package.json in ${resourcesDir}: ${
+            err instanceof Error ? err.message : String(err)
+          }. If that file exists and is valid, we may not handle this Electron layout on Linux yet - please submit a bug report or pull request!`
         )
       }
     }
