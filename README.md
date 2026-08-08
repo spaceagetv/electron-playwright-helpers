@@ -302,7 +302,9 @@ and the path to the app's main file.</p>
 <dd><p>Wait for a function to evaluate to true in the main Electron process. This really
 should be part of the Playwright API, but it's not.</p>
 <p>This function is to <code>electronApp.evaluate()</code>
-as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p></dd>
+as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p>
+<p>Gives up once <code>options.timeout</code> has elapsed, so a function that never returns
+true rejects rather than polling forever.</p></dd>
 <dt><a href="#evaluateWithRetry">evaluateWithRetry(electronApp, fn, arg, retries, retryIntervalMs)</a> ⇒ <code>Promise.&lt;R&gt;</code></dt>
 <dd><p>Electron's <code>evaluate</code> function can be flakey,
 throwing an error saying the execution context has been destroyed.
@@ -571,15 +573,26 @@ and the path to the app's main file.</p>
 should be part of the Playwright API, but it's not.</p>
 <p>This function is to <code>electronApp.evaluate()</code>
 as <code>page.waitForFunction()</code> is <code>page.evaluate()</code>.</p>
+<p>Gives up once <code>options.timeout</code> has elapsed, so a function that never returns
+true rejects rather than polling forever.</p>
 
 **Kind**: global function  
+**Throws**:
+
+- <code>Error</code> <p>if the function has not returned true before <code>options.timeout</code> elapses</p>
+
 **Fulfil**: <code>void</code> Resolves when the function returns true  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| electronApp | <code>ElectronApplication</code> | <p>the Playwright ElectronApplication</p> |
-| fn | <code>function</code> | <p>the function to evaluate in the main process - must return a boolean</p> |
-| arg | <code>Any</code> | <p>optional - an argument to pass to the function</p> |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| electronApp | <code>ElectronApplication</code> |  | <p>the Playwright ElectronApplication</p> |
+| fn | <code>function</code> |  | <p>the function to evaluate in the main process - must return a boolean</p> |
+| arg | <code>Any</code> |  | <p>optional - an argument to pass to the function</p> |
+| [options.timeout] | <code>number</code> | <code>5000</code> | <p>how long to keep polling, in total, before giving up</p> |
+| [options.poll] | <code>number</code> | <code>100</code> | <p>how long to wait between polls after a falsy result</p> |
+| [options.retryTimeout] | <code>number</code> | <code>5000</code> | <p>how long a single <code>evaluate()</code> may take before it is retried</p> |
+| [options.retryPoll] | <code>number</code> | <code>200</code> | <p>how long to wait before retrying after an error</p> |
+| [options.retryErrorMatch] | <code>string</code> \| <code>Array.&lt;string&gt;</code> \| <code>RegExp</code> |  | <p>errors to retry. Others throw immediately</p> |
 
 <a name="evaluateWithRetry"></a>
 
