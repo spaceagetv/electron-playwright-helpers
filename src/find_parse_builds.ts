@@ -1,6 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import * as ASAR from '@electron/asar'
+import { errorHelp, explainError } from './error_help'
 
 /**
  * Parses the `out` directory to find the latest build of your Electron project.
@@ -25,6 +26,14 @@ export function findLatestBuild(buildDirectory = 'out'): string {
   const rootDir = path.resolve('./')
   // directory where the builds are stored
   const outDir = path.resolve(rootDir, buildDirectory)
+  // a missing directory is the same user problem as an empty one - nothing has
+  // been packaged - so say the same thing, rather than leaking a bare ENOENT
+  if (!fs.existsSync(outDir)) {
+    throw explainError(
+      new Error(`Build directory does not exist: ${outDir}`),
+      errorHelp.findLatestBuild,
+    )
+  }
   // list of files in the out directory
   const builds = fs.readdirSync(outDir)
   const platforms = [
@@ -65,7 +74,10 @@ export function findLatestBuild(buildDirectory = 'out'): string {
       }
     })[0]
   if (!latestBuild) {
-    throw new Error('No build found in out directory')
+    throw explainError(
+      new Error(`No Electron build found in ${outDir}`),
+      errorHelp.findLatestBuild,
+    )
   }
   return path.join(outDir, latestBuild)
 }
@@ -175,7 +187,10 @@ export function parseElectronApp(buildDir: string): ElectronAppInfo {
   }
 
   if (!platform) {
-    throw new Error(`Platform not found in directory name: ${baseNameLc}`)
+    throw explainError(
+      new Error(`Platform not found in directory name: ${baseNameLc}`),
+      errorHelp.parsePlatform,
+    )
   }
 
   let arch: Architecture

@@ -15,8 +15,9 @@ describe('Utilities', () => {
     })
 
     it('should reject the promise after timeout', async () => {
+      // the message is followed by an explanation - see error_help.test.ts
       await assert.rejects(addTimeoutToPromise(new Promise(() => null), 100), {
-        message: 'timeout after 100ms',
+        message: /^timeout after 100ms$/m,
       })
     })
   })

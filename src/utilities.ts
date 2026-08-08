@@ -1,4 +1,10 @@
 import * as helpers from './'
+import {
+  errorHelp,
+  explainError,
+  gcErrorMatch,
+  teardownErrorMatch,
+} from './error_help'
 
 export type AllHelpers = typeof helpers
 
@@ -36,8 +42,13 @@ export async function addTimeoutToPromise<T>(
     setTimeout(() => {
       reject(
         timeoutMessage
-          ? new Error(timeoutMessage)
-          : new Error(`timeout after ${timeoutMs}ms`),
+          ? // a caller-supplied message is theirs - they already know what timed
+            // out, which is the only thing our note would have told them
+            new Error(timeoutMessage)
+          : explainError(
+              new Error(`timeout after ${timeoutMs}ms`),
+              errorHelp.addTimeout,
+            ),
       )
     }, timeoutMs)
     promise
@@ -101,113 +112,6 @@ export type RetryOptions = {
    * `setRetryOptions()` has the same runtime effect, but the types cannot see it.
    */
   disable: boolean
-}
-
-/**
- * Errors which mean the execution context went away *after* the call was dispatched,
- * i.e. the action most likely happened, and only the reply was lost. When retries are
- * disabled these are swallowed rather than thrown.
- *
- * @ignore
- */
-const teardownErrorMatch = [
-  'context or browser has been closed',
-  // Execution context was destroyed, most likely because of a navigation.
-  'Execution context was destroyed',
-  // "Cannot read properties of undefined (reading 'getOwnerBrowserWindow')"
-  `reading 'getOwnerBrowserWindow'`,
-]
-
-/**
- * Errors which mean V8 garbage-collected the promise that Playwright was awaiting.
- *
- * Playwright sends `Runtime.callFunctionOn` with `awaitPromise: true`, and V8's
- * inspector tracks the promise it is awaiting through a *weak* handle
- * (`ProtocolPromiseHandler` in `v8/src/inspector/injected-script.cc`). If that
- * promise becomes unreachable in the target heap before it settles, the weak
- * callback fires and CDP answers "Promise was collected". Playwright >= 1.62
- * rewrites that to "Resulting promise was garbage collected."
- * (`crExecutionContext.ts::rewriteError`).
- *
- * In practice only the rewritten wording ever reaches a caller: Playwright
- * >= 1.62 replaces the error outright, and Playwright < 1.62 has no branch for
- * the raw message at all, so it falls through `rewriteError`'s catch-all and
- * arrives disguised as "Execution context was destroyed" - i.e. on those
- * versions a collected promise is still retried, as a teardown error. The raw
- * wording is kept here anyway, in case it is ever surfaced directly.
- *
- * This is **not** a transient failure and is deliberately NOT in
- * {@link retryDefaults}.`errorMatch` - see the note on {@link retry}.
- *
- * @ignore
- */
-const gcErrorMatch = ['Promise was collected', 'promise was garbage collected']
-
-/**
- * Appended to a garbage-collected-promise error, because the raw message names
- * the symptom and not the cause.
- *
- * @ignore
- */
-const gcErrorHelp = [
-  'V8 collected the promise Playwright was awaiting before it could settle.',
-  'Two different things produce this, and they want opposite responses:',
-  '',
-  '1. An evaluate() callback returned a promise that nothing in the target',
-  '   process references - e.g. `evaluate(() => new Promise(() => {}))`. This is',
-  '   deterministic, not flaky: it fails the same way every time, so retrying',
-  '   only wastes the timeout. The callback body has ALREADY RUN - its side',
-  '   effects happened and only the reply was lost, so a retry fires them twice.',
-  '   Fix the callback: return a value, or a promise that something retains (an',
-  '   Electron API call, a timer, an event listener), rather than one nothing',
-  '   holds.',
-  '',
-  '2. A raw Playwright channel call - electronApp.browserWindow(),',
-  '   JSHandle.getProperty() and friends - lost an internal promise mid-flight.',
-  '   You wrote no callback here, so there is nothing to fix in your code. This',
-  '   one IS transient and worth retrying.',
-  '',
-  'The message is identical either way, so this library cannot tell them apart',
-  'and does not retry by default - silently repeating a side effect is the worse',
-  'failure. If yours is case 2, opt in per call. Note that errorMatch REPLACES',
-  'the default list rather than extending it, so repeat the defaults you still',
-  'want. See the README.',
-].join('\n')
-
-/**
- * Attach {@link gcErrorHelp} to a garbage-collected-promise error.
- *
- * Appends to the original error rather than wrapping it, so its identity and
- * stack survive. `.stack` has to be rebuilt from its own frames afterwards:
- * V8 renders it lazily and then caches it, so a `.stack` that was already read
- * would keep the old message and the note would never appear in whatever a
- * test reporter prints. Playwright does the same dance in `rewriteErrorMessage()`.
- *
- * @ignore
- */
-function explainGcError(err: unknown, errString: string): unknown {
-  if (!(err instanceof Error)) {
-    return new Error(`${errString}\n\n${gcErrorHelp}`)
-  }
-  // helpers call retry() internally, so a retry() around a helper sees an error
-  // an inner retry() already explained - don't say it twice
-  if (err.message.includes(gcErrorHelp)) {
-    return err
-  }
-  try {
-    err.message = `${err.message}\n\n${gcErrorHelp}`
-  } catch {
-    // a frozen error, or a subclass whose `message` is getter-only. Assigning
-    // throws under "use strict" - the original error is worth more than the note
-    return err
-  }
-  const frames = (err.stack?.split('\n') || []).filter((line) =>
-    line.startsWith('    at '),
-  )
-  if (frames.length) {
-    err.stack = [`${err.name}: ${err.message}`, ...frames].join('\n')
-  }
-  return err
 }
 
 /**
@@ -335,7 +239,7 @@ export async function retry<T>(
         // promise deserves an explanation, since its message names the symptom
         // rather than the cause
         if (errorMatches(errString, gcErrorMatch)) {
-          throw explainGcError(err, errString)
+          throw explainError(err, errorHelp.gc, errString)
         }
         throw err
       }
@@ -367,7 +271,10 @@ export async function retry<T>(
     }
   }
   const errMessage = lastErr ? ' Last throw: ' + errToString(lastErr) : ''
-  throw new Error(`retry()::Timeout after ${timeout}ms.${errMessage}`)
+  throw explainError(
+    new Error(`retry()::Timeout after ${timeout}ms.${errMessage}`),
+    errorHelp.retryTimeout,
+  )
 }
 
 const retryDefaults: RetryOptions = {

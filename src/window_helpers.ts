@@ -1,5 +1,6 @@
 import type { ElectronApplication, Page } from 'playwright-core'
-import { retry, RetryOptions } from './utilities'
+import { errToString, retry, RetryOptions } from './utilities'
+import { errorHelp, explainError } from './error_help'
 
 /**
  * A function that evaluates a Page and returns whether it matches.
@@ -416,6 +417,15 @@ export async function waitForWindowByMatcher(
         }, interval)
       }),
     ])
+  } catch (err) {
+    // either our own poll timeout or Playwright's waitForEvent timeout, whichever
+    // lost the race first - both mean "nothing matched". Anything else (the app
+    // closing, a matcher that threw) is passed through untouched.
+    const errString = errToString(err)
+    if (/timeout/i.test(errString)) {
+      throw explainError(err, errorHelp.waitForWindow, errString)
+    }
+    throw err
   } finally {
     // Clean up the polling interval when the race completes
     if (pollIntervalId !== undefined) {
