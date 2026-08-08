@@ -1,3 +1,10 @@
+## [2.2.3](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.2.2...v2.2.3) (2026-08-08)
+
+
+### Bug Fixes
+
+* report why a menu property failed to serialize ([a109e88](https://github.com/spaceagetv/electron-playwright-helpers/commit/a109e881d8f7dc653925b2acb964ed5fcad701af))
+
 ## [2.2.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.2.1...v2.2.2) (2026-08-08)
 
 
