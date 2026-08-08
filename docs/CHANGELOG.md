@@ -1,3 +1,9 @@
+## [2.3.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.3.0...v2.3.1) (2026-08-08)
+
+### Bug Fixes
+
+* show docs, refactor, test and style commits in the changelog ([dbce4a7](https://github.com/spaceagetv/electron-playwright-helpers/commit/dbce4a7041779da0a61c71cc49a12be823a6cd58))
+
 # [2.3.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.2.4...v2.3.0) (2026-08-08)
 
 
