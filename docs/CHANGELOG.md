@@ -1,3 +1,22 @@
+## [3.0.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.3.1...v3.0.0) (2026-08-08)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** minimum Node version is now 22.12.0 (was 22.0.0).
+@electron/asar v4 is ESM-only and is loaded via Node's require(esm),
+which is not available in the 22.x line before 22.12.0.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01TsNmNqiM3hf1Mw7aZcsERe
+* the minimum supported Node version is now 22. Consumers on
+Node 18 or 20 must upgrade, or stay on the 2.x line.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01TsNmNqiM3hf1Mw7aZcsERe
+
+* **deps:** upgrade @electron/asar to v4 ([26c11e2](https://github.com/spaceagetv/electron-playwright-helpers/commit/26c11e27baa4ae7599db87e7822e3887ae74ed48))
+* require Node >= 22 and target ES2022 ([7852b88](https://github.com/spaceagetv/electron-playwright-helpers/commit/7852b88b309f3d6e716cd43892ca83256915624c))
+
 ## [2.3.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.3.0...v2.3.1) (2026-08-08)
 
 ### Bug Fixes
