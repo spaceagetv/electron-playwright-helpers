@@ -171,6 +171,11 @@ export type OpenDialogReturnValue = {
 
 /**
  * Return value type for showSaveDialog
+ *
+ * `filePath` is optional here even though Electron >= 30 made it required on
+ * its own `SaveDialogReturnValue` — omitting it is the natural way to stub a
+ * cancelled save dialog, so we keep the permissive input type and cast at the
+ * point where the stub is handed back to Electron.
  */
 export type SaveDialogReturnValue = {
   canceled: boolean
@@ -634,6 +639,12 @@ export function stubDialogMatchers(
         return true
       }
 
+      // The optional first argument of every dialog method is typed as
+      // `Electron.BaseWindow` (Electron >= 30). `BrowserWindow extends
+      // BaseWindow`, so accepting `BaseWindow` accepts strictly more than
+      // before and no caller breaks. The runtime check below is unchanged:
+      // both window classes expose `id`, plain options objects don't.
+
       // showMessageBox
       if (stubsGrouped['showMessageBox']) {
         const stubs = stubsGrouped['showMessageBox'] as Array<{
@@ -649,12 +660,12 @@ export function stubDialogMatchers(
         }>
         dialog.showMessageBox = async (
           windowOrOptions?:
-            | Electron.BrowserWindow
+            | Electron.BaseWindow
             | Electron.MessageBoxOptions
             | undefined,
           maybeOptions?: Electron.MessageBoxOptions
         ) => {
-          // Handle optional BrowserWindow first argument
+          // Handle optional parent-window first argument
           const options =
             maybeOptions ||
             (windowOrOptions &&
@@ -694,7 +705,7 @@ export function stubDialogMatchers(
         }>
         dialog.showMessageBoxSync = (
           windowOrOptions?:
-            | Electron.BrowserWindow
+            | Electron.BaseWindow
             | Electron.MessageBoxOptions
             | undefined,
           maybeOptions?: Electron.MessageBoxOptions
@@ -740,7 +751,7 @@ export function stubDialogMatchers(
         }>
         dialog.showOpenDialog = async (
           windowOrOptions?:
-            | Electron.BrowserWindow
+            | Electron.BaseWindow
             | Electron.OpenDialogOptions
             | undefined,
           maybeOptions?: Electron.OpenDialogOptions
@@ -782,7 +793,7 @@ export function stubDialogMatchers(
         }>
         dialog.showOpenDialogSync = (
           windowOrOptions?:
-            | Electron.BrowserWindow
+            | Electron.BaseWindow
             | Electron.OpenDialogOptions
             | undefined,
           maybeOptions?: Electron.OpenDialogOptions
@@ -825,7 +836,7 @@ export function stubDialogMatchers(
         }>
         dialog.showSaveDialog = async (
           windowOrOptions?:
-            | Electron.BrowserWindow
+            | Electron.BaseWindow
             | Electron.SaveDialogOptions
             | undefined,
           maybeOptions?: Electron.SaveDialogOptions
@@ -838,9 +849,14 @@ export function stubDialogMatchers(
               ? (windowOrOptions as Electron.SaveDialogOptions)
               : undefined)
 
+          // Electron >= 30 made `SaveDialogReturnValue.filePath` required,
+          // but our public `SaveDialogReturnValue` keeps it optional: stubbing
+          // a cancelled save dialog without a `filePath` is a legitimate (and
+          // already-published) usage. Cast rather than default it to `''` so
+          // the value the app receives is exactly what the user stubbed.
           for (const stub of stubs) {
             if (matchesSaveDialog(options, stub.matcher)) {
-              return stub.value
+              return stub.value as Electron.SaveDialogReturnValue
             }
           }
           if (throwOnUnmatched) {
@@ -850,7 +866,7 @@ export function stubDialogMatchers(
               )}`
             )
           }
-          return defaults.showSaveDialog
+          return defaults.showSaveDialog as Electron.SaveDialogReturnValue
         }
       }
 
@@ -868,7 +884,7 @@ export function stubDialogMatchers(
         }>
         dialog.showSaveDialogSync = (
           windowOrOptions?:
-            | Electron.BrowserWindow
+            | Electron.BaseWindow
             | Electron.SaveDialogOptions
             | undefined,
           maybeOptions?: Electron.SaveDialogOptions
@@ -933,7 +949,7 @@ export function stubDialogMatchers(
         }>
         dialog.showCertificateTrustDialog = async (
           windowOrOptions?:
-            | Electron.BrowserWindow
+            | Electron.BaseWindow
             | Electron.CertificateTrustDialogOptions
             | undefined,
           maybeOptions?: Electron.CertificateTrustDialogOptions
