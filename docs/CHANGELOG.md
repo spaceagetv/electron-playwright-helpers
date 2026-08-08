@@ -1,3 +1,11 @@
+## [2.1.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.1.1...v2.1.2) (2026-08-08)
+
+
+### Bug Fixes
+
+* don't mutate caller RegExps, and restore sane errorMatch fallback ([59dfa14](https://github.com/spaceagetv/electron-playwright-helpers/commit/59dfa14eca8c8e1262ca3e9fe801279112fd8127)), closes [#106](https://github.com/spaceagetv/electron-playwright-helpers/issues/106)
+* keep sticky RegExp semantics when cloning an errorMatch matcher ([f71cf6c](https://github.com/spaceagetv/electron-playwright-helpers/commit/f71cf6c9dbdac61edbb9c022686e9298222a9403))
+
 ## [2.1.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.1.0...v2.1.1) (2026-08-08)
 
 
