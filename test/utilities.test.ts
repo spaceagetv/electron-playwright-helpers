@@ -97,5 +97,13 @@ describe('Utilities', () => {
       const result = errToString(error)
       expect(result).to.equal('{"message":"test error"}')
     })
+
+    it('should still return a string for values JSON.stringify() skips', () => {
+      // JSON.stringify() returns undefined for these, and callers go on to
+      // call String methods on the result
+      expect(errToString(undefined)).to.be.a('string')
+      expect(errToString(() => 'nope')).to.be.a('string')
+      expect(errToString(Symbol('nope'))).to.be.a('string')
+    })
   })
 })

@@ -76,7 +76,7 @@ Please use [Conventional Commit](https://www.conventionalcommits.org/) messages 
 
 ## Migrating from v1.x to v2.0
 
-Version 2.0 introduces significant improvements to handle flakiness issues that appeared with Electron 27+ and Playwright. Starting with Electron 27, Playwright's `evaluate()` calls became unreliable, often throwing errors like "context or browser has been closed", "Promise was collected", or "Execution context was destroyed" seemingly at random.
+Version 2.0 introduces significant improvements to handle flakiness issues that appeared with Electron 27+ and Playwright. Starting with Electron 27, Playwright's `evaluate()` calls became unreliable, often throwing errors like "context or browser has been closed" or "Execution context was destroyed" seemingly at random.
 
 ### What's New in v2.0
 
@@ -165,6 +165,42 @@ Or disable retries for specific calls:
 ```typescript
 await ipcRendererSend(page, 'channel', arg, { disable: true })
 ```
+
+### "Resulting promise was garbage collected." is not a flake
+
+This one error is deliberately **not** retried, and it means something specific: your `evaluate()` callback returned a promise that nothing in the target process references, so V8 collected it before it could settle.
+
+```typescript
+// this promise is unreachable the moment evaluate() returns - it can never settle
+await electronApp.evaluate(() => new Promise(() => {}))
+```
+
+Playwright awaits your promise through the debugger protocol, and V8's inspector tracks it with a *weak* handle - so an unreferenced promise gets garbage collected and the reply comes back as an error. Two consequences worth knowing:
+
+* **It is deterministic, not intermittent.** The same call fails the same way every time, so retrying only burns the timeout and buries the real cause under a "Timeout after 5000ms" message.
+* **Your callback body already ran.** Its side effects happened; only the reply was lost. That makes an automatic retry actively unsafe for anything non-idempotent.
+
+The fix is in the callback: return a value, or return a promise that something retains - one backed by an Electron API call, a timer, or an event listener. Promises from real Electron APIs are held by the native side; those were unaffected across 300 iterations with garbage collection forced at the await point.
+
+If you want the old retry-anyway behavior, opt back in explicitly. **`errorMatch` replaces the default list rather than extending it**, so repeat the defaults you still want:
+
+```typescript
+import { retry, setRetryOptions } from 'electron-playwright-helpers'
+
+const errorMatch = [
+  'context or browser has been closed',
+  'Execution context was destroyed',
+  "reading 'getOwnerBrowserWindow'",
+  'promise was garbage collected',
+]
+
+// per call...
+await retry(() => electronApp.evaluate(myFn), { errorMatch })
+// ...or globally
+setRetryOptions({ errorMatch })
+```
+
+Note that on **Playwright < 1.62** you will never see this error by name. Those versions have no branch for the underlying protocol message, so it falls through to the generic "Execution context was destroyed" and is retried as if it were a teardown error.
 
 ### Using the New Retry Functions
 

@@ -121,16 +121,87 @@ const teardownErrorMatch = [
 
 /**
  * Errors which mean V8 garbage-collected the promise that Playwright was awaiting.
- * The execution context is still alive and the call may or may not have completed,
- * so these are *never* swallowed - only retried when retries are enabled.
  *
- * Playwright < 1.62 surfaces the raw CDP message ("Promise was collected").
- * Playwright >= 1.62 rewrites it to "Resulting promise was garbage collected."
- * (see `crExecutionContext.ts::rewriteError`), so both are matched here.
+ * Playwright sends `Runtime.callFunctionOn` with `awaitPromise: true`, and V8's
+ * inspector tracks the promise it is awaiting through a *weak* handle
+ * (`ProtocolPromiseHandler` in `v8/src/inspector/injected-script.cc`). If that
+ * promise becomes unreachable in the target heap before it settles, the weak
+ * callback fires and CDP answers "Promise was collected". Playwright >= 1.62
+ * rewrites that to "Resulting promise was garbage collected."
+ * (`crExecutionContext.ts::rewriteError`).
+ *
+ * In practice only the rewritten wording ever reaches a caller: Playwright
+ * >= 1.62 replaces the error outright, and Playwright < 1.62 has no branch for
+ * the raw message at all, so it falls through `rewriteError`'s catch-all and
+ * arrives disguised as "Execution context was destroyed" - i.e. on those
+ * versions a collected promise is still retried, as a teardown error. The raw
+ * wording is kept here anyway, in case it is ever surfaced directly.
+ *
+ * This is **not** a transient failure and is deliberately NOT in
+ * {@link retryDefaults}.`errorMatch` - see the note on {@link retry}.
  *
  * @ignore
  */
-const gcErrorMatch = ['Promise was collected', 'garbage collected']
+const gcErrorMatch = ['Promise was collected', 'promise was garbage collected']
+
+/**
+ * Appended to a garbage-collected-promise error, because the raw message names
+ * the symptom and not the cause.
+ *
+ * @ignore
+ */
+const gcErrorHelp = [
+  'The evaluate callback returned a promise that nothing in the target process',
+  'references, so V8 collected it before it could settle.',
+  '',
+  'This is deterministic rather than flaky: the same call fails the same way every',
+  'time, so retrying only wastes the timeout. The callback body has ALREADY RUN -',
+  'its side effects happened, and only the reply was lost. Re-running it would',
+  'fire those side effects a second time.',
+  '',
+  'Return a value, or a promise that something retains (an Electron API call, a',
+  'timer, an event listener), rather than one nothing holds.',
+  '',
+  "To retry it anyway, include this error in retry()'s errorMatch - but note that",
+  'errorMatch REPLACES the default list rather than extending it, so repeat the',
+  'defaults you still want. See the README.',
+].join('\n')
+
+/**
+ * Attach {@link gcErrorHelp} to a garbage-collected-promise error.
+ *
+ * Appends to the original error rather than wrapping it, so its identity and
+ * stack survive. `.stack` has to be rebuilt from its own frames afterwards:
+ * V8 renders it lazily and then caches it, so a `.stack` that was already read
+ * would keep the old message and the note would never appear in whatever a
+ * test reporter prints. Playwright does the same dance in `rewriteErrorMessage()`.
+ *
+ * @ignore
+ */
+function explainGcError(err: unknown, errString: string): unknown {
+  if (!(err instanceof Error)) {
+    return new Error(`${errString}\n\n${gcErrorHelp}`)
+  }
+  // helpers call retry() internally, so a retry() around a helper sees an error
+  // an inner retry() already explained - don't say it twice
+  if (err.message.includes(gcErrorHelp)) {
+    return err
+  }
+  try {
+    err.message = `${err.message}\n\n${gcErrorHelp}`
+  } catch {
+    // a frozen error, or a subclass whose `message` is getter-only. Assigning
+    // throws under "use strict" - the original error is worth more than the note
+    return err
+  }
+  const frames = (err.stack?.split('\n') || []).filter((line) =>
+    line.startsWith('    at ')
+  )
+  if (frames.length) {
+    err.stack = [`${err.name}: ${err.message}`, ...frames].join('\n')
+  }
+  return err
+}
 
 /**
  * Test an error string against a `RetryOptions['errorMatch']` matcher.
@@ -160,10 +231,16 @@ function errorMatches(
  * Retries a function until it returns without throwing an error.
  *
  * Starting with Electron 27, Playwright can get very flakey when running code in Electron's main or renderer processes.
- * It will often throw errors like "context or browser has been closed" or "Resulting promise was garbage collected."
- * for no apparent reason.
+ * It will throw errors like "context or browser has been closed" or "Execution context was destroyed" when the
+ * execution context a call was dispatched into goes away underneath it. Playwright has no recovery for this on the
+ * Electron main process - it resolves a single `require('electron')` handle when the app launches and never
+ * re-acquires it - so retrying is the only option available from the outside.
  * This function retries a given function until it returns without throwing one of these errors, or until the timeout is reached.
  *
+ * Note that "Resulting promise was garbage collected." is deliberately *not* retried. Despite appearances it is not a
+ * flake: it means the evaluate callback returned a promise nothing in the target process references, so V8 collected
+ * it before it settled. Every attempt fails identically, and the callback body has already run. `retry()` throws that
+ * one immediately, with an explanation attached.
  *
  * @example
  *
@@ -191,7 +268,7 @@ function errorMatches(
  * @param {RetryOptions} [options={}] The options for retrying the function.
  * @param {number} [options.timeout=5000] The maximum time to wait before giving up in milliseconds.
  * @param {number} [options.poll=200] The delay between each retry attempt in milliseconds.
- * @param {string|string[]|RegExp} [options.errorMatch=['context or browser has been closed', 'Execution context was destroyed', "reading 'getOwnerBrowserWindow'", 'Promise was collected', 'garbage collected']] String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.
+ * @param {string|string[]|RegExp} [options.errorMatch=['context or browser has been closed', 'Execution context was destroyed', "reading 'getOwnerBrowserWindow'"]] String(s) or regex to match against error message. If the error does not match, it will throw immediately. If it does match, it will retry.
  * @param {boolean} [options.disable=false] If true, only call the function once. See {@link RetryOptions.disable}.
  * @returns {Promise<T>} A promise that resolves with the result of the function or rejects with an error or timeout message.
  *   With `disable: true` it can also resolve `undefined`, when a teardown error is swallowed.
@@ -246,7 +323,12 @@ export async function retry<T>(
       lastErr = err
       const errString = errToString(err)
       if (!errorMatches(errString, errorMatch)) {
-        // it's not a matching error, throw immediately
+        // it's not a matching error, throw immediately - but a garbage-collected
+        // promise deserves an explanation, since its message names the symptom
+        // rather than the cause
+        if (errorMatches(errString, gcErrorMatch)) {
+          throw explainGcError(err, errString)
+        }
         throw err
       }
       if (!shouldContinue()) {
@@ -256,9 +338,9 @@ export async function retry<T>(
             // returned its result - there's nothing left to report
             return
           }
-          // any other matching error (e.g. a garbage-collected promise) means we
-          // don't know whether the action happened. Retrying could fire it twice,
-          // so throw rather than silently reporting success.
+          // any other matching error - only reachable through a custom
+          // errorMatch - means we don't know whether the action happened.
+          // Throw rather than silently reporting success.
           throw err
         }
         break
@@ -284,7 +366,7 @@ const retryDefaults: RetryOptions = {
   disable: false,
   poll: 200,
   timeout: 5000,
-  errorMatch: [...teardownErrorMatch, ...gcErrorMatch],
+  errorMatch: [...teardownErrorMatch],
 }
 
 const currentRetryOptions: RetryOptions = { ...retryDefaults }
@@ -322,7 +404,7 @@ export function getRetryOptions(): RetryOptions {
  * - poll: 200
  * - timeout: 5000
  * - errorMatch: ['context or browser has been closed', 'Execution context was destroyed',
- *   "reading 'getOwnerBrowserWindow'", 'Promise was collected', 'garbage collected']
+ *   "reading 'getOwnerBrowserWindow'"]
  *
  * @category Utilities
  */
@@ -443,6 +525,9 @@ export function errToString(err: unknown): string {
   } else if (typeof err === 'string') {
     return err
   } else {
-    return JSON.stringify(err)
+    // JSON.stringify() returns undefined - not a string - for undefined,
+    // functions and symbols, and every caller expects a string back
+    const json = JSON.stringify(err)
+    return json === undefined ? String(err) : json
   }
 }
