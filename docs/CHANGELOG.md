@@ -1,3 +1,16 @@
+# [2.2.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.1.2...v2.2.0) (2026-08-08)
+
+
+### Bug Fixes
+
+* describe both causes of a garbage-collected promise, not just one ([c7029c1](https://github.com/spaceagetv/electron-playwright-helpers/commit/c7029c1424ca397f4b30148965717b3eec8ca943))
+* upgrade jsdoc-to-markdown for Node.js 22+ compatibility ([d48995e](https://github.com/spaceagetv/electron-playwright-helpers/commit/d48995e904d98a702e7a42fbfbe735457dc123ac))
+
+
+### Features
+
+* stop retrying garbage-collected promise errors ([6b10d2e](https://github.com/spaceagetv/electron-playwright-helpers/commit/6b10d2ea80ab82c2895d1a8e0e16073e2eb8712b)), closes [microsoft/playwright#41826](https://github.com/microsoft/playwright/issues/41826)
+
 ## [2.1.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.1.1...v2.1.2) (2026-08-08)
 
 
