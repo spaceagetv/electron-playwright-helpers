@@ -69,5 +69,8 @@
     "tabWidth": 2,
     "useTabs": false,
     "endOfLine": "lf"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.1.0"
   }
 }
