@@ -22,7 +22,7 @@ import { RetryOptions, retry } from './utilities'
 export function clickMenuItemById(
   electronApp: ElectronApplication,
   id: string,
-  options: Partial<RetryOptions> = {}
+  options: Partial<RetryOptions> = {},
 ): Promise<unknown> {
   return retry(
     () =>
@@ -38,7 +38,7 @@ export function clickMenuItemById(
           throw new Error(`Menu item with id ${menuId} not found`)
         }
       }, id),
-    { disable: true, ...options }
+    { disable: true, ...options },
   )
 }
 
@@ -65,7 +65,7 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
   electronApp: ElectronApplication,
   property: P,
   value: MenuItemPartial[P],
-  options: Partial<RetryOptions> = {}
+  options: Partial<RetryOptions> = {},
 ): Promise<unknown> {
   const menuItem = await findMenuItem(electronApp, property, value)
   if (!menuItem) {
@@ -84,7 +84,7 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
         // recurse through the menu to find menu item with matching commandId
         function findMenuItem(
           menu: Electron.Menu,
-          commandId: number
+          commandId: number,
         ): Electron.MenuItem | undefined {
           for (const item of menu.items) {
             if (item.type === 'submenu' && item.submenu) {
@@ -107,7 +107,7 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
         await mI.click()
       }, menuItem.commandId),
     // a click is not idempotent - same policy as clickMenuItemById()
-    { disable: true, ...options }
+    { disable: true, ...options },
   )
 }
 
@@ -126,7 +126,7 @@ export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
   electronApp: ElectronApplication,
   menuId: string,
   attribute: T,
-  options: Partial<RetryOptions> = {}
+  options: Partial<RetryOptions> = {},
 ): Promise<Electron.MenuItem[T]> {
   const attr = attribute as keyof Electron.MenuItem
   const resultPromise = retry(
@@ -142,15 +142,15 @@ export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
             throw new Error(`Menu item with id "${menuId}" not found`)
           } else if (menuItem[attr] === undefined) {
             throw new Error(
-              `Menu item with id "${menuId}" has no attribute "${attr}"`
+              `Menu item with id "${menuId}" has no attribute "${attr}"`,
             )
           } else {
             return menuItem[attr]
           }
         },
-        { menuId, attr }
+        { menuId, attr },
       ),
-    options
+    options,
   )
   return resultPromise as Promise<Electron.MenuItem[T]>
 }
@@ -182,19 +182,18 @@ export type SerializedNativeImageError = {
 
 /** Serialized representation of an Electron.NativeImage */
 export type SerializedNativeImage =
-  | SerializedNativeImageSuccess
-  | SerializedNativeImageError
+  SerializedNativeImageSuccess | SerializedNativeImageError
 
 /** Type guard to check if a SerializedNativeImage is a success case */
 export function isSerializedNativeImageSuccess(
-  image: SerializedNativeImage
+  image: SerializedNativeImage,
 ): image is SerializedNativeImageSuccess {
   return 'dataURL' in image
 }
 
 /** Type guard to check if a SerializedNativeImage is an error case */
 export function isSerializedNativeImageError(
-  image: SerializedNativeImage
+  image: SerializedNativeImage,
 ): image is SerializedNativeImageError {
   return 'error' in image
 }
@@ -207,8 +206,8 @@ export type MenuItemPartial = {
   -readonly [K in keyof Electron.MenuItem]?: K extends 'icon'
     ? SerializedNativeImage | undefined
     : Electron.MenuItem[K] extends SerializableValue
-    ? Electron.MenuItem[K]
-    : SerializableValue
+      ? Electron.MenuItem[K]
+      : SerializableValue
 } & {
   submenu?: MenuItemPartial[]
 }
@@ -227,7 +226,7 @@ export type MenuItemPartial = {
 export function getMenuItemById(
   electronApp: ElectronApplication,
   menuId: string,
-  options: Partial<RetryOptions> = {}
+  options: Partial<RetryOptions> = {},
 ): Promise<MenuItemPartial> {
   return retry(
     () =>
@@ -236,7 +235,7 @@ export function getMenuItemById(
           // we need this function to be in scope/context for the electronApp.evaluate
           function cleanMenuItem(
             menuItem: Electron.MenuItem,
-            visited = new WeakSet()
+            visited = new WeakSet(),
           ): MenuItemPartial {
             // Check for circular references
             if (visited.has(menuItem)) {
@@ -295,7 +294,7 @@ export function getMenuItemById(
 
             if (menuItem.type === 'submenu' && menuItem.submenu) {
               returnValue['submenu'] = menuItem.submenu.items.map((item) =>
-                cleanMenuItem(item, visited)
+                cleanMenuItem(item, visited),
               )
             }
 
@@ -314,9 +313,9 @@ export function getMenuItemById(
             throw new Error(`Menu item with id ${menuId} not found`)
           }
         },
-        { menuId }
+        { menuId },
       ),
-    options
+    options,
   )
 }
 
@@ -335,7 +334,7 @@ export function getMenuItemById(
  */
 export function getApplicationMenu(
   electronApp: ElectronApplication,
-  options: Partial<RetryOptions> = {}
+  options: Partial<RetryOptions> = {},
 ): Promise<MenuItemPartial[]> {
   return retry(
     () =>
@@ -343,7 +342,7 @@ export function getApplicationMenu(
         // we need this function to be in scope/context for the electronApp.evaluate
         function cleanMenuItem(
           menuItem: Electron.MenuItem,
-          visited = new WeakSet()
+          visited = new WeakSet(),
         ): MenuItemPartial {
           // Check for circular references
           if (visited.has(menuItem)) {
@@ -402,7 +401,7 @@ export function getApplicationMenu(
 
           if (menuItem.type === 'submenu' && menuItem.submenu) {
             returnValue['submenu'] = menuItem.submenu.items.map((item) =>
-              cleanMenuItem(item, visited)
+              cleanMenuItem(item, visited),
             )
           }
 
@@ -417,7 +416,7 @@ export function getApplicationMenu(
 
         return cleanItems
       }),
-    options
+    options,
   )
 }
 
@@ -437,11 +436,11 @@ export async function findMenuItem<P extends keyof MenuItemPartial>(
   electronApp: ElectronApplication,
   property: P,
   value: MenuItemPartial[P],
-  menuItems?: MenuItemPartial | MenuItemPartial[]
+  menuItems?: MenuItemPartial | MenuItemPartial[],
 ): Promise<MenuItemPartial | undefined> {
   if (property === 'role') {
     // set the value to lowercase
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-ignore
     value = value.toLowerCase()
   }
@@ -477,7 +476,7 @@ export async function findMenuItem<P extends keyof MenuItemPartial>(
  */
 export async function waitForMenuItem(
   electronApp: ElectronApplication,
-  id: string
+  id: string,
 ): Promise<void> {
   await electronWaitForFunction(
     electronApp,
@@ -488,7 +487,7 @@ export async function waitForMenuItem(
       }
       return !!menu.getMenuItemById(id as string)
     },
-    id
+    id,
   )
 }
 
@@ -509,11 +508,11 @@ export async function waitForMenuItemStatus<P extends keyof Electron.MenuItem>(
   electronApp: ElectronApplication,
   id: string,
   property: P,
-  value: Electron.MenuItem[P]
+  value: Electron.MenuItem[P],
 ): Promise<void> {
   if (property === 'role') {
     // set the value to lowercase
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
     // @ts-ignore
     value = value.toLowerCase()
   }
@@ -530,6 +529,6 @@ export async function waitForMenuItemStatus<P extends keyof Electron.MenuItem>(
       }
       return menuItem[property] === value
     },
-    { id, value, property }
+    { id, value, property },
   )
 }

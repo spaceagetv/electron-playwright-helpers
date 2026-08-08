@@ -76,7 +76,7 @@ const dialogDefaults: DialogDefaults = {
 export function stubDialog<T extends keyof Electron.Dialog>(
   app: ElectronApplication,
   method: T,
-  value?: Partial<Awaited<ReturnType<Electron.Dialog[T]>>>
+  value?: Partial<Awaited<ReturnType<Electron.Dialog[T]>>>,
 ) {
   if (!value) value = dialogDefaults[method]
   return stubMultipleDialogs(app, [{ method, value }])
@@ -124,7 +124,7 @@ export function stubDialog<T extends keyof Electron.Dialog>(
  */
 export function stubMultipleDialogs<T extends keyof Electron.Dialog>(
   app: ElectronApplication,
-  mocks: DialogMethodStubPartial<T>[]
+  mocks: DialogMethodStubPartial<T>[],
 ) {
   const mocksRequired = mocks.map((mock) => {
     const methodDefault = dialogDefaults[mock.method]
@@ -146,14 +146,12 @@ export function stubMultipleDialogs<T extends keyof Electron.Dialog>(
           throw new Error(`can't find ${mock.method} on dialog module.`)
         }
         if (mock.method.endsWith('Sync')) {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           dialog[mock.method] = () => {
             // console.log(`Dialog.${v.method}(${args.join(', ')})`)
             return mock.value
           }
         } else {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           dialog[mock.method] = async () => {
             // console.log(`Dialog.${v.method}(${args.join(', ')})`)
@@ -161,7 +159,7 @@ export function stubMultipleDialogs<T extends keyof Electron.Dialog>(
           }
         }
       })
-    }, mocksRequired)
+    }, mocksRequired),
   )
 }
 
@@ -187,6 +185,6 @@ export function stubAllDialogs(app: ElectronApplication) {
   }
   return stubMultipleDialogs(
     app,
-    stubMultipleDialogsArgs as DialogMethodStubPartial<keyof Electron.Dialog>[]
+    stubMultipleDialogsArgs as DialogMethodStubPartial<keyof Electron.Dialog>[],
   )
 }

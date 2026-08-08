@@ -30,14 +30,14 @@ export type HelperFunctionName = keyof AllPromiseHelpersWithoutTimeout
 export async function addTimeoutToPromise<T>(
   promise: Promise<T>,
   timeoutMs = 5000,
-  timeoutMessage?: string
+  timeoutMessage?: string,
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       reject(
         timeoutMessage
           ? new Error(timeoutMessage)
-          : new Error(`timeout after ${timeoutMs}ms`)
+          : new Error(`timeout after ${timeoutMs}ms`),
       )
     }, timeoutMs)
     promise
@@ -69,11 +69,10 @@ export function addTimeout<T extends HelperFunctionName>(
   ...args: Parameters<AllPromiseHelpers[T]>
 ): ReturnType<AllPromiseHelpers[T]> {
   return addTimeoutToPromise(
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     helpers[functionName](...args),
     timeoutMs,
-    timeoutMessage
+    timeoutMessage,
   ) as ReturnType<AllPromiseHelpers[T]>
 }
 
@@ -203,7 +202,7 @@ function explainGcError(err: unknown, errString: string): unknown {
     return err
   }
   const frames = (err.stack?.split('\n') || []).filter((line) =>
-    line.startsWith('    at ')
+    line.startsWith('    at '),
   )
   if (frames.length) {
     err.stack = [`${err.name}: ${err.message}`, ...frames].join('\n')
@@ -219,7 +218,7 @@ function explainGcError(err: unknown, errString: string): unknown {
  */
 function errorMatches(
   errString: string,
-  match: string | string[] | RegExp
+  match: string | string[] | RegExp,
 ): boolean {
   if (match instanceof RegExp) {
     // `test()` advances lastIndex on /g and /y patterns, so the same matcher would
@@ -231,7 +230,8 @@ function errorMatches(
   const matchers = Array.isArray(match) ? match : [match]
   return matchers.some(
     (m) =>
-      typeof m === 'string' && errString.toLowerCase().includes(m.toLowerCase())
+      typeof m === 'string' &&
+      errString.toLowerCase().includes(m.toLowerCase()),
   )
 }
 
@@ -283,15 +283,15 @@ function errorMatches(
  */
 export async function retry<T>(
   fn: () => Promise<T> | T,
-  options: Partial<RetryOptions> & { disable: true }
+  options: Partial<RetryOptions> & { disable: true },
 ): Promise<T | undefined>
 export async function retry<T>(
   fn: () => Promise<T> | T,
-  options?: Partial<RetryOptions>
+  options?: Partial<RetryOptions>,
 ): Promise<T>
 export async function retry<T>(
   fn: () => Promise<T> | T,
-  options: Partial<RetryOptions> = {}
+  options: Partial<RetryOptions> = {},
 ): Promise<T | undefined> {
   // the destructuring defaults matter: an explicit `undefined` in `options` (or in a
   // previous setRetryOptions() call) overwrites the merged value, and falling back to
@@ -478,7 +478,7 @@ export type RetryUntilTruthyOptions = {
  */
 export async function retryUntilTruthy<T>(
   fn: () => Promise<T> | T,
-  options: Partial<RetryUntilTruthyOptions> = {}
+  options: Partial<RetryUntilTruthyOptions> = {},
 ): Promise<T> {
   const {
     timeout = 5000,

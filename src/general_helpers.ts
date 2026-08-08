@@ -33,20 +33,19 @@ export async function electronWaitForFunction<R, Arg>(
   electronApp: ElectronApplication,
   fn: PageFunctionOn<typeof Electron.CrossProcessExports, Arg, R>,
   arg?: Arg,
-  options: Partial<RetryUntilTruthyOptions & RetryOptions> = {}
+  options: Partial<RetryUntilTruthyOptions & RetryOptions> = {},
 ): Promise<void> {
   // `errorMatch` and `disable` used to reach the inner retry() directly, since
   // this took RetryOptions. Keep honoring them under their retry* names.
   const { errorMatch, disable, ...rest } = options
   await retryUntilTruthy(
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     () => electronApp.evaluate(fn, arg),
     {
       ...rest,
       ...(errorMatch !== undefined && { retryErrorMatch: errorMatch }),
       ...(disable !== undefined && { retryDisable: disable }),
-    }
+    },
   )
 }
 
@@ -68,7 +67,7 @@ export async function evaluateWithRetry<R, Arg>(
   electronApp: ElectronApplication,
   fn: PageFunctionOn<typeof Electron.CrossProcessExports, Arg, R>,
   arg = {} as Arg,
-  options: Partial<RetryOptions> = {}
+  options: Partial<RetryOptions> = {},
 ): Promise<R> {
   return retry(() => electronApp.evaluate(fn, arg), options)
 }
