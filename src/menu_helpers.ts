@@ -1,6 +1,35 @@
 import type { ElectronApplication } from 'playwright-core'
+import { errorHelp, explainError } from './error_help'
 import { electronWaitForFunction } from './general_helpers'
-import { RetryOptions, retry } from './utilities'
+import { RetryOptions, errToString, retry } from './utilities'
+
+/**
+ * Attach an explanation to the errors these helpers throw from inside an
+ * `evaluate()` callback.
+ *
+ * The callback runs in the Electron process and cannot see anything in this
+ * module, so it can only throw a bare message. Matching that message back here
+ * is what lets the note be added. Every caller re-throws, so nothing is
+ * swallowed: an error this does not recognize comes back untouched.
+ *
+ * @ignore
+ */
+function explainMenuError(err: unknown): never {
+  const errString = errToString(err)
+  if (errString.includes('No application menu found')) {
+    throw explainError(err, errorHelp.noApplicationMenu, errString)
+  }
+  if (errString.includes('has no attribute')) {
+    throw explainError(err, errorHelp.menuItemAttribute, errString)
+  }
+  if (
+    errString.includes('Menu item with id') ||
+    errString.includes('Menu item with commandId')
+  ) {
+    throw explainError(err, errorHelp.menuItemNotFound, errString)
+  }
+  throw err
+}
 
 /**
  * Execute the `.click()` method on the element with the given id.
@@ -39,7 +68,7 @@ export function clickMenuItemById(
         }
       }, id),
     { disable: true, ...options },
-  )
+  ).catch(explainMenuError)
 }
 
 /**
@@ -67,12 +96,22 @@ export async function clickMenuItem<P extends keyof MenuItemPartial>(
   value: MenuItemPartial[P],
   options: Partial<RetryOptions> = {},
 ): Promise<unknown> {
+  // findMenuItem() reads the menu through getApplicationMenu(), which explains
+  // its own errors, so there is nothing to add around this call
   const menuItem = await findMenuItem(electronApp, property, value)
   if (!menuItem) {
-    throw new Error(`Menu item with ${property} = ${value} not found`)
+    throw explainError(
+      new Error(`Menu item with ${property} = ${value} not found`),
+      errorHelp.menuItemByProperty,
+    )
   }
   if (menuItem.commandId === undefined) {
-    throw new Error(`Menu item with ${property} = ${value} has no commandId`)
+    // an item Electron built without a commandId cannot be clicked through the
+    // menu at all - matching harder will not help, so this gets its own note
+    throw explainError(
+      new Error(`Menu item with ${property} = ${value} has no commandId`),
+      errorHelp.menuItemNoCommandId,
+    )
   }
   return await retry(
     () =>
@@ -151,7 +190,7 @@ export function getMenuItemAttribute<T extends keyof Electron.MenuItem>(
         { menuId, attr },
       ),
     options,
-  )
+  ).catch(explainMenuError)
   return resultPromise as Promise<Electron.MenuItem[T]>
 }
 
@@ -338,7 +377,7 @@ export function getMenuItemById(
         { menuId },
       ),
     options,
-  )
+  ).catch(explainMenuError)
 }
 
 /**
@@ -455,7 +494,7 @@ export function getApplicationMenu(
         return cleanItems
       }),
     options,
-  )
+  ).catch(explainMenuError)
 }
 
 /**
@@ -526,7 +565,7 @@ export async function waitForMenuItem(
       return !!menu.getMenuItemById(id as string)
     },
     id,
-  )
+  ).catch(explainMenuError)
 }
 
 /**
@@ -568,5 +607,5 @@ export async function waitForMenuItemStatus<P extends keyof Electron.MenuItem>(
       return menuItem[property] === value
     },
     { id, value, property },
-  )
+  ).catch(explainMenuError)
 }
