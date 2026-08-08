@@ -49,7 +49,7 @@ describe('retry', () => {
       }
 
       await expect(retry(fn, { poll: 2 })).to.be.rejectedWith(
-        /nothing in the target process\s+references/
+        /V8 collected the promise Playwright was awaiting/
       )
     })
 
@@ -64,7 +64,7 @@ describe('retry', () => {
 
       const err = await retry(fn, { poll: 2 }).catch((e: Error) => e)
 
-      expect(err.stack).to.include('nothing in the target process')
+      expect(err.stack).to.include('V8 collected the promise')
     })
 
     it('should not repeat the explanation when retry() calls nest', async () => {
@@ -80,7 +80,7 @@ describe('retry', () => {
 
       const err = await retry(inner, { poll: 2 }).catch((e: Error) => e)
 
-      const occurrences = err.message.split('nothing in the target process')
+      const occurrences = err.message.split('V8 collected the promise')
       expect(occurrences).to.have.lengthOf(2) // i.e. the phrase appears once
     })
 
@@ -127,7 +127,7 @@ describe('retry', () => {
 
       // the caller's matcher wins, so this times out as a normal retry
       expect(err.message).to.include('Timeout')
-      expect(err.message).to.not.include('nothing in the target process')
+      expect(err.message).to.not.include('V8 collected the promise')
     })
 
     it('should retry a closed context error', async () => {

@@ -166,23 +166,50 @@ Or disable retries for specific calls:
 await ipcRendererSend(page, 'channel', arg, { disable: true })
 ```
 
-### "Resulting promise was garbage collected." is not a flake
+### "Resulting promise was garbage collected." is not retried by default
 
-This one error is deliberately **not** retried, and it means something specific: your `evaluate()` callback returned a promise that nothing in the target process references, so V8 collected it before it could settle.
+Playwright awaits your promise through the debugger protocol, and V8's inspector tracks it with a *weak* handle. If nothing in the target process references that promise, it gets collected before it can settle and the reply comes back as this error.
+
+Two quite different things produce it, and they want opposite responses.
+
+**Case 1 — your `evaluate()` callback returned a dangling promise.**
 
 ```typescript
 // this promise is unreachable the moment evaluate() returns - it can never settle
 await electronApp.evaluate(() => new Promise(() => {}))
 ```
 
-Playwright awaits your promise through the debugger protocol, and V8's inspector tracks it with a *weak* handle - so an unreferenced promise gets garbage collected and the reply comes back as an error. Two consequences worth knowing:
-
 * **It is deterministic, not intermittent.** The same call fails the same way every time, so retrying only burns the timeout and buries the real cause under a "Timeout after 5000ms" message.
 * **Your callback body already ran.** Its side effects happened; only the reply was lost. That makes an automatic retry actively unsafe for anything non-idempotent.
 
 The fix is in the callback: return a value, or return a promise that something retains - one backed by an Electron API call, a timer, or an event listener. Promises from real Electron APIs are held by the native side; those were unaffected across 300 iterations with garbage collection forced at the await point.
 
-If you want the old retry-anyway behavior, opt back in explicitly. **`errorMatch` replaces the default list rather than extending it**, so repeat the defaults you still want:
+**Case 2 — a raw Playwright channel call lost an internal promise mid-flight.**
+
+```typescript
+// no callback of yours involved - the promise that got collected is Playwright's
+const win = await electronApp.browserWindow(page)
+const title = await win.getProperty('title')
+```
+
+Here you wrote no callback, so there is nothing to fix in your code. This one really is transient, and retrying is the right response.
+
+**The message is identical in both cases**, so this library cannot tell them apart. It does not retry by default, because silently repeating a side effect is the worse of the two failures. If you are in case 2, opt in - ideally scoped to the specific reads that need it rather than set globally, so that case 1 keeps failing loudly:
+
+```typescript
+import { retry, getRetryOptions } from 'electron-playwright-helpers'
+
+/** only ever wrap idempotent reads in this - a retried action can fire twice */
+function retryThroughGC<T>(fn: () => Promise<T>) {
+  const { errorMatch } = getRetryOptions()
+  const existing = Array.isArray(errorMatch) ? errorMatch : [errorMatch]
+  return retry(fn, { errorMatch: [...existing, 'promise was garbage collected'] })
+}
+
+const win = await retryThroughGC(() => electronApp.browserWindow(page))
+```
+
+To turn the old retry-anyway behavior back on everywhere instead, note that **`errorMatch` replaces the default list rather than extending it**, so repeat the defaults you still want:
 
 ```typescript
 import { retry, setRetryOptions } from 'electron-playwright-helpers'
