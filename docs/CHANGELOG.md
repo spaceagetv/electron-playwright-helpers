@@ -1,3 +1,9 @@
+## [3.1.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v3.0.0...v3.1.0) (2026-08-08)
+
+### Features
+
+* explain the menu helper errors, and how to find the right item ([1ee4fe4](https://github.com/spaceagetv/electron-playwright-helpers/commit/1ee4fe4163e5402b4d4bcc2cc35cf2d9be91dc48))
+
 ## [3.0.0](https://github.com/spaceagetv/electron-playwright-helpers/compare/v2.3.1...v3.0.0) (2026-08-08)
 
 ### ⚠ BREAKING CHANGES
