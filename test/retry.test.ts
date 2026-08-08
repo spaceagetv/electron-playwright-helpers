@@ -229,6 +229,22 @@ describe('retry', () => {
     expect(errorMatch.lastIndex).to.equal(0)
   })
 
+  it('should keep a sticky RegExp sticky', async () => {
+    let counter = 0
+    const fn = async () => {
+      counter++
+      throw new Error('flaky thing happened')
+    }
+
+    // /y anchors at lastIndex, which is 0 here, so this must NOT match a
+    // message that says "flaky" further along - and a non-match throws at once
+    await expect(
+      retry(fn, { poll: 2, errorMatch: /flaky/y })
+    ).to.be.rejectedWith('flaky thing happened')
+
+    expect(counter).to.equal(1)
+  })
+
   it('should fall back to the default errorMatch when given undefined', async () => {
     let counter = 0
     const fn = async () => {

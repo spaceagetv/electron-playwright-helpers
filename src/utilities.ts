@@ -144,11 +144,10 @@ function errorMatches(
 ): boolean {
   if (match instanceof RegExp) {
     // `test()` advances lastIndex on /g and /y patterns, so the same matcher would
-    // miss on the next retry. Test against a copy without those flags rather than
-    // resetting lastIndex, which would leave the caller's RegExp altered.
-    return new RegExp(match.source, match.flags.replace(/[gy]/g, '')).test(
-      errString
-    )
+    // miss on the next retry. Test a fresh clone - its lastIndex starts at 0, and
+    // keeping the flags preserves sticky semantics - rather than resetting
+    // lastIndex on the caller's own RegExp.
+    return new RegExp(match.source, match.flags).test(errString)
   }
   const matchers = Array.isArray(match) ? match : [match]
   return matchers.some(
