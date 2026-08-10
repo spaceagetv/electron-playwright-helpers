@@ -29,7 +29,7 @@ export function ipcRendererSend(
     () =>
       page.evaluate(
         ({ channel, args }) => {
-          if (!require) {
+          if (typeof require !== 'function') {
             throw new Error(
               `Cannot access require() in renderer process. Is nodeIntegration: true?`,
             )
@@ -71,7 +71,7 @@ export function ipcRendererInvoke(
     () =>
       page.evaluate(
         async ({ message, args }) => {
-          if (!require) {
+          if (typeof require !== 'function') {
             throw new Error(
               `Cannot access require() in renderer process. Is nodeIntegration: true?`,
             )
@@ -115,8 +115,16 @@ export function ipcRendererCallFirstListener(
   return retry(
     () =>
       page.evaluate(
-        async ({ message, args }) => {
-          if (!require) {
+        // Deliberately NOT an async callback. An async function always hands
+        // Playwright a promise, which sends the call down CDP's awaitPromise
+        // path — where a promise the target process doesn't otherwise retain
+        // can be collected before it settles ("Resulting promise was garbage
+        // collected."). Most listeners return a plain value; returning it
+        // unwrapped keeps those calls off that path entirely. A listener that
+        // does return a promise still works: evaluate() awaits it for us, and
+        // that promise is retained by whatever produced it.
+        ({ message, args }) => {
+          if (typeof require !== 'function') {
             throw new Error(
               `Cannot access require() in renderer process. Is nodeIntegration: true?`,
             )
@@ -126,8 +134,7 @@ export function ipcRendererCallFirstListener(
           if (ipcRenderer.listenerCount(message) > 0) {
             // we send a fake event in place of the ipc event object
             const event = {} as Electron.IpcRendererEvent
-            // also, we await in case the listener returns a promise
-            return await ipcRenderer.listeners(message)[0](event, ...args)
+            return ipcRenderer.listeners(message)[0](event, ...args)
           } else {
             throw new Error(`No ipcRenderer listeners for '${message}'`)
           }
@@ -169,7 +176,7 @@ export function ipcRendererEmit(
     () =>
       page.evaluate(
         ({ message, args }) => {
-          if (!require) {
+          if (typeof require !== 'function') {
             throw new Error(
               `Cannot access require() in renderer process. Is nodeIntegration: true?`,
             )
@@ -262,11 +269,12 @@ export async function ipcMainCallFirstListener(
   return retry(
     () =>
       electronApp.evaluate(
-        async ({ ipcMain }, { message, args }) => {
+        // Not async — see the note in ipcRendererCallFirstListener().
+        ({ ipcMain }, { message, args }) => {
           if (ipcMain.listenerCount(message) > 0) {
             // fake ipcMainEvent
             const event = {} as Electron.IpcMainEvent
-            return await ipcMain.listeners(message)[0](event, ...args)
+            return ipcMain.listeners(message)[0](event, ...args)
           } else {
             throw new Error(`No listeners for message ${message}`)
           }
@@ -287,7 +295,8 @@ type IpcMainInvokeEventWithReply = Electron.IpcMainInvokeEvent & {
 type IpcMainWithHandlers = Electron.IpcMain & {
   _invokeHandlers: Map<
     string,
-    (e: IpcMainInvokeEventWithReply, ...args: unknown[]) => Promise<unknown>
+    // may return a value or a promise — ipcMain.handle() accepts both
+    (e: IpcMainInvokeEventWithReply, ...args: unknown[]) => unknown
   >
 }
 
@@ -316,7 +325,8 @@ export async function ipcMainInvokeHandler(
   return retry(
     () =>
       electronApp.evaluate(
-        async ({ ipcMain }, { message, args }) => {
+        // Not async — see the note in ipcRendererCallFirstListener().
+        ({ ipcMain }, { message, args }) => {
           const ipcMainWH = ipcMain as IpcMainWithHandlers
           // this is all a bit of a hack, so let's test as we go
           if (!ipcMainWH._invokeHandlers) {
@@ -336,11 +346,21 @@ export async function ipcMainInvokeHandler(
             throw error
           }
           // in electron >= 25, we can simply call the handler
-          const e25reply = await handler(e, ...args)
+          const e25reply: unknown = handler(e, ...args)
 
           // return the value from the event object if it exists
           // otherwise return the value from the handler
-          return (await e24reply) ?? e25reply
+          const isThenable =
+            typeof (e25reply as PromiseLike<unknown>)?.then === 'function'
+          if (isThenable) {
+            // The handler is genuinely async, so a promise has to cross the
+            // wire either way. Keep the original ordering: settle the handler
+            // first, because on electron <= 24 that's when _reply() fires.
+            return Promise.resolve(e25reply).then((v) =>
+              Promise.resolve(e24reply).then((r24) => r24 ?? v),
+            )
+          }
+          return e24reply ?? e25reply
         },
         { message, args },
       ),
