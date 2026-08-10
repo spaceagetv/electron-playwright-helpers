@@ -1,3 +1,9 @@
+## [3.1.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v3.1.1...v3.1.2) (2026-08-10)
+
+### Bug Fixes
+
+* keep synchronous ipc handlers off CDP's awaitPromise path ([1a1834d](https://github.com/spaceagetv/electron-playwright-helpers/commit/1a1834ddc1f79b734b87f309a6e9d96087a05982))
+
 ## [3.1.1](https://github.com/spaceagetv/electron-playwright-helpers/compare/v3.1.0...v3.1.1) (2026-08-08)
 
 ### Code Refactoring
