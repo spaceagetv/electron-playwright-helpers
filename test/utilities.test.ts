@@ -3,6 +3,7 @@ import {
   addTimeoutToPromise,
   errToString,
   getRetryOptions,
+  isRetryOptions,
   resetRetryOptions,
   setRetryOptions,
 } from '../src/utilities'
@@ -69,6 +70,42 @@ describe('Utilities', () => {
       resetRetryOptions()
       const options = getRetryOptions()
       assert.strictEqual(options.poll, 200)
+    })
+  })
+
+  describe('isRetryOptions', () => {
+    it('should not treat an empty array as retry options', () => {
+      // Object.keys([]).every(...) is vacuously true and typeof [] === 'object',
+      // so a trailing [] used to be popped off IPC helpers as retry options
+      assert.strictEqual(isRetryOptions([]), false)
+    })
+
+    it('should not treat a non-empty array as retry options', () => {
+      assert.strictEqual(isRetryOptions([1, 2]), false)
+      assert.strictEqual(isRetryOptions(['timeout']), false)
+    })
+
+    it('should accept a retry-options object', () => {
+      assert.strictEqual(isRetryOptions({ timeout: 1000 }), true)
+      assert.strictEqual(isRetryOptions({ poll: 10, timeout: 100 }), true)
+      assert.strictEqual(isRetryOptions({ disable: true }), true)
+    })
+
+    it('should reject objects with unknown keys', () => {
+      assert.strictEqual(isRetryOptions({ timeout: 1000, extra: true }), false)
+      assert.strictEqual(isRetryOptions({ foo: 1 }), false)
+    })
+
+    it('should reject null and non-objects', () => {
+      assert.strictEqual(isRetryOptions(null), false)
+      assert.strictEqual(isRetryOptions(undefined), false)
+      assert.strictEqual(isRetryOptions(1), false)
+      assert.strictEqual(isRetryOptions('timeout'), false)
+    })
+
+    it('should still treat an empty object as retry options', () => {
+      // swallowing {} is what a caller passing no options would want
+      assert.strictEqual(isRetryOptions({}), true)
     })
   })
 

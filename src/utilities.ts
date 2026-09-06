@@ -328,8 +328,14 @@ export function resetRetryOptions(): void {
 }
 
 export function isRetryOptions(options: unknown): options is RetryOptions {
-  if (typeof options !== 'object' || options === null) {
-    // if it's not an object
+  // arrays are typeof 'object', and Object.keys([]).every(...) is vacuously
+  // true, so a trailing [] would be popped as retry options and never reach
+  // the IPC handler
+  if (
+    typeof options !== 'object' ||
+    options === null ||
+    Array.isArray(options)
+  ) {
     return false
   }
   const validKeys = Object.keys(retryDefaults)
