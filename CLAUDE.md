@@ -28,9 +28,9 @@ npm ci && cd example-project && npm ci
 
 `npm test` runs unit then e2e. E2E needs a packaged build in `example-project/out/` — `npm run package` (electron-forge) creates it, and `findLatestBuild()` locates it at test time. On Linux/CI, e2e runs under `xvfb-run` (see `.github/workflows/e2e-ci.yml`).
 
-**README.md is generated** — `npm run make:doc` renders `readme-template.hbs.md` + JSDoc from `src/*.ts` via jsdoc2md. Never hand-edit README.md; edit the template or the JSDoc comments.
+**README.md is generated** — `npm run make:doc` renders `readme-template.hbs.md` + JSDoc from `src/*.ts` via jsdoc2md. Never hand-edit README.md; edit the template or the JSDoc comments, then run `npm run make:doc` and commit the regenerated README in the same PR — CI fails if it's stale.
 
-Releases are automatic: semantic-release on `main` (and prerelease on `beta`) driven by Conventional Commit messages. Don't bump versions manually or edit `docs/CHANGELOG.md`.
+Releases are automatic: semantic-release on `main` (and prerelease on `beta`) driven by Conventional Commit messages, published to npm via trusted publishing (OIDC, no token). The release job does not commit back to `main` (the ruleset requires the `CI passed` check, which would block it), so the `version` in package.json on `main` is not the published version, and release notes live in GitHub Releases. Don't bump versions manually. `docs/CHANGELOG.md` is frozen at 3.1.2.
 
 ## Architecture
 

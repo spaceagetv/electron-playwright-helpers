@@ -33,6 +33,13 @@ jobs:
         run: npm run type-check
       - name: Unit tests
         run: npm run test:unit
+      - name: README is up to date
+        run: |
+          npm run make:doc
+          git diff --exit-code README.md || {
+            echo "::error file=README.md::README.md is generated. Run 'npm run make:doc' and commit the result."
+            exit 1
+          }
 
   tests_e2e:
     name: Run end-to-end tests

@@ -34,7 +34,7 @@ jobs:
         run: npm install -g npm@latest
       - name: Install dependencies
         run: npm ci
-      - name: Build (update README.md)
+      - name: Build
         run: npm run make
       - name: Release
         env:
