@@ -33,6 +33,13 @@ jobs:
         run: npm run type-check
       - name: Unit tests
         run: npm run test:unit
+      - name: README is up to date
+        run: |
+          npm run make:doc
+          git diff --exit-code README.md || {
+            echo "::error file=README.md::README.md is generated. Run 'npm run make:doc' and commit the result."
+            exit 1
+          }
 
   tests_e2e:
     name: Run end-to-end tests
@@ -82,3 +89,16 @@ jobs:
         run: npm ci && cd example-project && npm ci
       - name: e2e tests
         run: ${{ matrix.commandPrefix }} npm run test:e2e
+
+  # Single, stable status check for branch rules / auto-merge. Matrix job names
+  # change whenever the matrix does; this one never does.
+  ci_passed:
+    name: CI passed
+    if: always()
+    needs: [lint_and_unit, tests_e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job did not succeed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1
+      - run: echo "All required jobs passed"

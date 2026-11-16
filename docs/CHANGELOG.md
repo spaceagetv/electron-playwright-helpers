@@ -1,3 +1,5 @@
+> **Note:** This file is no longer updated. Release notes for versions after 3.1.2 are on [GitHub Releases](https://github.com/spaceagetv/electron-playwright-helpers/releases).
+
 ## [3.1.2](https://github.com/spaceagetv/electron-playwright-helpers/compare/v3.1.1...v3.1.2) (2026-08-10)
 
 ### Bug Fixes
