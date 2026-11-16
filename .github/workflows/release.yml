@@ -9,7 +9,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
-  id-token: write
+  id-token: write # npm trusted publishing (OIDC) + provenance
 
 concurrency:
   group: release-${{ github.ref }}
@@ -27,8 +27,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: "lts/*"
+          node-version: 24
           cache: 'npm'
+      # npm trusted publishing (OIDC) needs npm >= 11.5.1
+      - name: Update npm
+        run: npm install -g npm@latest
       - name: Install dependencies
         run: npm ci
       - name: Build (update README.md)
@@ -36,5 +39,4 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
