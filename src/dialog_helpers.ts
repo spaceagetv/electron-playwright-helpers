@@ -129,7 +129,7 @@ export function stubMultipleDialogs<T extends keyof Electron.Dialog>(
   const mocksRequired = mocks.map((mock) => {
     const methodDefault = dialogDefaults[mock.method]
     if (!methodDefault) return mock as DialogMethodStub<T>
-    if (typeof mock.value === 'object') {
+    if (typeof mock.value === 'object' && !Array.isArray(mock.value)) {
       mock.value = Object.assign({}, methodDefault, mock.value)
     } else {
       mock.value = mock.value ?? methodDefault
