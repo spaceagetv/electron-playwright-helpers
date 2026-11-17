@@ -77,5 +77,8 @@
   },
   "overrides": {
     "serialize-javascript": "^7.1.0"
+  },
+  "allowScripts": {
+    "fsevents": false
   }
 }
